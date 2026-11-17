@@ -1399,11 +1399,20 @@ export declare const ExportJobResponseSchema: z.ZodObject<{
     status: "running" | "pending" | "done" | "failed";
     jobId: string;
 }>;
+export declare const ExportJobStageSchema: z.ZodEnum<["queued", "capturing", "encoding", "done", "failed"]>;
+export type ExportJobStage = z.infer<typeof ExportJobStageSchema>;
 export declare const ExportJobStatusSchema: z.ZodObject<{
     id: z.ZodString;
     projectId: z.ZodString;
     format: z.ZodString;
     status: z.ZodEnum<["pending", "running", "done", "failed"]>;
+    /** 0..1 completion, driven by frames captured (then encoding). */
+    progress: z.ZodDefault<z.ZodNumber>;
+    stage: z.ZodDefault<z.ZodEnum<["queued", "capturing", "encoding", "done", "failed"]>>;
+    framesDone: z.ZodDefault<z.ZodNumber>;
+    framesTotal: z.ZodDefault<z.ZodNumber>;
+    /** Milliseconds remaining, or null when it cannot be estimated yet. */
+    etaMs: z.ZodDefault<z.ZodNullable<z.ZodNumber>>;
     filePath: z.ZodNullable<z.ZodString>;
     error: z.ZodNullable<z.ZodString>;
     createdAt: z.ZodString;
@@ -1415,6 +1424,11 @@ export declare const ExportJobStatusSchema: z.ZodObject<{
     projectId: string;
     createdAt: string;
     format: string;
+    progress: number;
+    stage: "done" | "failed" | "queued" | "capturing" | "encoding";
+    framesDone: number;
+    framesTotal: number;
+    etaMs: number | null;
     filePath: string | null;
     completedAt: string | null;
 }, {
@@ -1426,6 +1440,11 @@ export declare const ExportJobStatusSchema: z.ZodObject<{
     format: string;
     filePath: string | null;
     completedAt: string | null;
+    progress?: number | undefined;
+    stage?: "done" | "failed" | "queued" | "capturing" | "encoding" | undefined;
+    framesDone?: number | undefined;
+    framesTotal?: number | undefined;
+    etaMs?: number | null | undefined;
 }>;
 export type ExportJobStatus = z.infer<typeof ExportJobStatusSchema>;
 export declare const CreateSkillInputSchema: z.ZodObject<{

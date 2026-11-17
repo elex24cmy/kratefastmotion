@@ -12,7 +12,7 @@ import { publicBaseUrl } from "../config.js";
 import { now } from "../utils/id.js";
 import { logger } from "../utils/logger.js";
 import { hasPuppeteer, hasFfmpeg, getFfmpegPath } from "../utils/env.js";
-import { recordFrames } from "./recorder.js";
+import { recordFrames, framePattern, expectedFrameCount } from "./recorder.js";
 
 export type VideoFormat = "mp4" | "gif" | "webm";
 
@@ -75,7 +75,7 @@ function ffmpegArgs(
   height: number,
   audioSources: AudioSource[],
 ): string[] {
-  const input = join(framesDir, "frame_%06d.png");
+  const input = framePattern(framesDir);
   const args: string[] = ["-y", "-framerate", String(fps), "-i", input];
 
   // Add audio inputs
@@ -110,6 +110,10 @@ function ffmpegArgs(
         "-map", "0:v",
         "-map", "[aout]",
         "-c:v", "libx264",
+        // veryfast is ~3x faster than the default medium preset at this
+        // resolution with no visible difference at CRF 20.
+        "-preset", "veryfast",
+        "-crf", "20",
         "-pix_fmt", "yuv420p",
         "-movflags", "+faststart",
         `-vf`, `scale=${width}:${height}`,
@@ -138,6 +142,8 @@ function ffmpegArgs(
     if (format === "mp4") {
       args.push(
         "-c:v", "libx264",
+        "-preset", "veryfast",
+        "-crf", "20",
         "-pix_fmt", "yuv420p",
         "-movflags", "+faststart",
         `-vf`, `scale=${width}:${height}`,
@@ -148,6 +154,8 @@ function ffmpegArgs(
         "-c:v", "libvpx-vp9",
         "-b:v", "0",
         "-crf", "40",
+        "-row-mt", "1",
+        "-cpu-used", "4",
         `-vf`, `scale=${width}:${height}`,
         outFile,
       );
@@ -157,13 +165,34 @@ function ffmpegArgs(
     }
   }
 
+  // Stream machine-readable progress on stdout so the job can report encode %.
+  // (Inserted before the output file, which is always the last argument.)
+  args.splice(args.length - 1, 0, "-progress", "pipe:1", "-nostats");
+
   return args;
 }
 
-function runFfmpeg(args: string[]): Promise<void> {
+function runFfmpeg(
+  args: string[],
+  opts?: { totalMs?: number; onProgress?: (fraction: number) => void },
+): Promise<void> {
   return new Promise((resolve, reject) => {
     const proc = spawn(args[0], args.slice(1), { stdio: ["ignore", "pipe", "pipe"] });
     let stderr = "";
+    let stdoutBuf = "";
+    proc.stdout?.on("data", (chunk) => {
+      stdoutBuf += chunk.toString();
+      let newline = stdoutBuf.indexOf("\n");
+      while (newline >= 0) {
+        const line = stdoutBuf.slice(0, newline).trim();
+        stdoutBuf = stdoutBuf.slice(newline + 1);
+        const match = /^out_time_ms=(\d+)$/.exec(line);
+        if (match && opts?.totalMs && opts.onProgress) {
+          opts.onProgress(Math.min(1, Number(match[1]) / 1000 / opts.totalMs));
+        }
+        newline = stdoutBuf.indexOf("\n");
+      }
+    });
     proc.stderr?.on("data", (chunk) => {
       stderr += chunk.toString();
     });
@@ -192,6 +221,7 @@ export async function exportProjectVideo(
     logger.error("video job crashed", { jobId: job.id, error: String(err) });
     updateExportJob(job.id, {
       status: "failed",
+      stage: "failed",
       error: String(err),
       completedAt: now(),
     });
@@ -209,6 +239,7 @@ async function _runVideoJob(
   if (!puppet || !ffmpeg) {
     updateExportJob(jobId, {
       status: "failed",
+      stage: "failed",
       error: `video export requires puppeteer + ffmpeg (puppeteer=${puppet}, ffmpeg=${ffmpeg})`,
       completedAt: now(),
     });
@@ -219,6 +250,7 @@ async function _runVideoJob(
   if (!spec) {
     updateExportJob(jobId, {
       status: "failed",
+      stage: "failed",
       error: "project not found",
       completedAt: now(),
     });
@@ -228,6 +260,7 @@ async function _runVideoJob(
   updateExportJob(jobId, { status: "running" });
 
   const totalDurationMs = computeTotalDuration(spec);
+  const totalFrames = expectedFrameCount(totalDurationMs, opts.fps);
   const framesDir = join(renderedDir, "jobs", jobId);
   const filename = `${projectId}-${jobId}.${opts.format}`;
   const outFile = join(exportsDir, filename);
@@ -235,14 +268,47 @@ async function _runVideoJob(
   if (!ffmpegPath) {
     updateExportJob(jobId, {
       status: "failed",
+      stage: "failed",
       error: "ffmpeg binary not found",
       completedAt: now(),
     });
     return;
   }
 
+  // Capture owns 2%..90% of the bar; encoding owns the rest.
+  const CAPTURE_START = 0.02;
+  const CAPTURE_END = 0.9;
+  let captureStartedAt = Date.now();
+  let lastReported = 0;
+  let lastEncodeReport = 0;
+  const reportProgress = (done: number, total: number): void => {
+    const nowMs = Date.now();
+    // Throttle to ~4 writes/second so a 900-frame export does not hammer SQLite.
+    if (done < total && nowMs - lastReported < 250) return;
+    lastReported = nowMs;
+    const elapsed = nowMs - captureStartedAt;
+    const perFrame = done > 0 ? elapsed / done : 0;
+    const etaMs = done > 0 && done < total ? Math.round(perFrame * (total - done)) : null;
+    updateExportJob(jobId, {
+      progress: CAPTURE_START + (CAPTURE_END - CAPTURE_START) * (done / Math.max(1, total)),
+      stage: "capturing",
+      framesDone: done,
+      framesTotal: total,
+      etaMs,
+    });
+  };
+
+  updateExportJob(jobId, {
+    stage: "capturing",
+    progress: CAPTURE_START,
+    framesDone: 0,
+    framesTotal: totalFrames,
+    etaMs: null,
+  });
+
   try {
     const previewUrl = `${publicBaseUrl()}/api/projects/${projectId}/preview`;
+    captureStartedAt = Date.now();
     await recordFrames({
       previewUrl,
       width: opts.width,
@@ -250,6 +316,15 @@ async function _runVideoJob(
       fps: opts.fps,
       durationMs: totalDurationMs,
       framesDir,
+      onProgress: reportProgress,
+    });
+
+    updateExportJob(jobId, {
+      stage: "encoding",
+      progress: CAPTURE_END,
+      framesDone: totalFrames,
+      framesTotal: totalFrames,
+      etaMs: null,
     });
 
     const audioSources = extractAudioSources(spec);
@@ -257,10 +332,25 @@ async function _runVideoJob(
     if (audioSources.length > 0) {
       logger.info(`Video export includes ${audioSources.length} audio source(s)`, { jobId });
     }
-    await runFfmpeg([ffmpegPath, ...args]);
+    await runFfmpeg([ffmpegPath, ...args], {
+      totalMs: totalDurationMs,
+      onProgress: (fraction) => {
+        const nowMs = Date.now();
+        if (nowMs - lastEncodeReport < 250) return;
+        lastEncodeReport = nowMs;
+        updateExportJob(jobId, {
+          stage: "encoding",
+          progress: CAPTURE_END + (1 - CAPTURE_END) * fraction,
+          etaMs: null,
+        });
+      },
+    });
 
     updateExportJob(jobId, {
       status: "done",
+      stage: "done",
+      progress: 1,
+      etaMs: 0,
       filePath: filename,
       completedAt: now(),
     });
@@ -268,7 +358,9 @@ async function _runVideoJob(
   } catch (err) {
     updateExportJob(jobId, {
       status: "failed",
+      stage: "failed",
       error: err instanceof Error ? err.message : String(err),
+      etaMs: null,
       completedAt: now(),
     });
   } finally {

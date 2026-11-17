@@ -9,6 +9,11 @@ import { rebuildFtsIndexes } from "../server/services/searchService.js";
 const COLUMN_MIGRATIONS: { table: string; column: string; ddl: string }[] = [
   { table: "motion_components", column: "trigger", ddl: "TEXT NOT NULL DEFAULT 'onLoad'" },
   { table: "motion_components", column: "parent_id", ddl: "TEXT" },
+  { table: "exports", column: "progress", ddl: "REAL NOT NULL DEFAULT 0" },
+  { table: "exports", column: "stage", ddl: "TEXT NOT NULL DEFAULT 'queued'" },
+  { table: "exports", column: "frames_done", ddl: "INTEGER NOT NULL DEFAULT 0" },
+  { table: "exports", column: "frames_total", ddl: "INTEGER NOT NULL DEFAULT 0" },
+  { table: "exports", column: "eta_ms", ddl: "INTEGER" },
 ];
 
 /** Add a column if it isn't present yet (SQLite lacks ADD COLUMN IF NOT EXISTS). */

@@ -9,6 +9,7 @@ import { RightPanel } from "../components/layout/RightPanel.js";
 import { ResizableDivider } from "../components/layout/ResizableDivider.js";
 import { StatusBar } from "../components/layout/StatusBar.js";
 import { ExportDialog } from "../components/export/ExportDialog.js";
+import { ExportStatusPill } from "../components/export/ExportStatusPill.js";
 import { PreviewOverlay } from "../components/canvas/PreviewOverlay.js";
 import { ContextMenu } from "../components/canvas/ContextMenu.js";
 import { ApiSettingsDialog } from "../components/settings/ApiSettingsDialog.js";
@@ -203,6 +204,7 @@ export function Editor() {
       </main>
 
       <ExportDialog />
+      <ExportStatusPill />
       <PreviewOverlay />
       <ContextMenu />
       <ApiSettingsDialog />

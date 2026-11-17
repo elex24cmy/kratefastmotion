@@ -1,12 +1,21 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useProjectStore } from "../../store/projectStore.js";
 import { useUiStore } from "../../store/uiStore.js";
+import { useExportStore } from "../../store/exportStore.js";
 import * as api from "../../api/endpoints.js";
 import { useDismissOnEscape } from "../../hooks/useDismissOnEscape.js";
 
-type VideoStatus = "idle" | "pending" | "running" | "done" | "failed";
 type Format = "mp4" | "gif" | "webm";
 type CodeFormat = "css" | "json" | "react" | "framer";
+
+function formatEta(ms: number | null): string | null {
+  if (ms === null || !Number.isFinite(ms) || ms <= 0) return null;
+  const totalSeconds = Math.round(ms / 1000);
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+}
 
 export function ExportDialog() {
   const open = useUiStore((s) => s.exportOpen);
@@ -22,11 +31,17 @@ export function ExportDialog() {
   const [fps, setFps] = useState(30);
   const [width, setWidth] = useState(1280);
   const [height, setHeight] = useState(720);
-  const [videoStatus, setVideoStatus] = useState<VideoStatus>("idle");
-  const [videoJobId, setVideoJobId] = useState<string | null>(null);
-  const [videoError, setVideoError] = useState<string | null>(null);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // The in-flight export lives in a store so it survives closing this dialog.
+  const videoStatus = useExportStore((s) => s.status);
+  const videoJobId = useExportStore((s) => s.jobId);
+  const videoError = useExportStore((s) => s.error);
+  const videoUrl = useExportStore((s) => s.url);
+  const videoProgress = useExportStore((s) => s.progress);
+  const videoStage = useExportStore((s) => s.stage);
+  const videoFramesDone = useExportStore((s) => s.framesDone);
+  const videoFramesTotal = useExportStore((s) => s.framesTotal);
+  const videoEtaMs = useExportStore((s) => s.etaMs);
 
   const [codeFormat, setCodeFormat] = useState<CodeFormat>("css");
   const [codeResult, setCodeResult] = useState<api.CodeExport | null>(null);
@@ -54,10 +69,9 @@ export function ExportDialog() {
       setHtmlResult(null);
       setHtmlError(null);
       setHtmlBusy(false);
-      setVideoStatus("idle");
-      setVideoJobId(null);
-      setVideoError(null);
-      setVideoUrl(null);
+      // Video export state is intentionally NOT reset here: the job keeps
+      // running server-side and the store keeps polling, so reopening the
+      // dialog still shows progress and the finished download link.
       setCodeResult(null);
       setCodeError(null);
       setCodeBusy(false);
@@ -72,18 +86,8 @@ export function ExportDialog() {
       setSkillBusy(false);
       setSkillError(null);
       setSkillResult(null);
-      if (pollRef.current) {
-        clearInterval(pollRef.current);
-        pollRef.current = null;
-      }
     }
   }, [open]);
-
-  useEffect(() => {
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, []);
 
   const exportHtml = async () => {
     if (!projectId) return;
@@ -105,43 +109,13 @@ export function ExportDialog() {
 
   const exportVideo = async () => {
     if (!projectId) return;
-    setVideoStatus("pending");
-    setVideoError(null);
-    setVideoUrl(null);
-    setVideoJobId(null);
-    if (pollRef.current) {
-      clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
+    const store = useExportStore.getState();
+    store.reset();
     try {
       const { jobId } = await api.exportVideo(projectId, { format, fps, width, height });
-      setVideoJobId(jobId);
-      pollRef.current = setInterval(async () => {
-        try {
-          const job = await api.getVideoJob(jobId);
-          setVideoStatus(job.status as VideoStatus);
-          if (job.status === "done") {
-            if (job.filePath) {
-              setVideoUrl(`/api/exports/files/${job.filePath}`);
-            }
-            if (pollRef.current) {
-              clearInterval(pollRef.current);
-              pollRef.current = null;
-            }
-          } else if (job.status === "failed") {
-            setVideoError(job.error ?? "export failed");
-            if (pollRef.current) {
-              clearInterval(pollRef.current);
-              pollRef.current = null;
-            }
-          }
-        } catch {
-          /* keep polling */
-        }
-      }, 1500);
+      useExportStore.getState().start(projectId, jobId);
     } catch (e) {
-      setVideoStatus("failed");
-      setVideoError(e instanceof Error ? e.message : String(e));
+      useExportStore.getState().fail(e instanceof Error ? e.message : String(e));
     }
   };
 
@@ -519,9 +493,39 @@ export function ExportDialog() {
               className="w-full px-3 py-2 rounded-lg bg-panel2 border border-edge hover:border-accent disabled:opacity-40 text-gray-200 text-sm font-medium transition-colors"
             >
               {videoStatus === "pending" || videoStatus === "running"
-                ? `Exporting… (${videoStatus})`
-                : "Export Video"}
+                ? `Exporting… ${Math.round(videoProgress * 100)}%`
+                : videoStatus === "done"
+                  ? "Export Video Again"
+                  : "Export Video"}
             </button>
+
+            {(videoStatus === "pending" || videoStatus === "running") && (
+              <div className="mt-3" aria-live="polite">
+                <div
+                  className="h-1.5 w-full rounded-full bg-panel2 border border-edge overflow-hidden"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(videoProgress * 100)}
+                  aria-label="Video export progress"
+                >
+                  <div
+                    className="h-full bg-accent transition-[width] duration-300 ease-out"
+                    style={{ width: `${Math.max(2, Math.round(videoProgress * 100))}%` }}
+                  />
+                </div>
+                <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-500">
+                  <span>
+                    {videoStage === "encoding"
+                      ? "Encoding video…"
+                      : videoFramesTotal > 0
+                        ? `Rendering frame ${Math.min(videoFramesDone + 1, videoFramesTotal)} / ${videoFramesTotal}`
+                        : "Starting renderer…"}
+                  </span>
+                  {formatEta(videoEtaMs) && <span>~{formatEta(videoEtaMs)} left</span>}
+                </div>
+              </div>
+            )}
 
             {videoJobId && (
               <div className="mt-2 text-[10px] text-gray-600 font-mono">job: {videoJobId}</div>

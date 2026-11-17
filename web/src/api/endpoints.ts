@@ -184,10 +184,21 @@ export const getAccessibilityReport = (projectId: string) =>
 
 export const getPerformanceReport = (projectId: string) =>
   apiGet<PerformanceReport>(`/projects/${projectId}/performance`);
+export interface VideoJobStatus {
+  id: string;
+  status: "pending" | "running" | "done" | "failed";
+  progress: number;
+  stage: "queued" | "capturing" | "encoding" | "done" | "failed";
+  framesDone: number;
+  framesTotal: number;
+  etaMs: number | null;
+  filePath: string | null;
+  error: string | null;
+}
 export const exportVideo = (projectId: string, opts: { format?: string; fps?: number; width?: number; height?: number }) =>
   apiPost<{ jobId: string; status: string }>(`/projects/${projectId}/export/video`, opts);
 export const getVideoJob = (jobId: string) =>
-  apiGet<{ id: string; status: string; filePath: string | null; error: string | null }>(`/exports/jobs/${jobId}`);
+  apiGet<VideoJobStatus>(`/exports/jobs/${jobId}`);
 
 export interface CodeExport {
   code: string;

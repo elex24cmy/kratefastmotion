@@ -240,11 +240,20 @@ export const ExportJobResponseSchema = z.object({
   jobId: z.string(),
   status: z.enum(["pending", "running", "done", "failed"]),
 });
+export const ExportJobStageSchema = z.enum(["queued", "capturing", "encoding", "done", "failed"]);
+export type ExportJobStage = z.infer<typeof ExportJobStageSchema>;
 export const ExportJobStatusSchema = z.object({
   id: z.string(),
   projectId: z.string(),
   format: z.string(),
   status: z.enum(["pending", "running", "done", "failed"]),
+  /** 0..1 completion, driven by frames captured (then encoding). */
+  progress: z.number().default(0),
+  stage: ExportJobStageSchema.default("queued"),
+  framesDone: z.number().int().default(0),
+  framesTotal: z.number().int().default(0),
+  /** Milliseconds remaining, or null when it cannot be estimated yet. */
+  etaMs: z.number().int().nullable().default(null),
   filePath: z.string().nullable(),
   error: z.string().nullable(),
   createdAt: z.string(),
