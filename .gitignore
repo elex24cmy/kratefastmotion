@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Local runtime data: SQLite database, imported media, exports.
+# Override the location with DB_PATH; when it lives here it is still ignored.
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Secrets — never commit API keys
+.env
+.env.*
+!.env.example
+
+# Editor / OS noise
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

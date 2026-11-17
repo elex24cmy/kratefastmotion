@@ -1,0 +1,1119 @@
+import { z } from "zod";
+import { type Easing } from "./easing.js";
+export declare const zId: z.ZodString;
+export declare const CssStyleSchema: z.ZodDefault<z.ZodRecord<z.ZodString, z.ZodUnion<[z.ZodString, z.ZodNumber]>>>;
+export declare const KeyframeSchema: z.ZodObject<{
+    offset: z.ZodNumber;
+    properties: z.ZodDefault<z.ZodRecord<z.ZodEnum<["translateX", "translateY", "translateZ", "scale", "scaleX", "scaleY", "rotate", "rotateX", "rotateY", "rotateZ", "skewX", "skewY", "opacity", "blur", "color", "backgroundColor", "width", "height", "borderRadius", "fontSize", "letterSpacing", "boxShadow", "clipPath"]>, z.ZodUnion<[z.ZodNumber, z.ZodString]>>>;
+    easing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
+        type: z.ZodLiteral<"preset">;
+        name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+    }, "strip", z.ZodTypeAny, {
+        type: "preset";
+        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+    }, {
+        type: "preset";
+        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+    }>, z.ZodObject<{
+        type: z.ZodLiteral<"bezier">;
+        p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+        p2: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+    }, "strip", z.ZodTypeAny, {
+        type: "bezier";
+        p1: [number, number];
+        p2: [number, number];
+    }, {
+        type: "bezier";
+        p1: [number, number];
+        p2: [number, number];
+    }>, z.ZodObject<{
+        type: z.ZodLiteral<"spring">;
+        stiffness: z.ZodNumber;
+        damping: z.ZodNumber;
+        mass: z.ZodDefault<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        type: "spring";
+        stiffness: number;
+        damping: number;
+        mass: number;
+    }, {
+        type: "spring";
+        stiffness: number;
+        damping: number;
+        mass?: number | undefined;
+    }>]>>;
+}, "strip", z.ZodTypeAny, {
+    offset: number;
+    properties: Partial<Record<"translateX" | "translateY" | "translateZ" | "scale" | "scaleX" | "scaleY" | "rotate" | "rotateX" | "rotateY" | "rotateZ" | "skewX" | "skewY" | "opacity" | "blur" | "color" | "backgroundColor" | "width" | "height" | "borderRadius" | "fontSize" | "letterSpacing" | "boxShadow" | "clipPath", string | number>>;
+    easing?: {
+        type: "bezier";
+        p1: [number, number];
+        p2: [number, number];
+    } | {
+        type: "spring";
+        stiffness: number;
+        damping: number;
+        mass: number;
+    } | {
+        type: "preset";
+        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+    } | undefined;
+}, {
+    offset: number;
+    properties?: Partial<Record<"translateX" | "translateY" | "translateZ" | "scale" | "scaleX" | "scaleY" | "rotate" | "rotateX" | "rotateY" | "rotateZ" | "skewX" | "skewY" | "opacity" | "blur" | "color" | "backgroundColor" | "width" | "height" | "borderRadius" | "fontSize" | "letterSpacing" | "boxShadow" | "clipPath", string | number>> | undefined;
+    easing?: {
+        type: "bezier";
+        p1: [number, number];
+        p2: [number, number];
+    } | {
+        type: "spring";
+        stiffness: number;
+        damping: number;
+        mass?: number | undefined;
+    } | {
+        type: "preset";
+        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+    } | undefined;
+}>;
+export type Keyframe = z.infer<typeof KeyframeSchema>;
+export declare const IterationCountSchema: z.ZodUnion<[z.ZodNumber, z.ZodLiteral<"infinite">]>;
+export type IterationCount = z.infer<typeof IterationCountSchema>;
+export declare const DirectionSchema: z.ZodEnum<["normal", "reverse", "alternate", "alternate-reverse"]>;
+export declare const FillModeSchema: z.ZodEnum<["none", "forwards", "backwards", "both"]>;
+export declare const PlayStateSchema: z.ZodEnum<["running", "paused"]>;
+export declare const TriggerSchema: z.ZodEnum<["onLoad", "onClick", "onHover", "onScroll", "afterDelay"]>;
+export type Trigger = z.infer<typeof TriggerSchema>;
+/** A single animatable element. The editable unit the agent tools operate on. */
+export declare const MotionComponentSchema: z.ZodObject<{
+    id: z.ZodString;
+    projectId: z.ZodString;
+    sceneId: z.ZodDefault<z.ZodNullable<z.ZodString>>;
+    name: z.ZodString;
+    selector: z.ZodDefault<z.ZodNullable<z.ZodString>>;
+    templateId: z.ZodDefault<z.ZodNullable<z.ZodString>>;
+    durationMs: z.ZodDefault<z.ZodNumber>;
+    delayMs: z.ZodDefault<z.ZodNumber>;
+    iterationCount: z.ZodDefault<z.ZodUnion<[z.ZodNumber, z.ZodLiteral<"infinite">]>>;
+    direction: z.ZodDefault<z.ZodEnum<["normal", "reverse", "alternate", "alternate-reverse"]>>;
+    fillMode: z.ZodDefault<z.ZodEnum<["none", "forwards", "backwards", "both"]>>;
+    playState: z.ZodDefault<z.ZodEnum<["running", "paused"]>>;
+    trigger: z.ZodDefault<z.ZodEnum<["onLoad", "onClick", "onHover", "onScroll", "afterDelay"]>>;
+    easing: z.ZodDefault<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
+        type: z.ZodLiteral<"preset">;
+        name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+    }, "strip", z.ZodTypeAny, {
+        type: "preset";
+        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+    }, {
+        type: "preset";
+        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+    }>, z.ZodObject<{
+        type: z.ZodLiteral<"bezier">;
+        p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+        p2: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+    }, "strip", z.ZodTypeAny, {
+        type: "bezier";
+        p1: [number, number];
+        p2: [number, number];
+    }, {
+        type: "bezier";
+        p1: [number, number];
+        p2: [number, number];
+    }>, z.ZodObject<{
+        type: z.ZodLiteral<"spring">;
+        stiffness: z.ZodNumber;
+        damping: z.ZodNumber;
+        mass: z.ZodDefault<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        type: "spring";
+        stiffness: number;
+        damping: number;
+        mass: number;
+    }, {
+        type: "spring";
+        stiffness: number;
+        damping: number;
+        mass?: number | undefined;
+    }>]>>;
+    keyframes: z.ZodDefault<z.ZodArray<z.ZodObject<{
+        offset: z.ZodNumber;
+        properties: z.ZodDefault<z.ZodRecord<z.ZodEnum<["translateX", "translateY", "translateZ", "scale", "scaleX", "scaleY", "rotate", "rotateX", "rotateY", "rotateZ", "skewX", "skewY", "opacity", "blur", "color", "backgroundColor", "width", "height", "borderRadius", "fontSize", "letterSpacing", "boxShadow", "clipPath"]>, z.ZodUnion<[z.ZodNumber, z.ZodString]>>>;
+        easing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
+            type: z.ZodLiteral<"preset">;
+            name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+        }, "strip", z.ZodTypeAny, {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        }, {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        }>, z.ZodObject<{
+            type: z.ZodLiteral<"bezier">;
+            p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+            p2: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+        }, "strip", z.ZodTypeAny, {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        }, {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        }>, z.ZodObject<{
+            type: z.ZodLiteral<"spring">;
+            stiffness: z.ZodNumber;
+            damping: z.ZodNumber;
+            mass: z.ZodDefault<z.ZodNumber>;
+        }, "strip", z.ZodTypeAny, {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass: number;
+        }, {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass?: number | undefined;
+        }>]>>;
+    }, "strip", z.ZodTypeAny, {
+        offset: number;
+        properties: Partial<Record<"translateX" | "translateY" | "translateZ" | "scale" | "scaleX" | "scaleY" | "rotate" | "rotateX" | "rotateY" | "rotateZ" | "skewX" | "skewY" | "opacity" | "blur" | "color" | "backgroundColor" | "width" | "height" | "borderRadius" | "fontSize" | "letterSpacing" | "boxShadow" | "clipPath", string | number>>;
+        easing?: {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        } | {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass: number;
+        } | {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        } | undefined;
+    }, {
+        offset: number;
+        properties?: Partial<Record<"translateX" | "translateY" | "translateZ" | "scale" | "scaleX" | "scaleY" | "rotate" | "rotateX" | "rotateY" | "rotateZ" | "skewX" | "skewY" | "opacity" | "blur" | "color" | "backgroundColor" | "width" | "height" | "borderRadius" | "fontSize" | "letterSpacing" | "boxShadow" | "clipPath", string | number>> | undefined;
+        easing?: {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        } | {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass?: number | undefined;
+        } | {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        } | undefined;
+    }>, "many">>;
+    style: z.ZodDefault<z.ZodDefault<z.ZodRecord<z.ZodString, z.ZodUnion<[z.ZodString, z.ZodNumber]>>>>;
+    orderIndex: z.ZodDefault<z.ZodNumber>;
+    parentId: z.ZodDefault<z.ZodNullable<z.ZodString>>;
+    createdAt: z.ZodString;
+    updatedAt: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    name: string;
+    easing: {
+        type: "bezier";
+        p1: [number, number];
+        p2: [number, number];
+    } | {
+        type: "spring";
+        stiffness: number;
+        damping: number;
+        mass: number;
+    } | {
+        type: "preset";
+        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+    };
+    id: string;
+    projectId: string;
+    sceneId: string | null;
+    selector: string | null;
+    templateId: string | null;
+    durationMs: number;
+    delayMs: number;
+    iterationCount: number | "infinite";
+    direction: "reverse" | "normal" | "alternate" | "alternate-reverse";
+    fillMode: "none" | "forwards" | "backwards" | "both";
+    playState: "running" | "paused";
+    trigger: "onLoad" | "onClick" | "onHover" | "onScroll" | "afterDelay";
+    keyframes: {
+        offset: number;
+        properties: Partial<Record<"translateX" | "translateY" | "translateZ" | "scale" | "scaleX" | "scaleY" | "rotate" | "rotateX" | "rotateY" | "rotateZ" | "skewX" | "skewY" | "opacity" | "blur" | "color" | "backgroundColor" | "width" | "height" | "borderRadius" | "fontSize" | "letterSpacing" | "boxShadow" | "clipPath", string | number>>;
+        easing?: {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        } | {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass: number;
+        } | {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        } | undefined;
+    }[];
+    style: Record<string, string | number>;
+    orderIndex: number;
+    parentId: string | null;
+    createdAt: string;
+    updatedAt: string;
+}, {
+    name: string;
+    id: string;
+    projectId: string;
+    createdAt: string;
+    updatedAt: string;
+    easing?: {
+        type: "bezier";
+        p1: [number, number];
+        p2: [number, number];
+    } | {
+        type: "spring";
+        stiffness: number;
+        damping: number;
+        mass?: number | undefined;
+    } | {
+        type: "preset";
+        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+    } | undefined;
+    sceneId?: string | null | undefined;
+    selector?: string | null | undefined;
+    templateId?: string | null | undefined;
+    durationMs?: number | undefined;
+    delayMs?: number | undefined;
+    iterationCount?: number | "infinite" | undefined;
+    direction?: "reverse" | "normal" | "alternate" | "alternate-reverse" | undefined;
+    fillMode?: "none" | "forwards" | "backwards" | "both" | undefined;
+    playState?: "running" | "paused" | undefined;
+    trigger?: "onLoad" | "onClick" | "onHover" | "onScroll" | "afterDelay" | undefined;
+    keyframes?: {
+        offset: number;
+        properties?: Partial<Record<"translateX" | "translateY" | "translateZ" | "scale" | "scaleX" | "scaleY" | "rotate" | "rotateX" | "rotateY" | "rotateZ" | "skewX" | "skewY" | "opacity" | "blur" | "color" | "backgroundColor" | "width" | "height" | "borderRadius" | "fontSize" | "letterSpacing" | "boxShadow" | "clipPath", string | number>> | undefined;
+        easing?: {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        } | {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass?: number | undefined;
+        } | {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        } | undefined;
+    }[] | undefined;
+    style?: Record<string, string | number> | undefined;
+    orderIndex?: number | undefined;
+    parentId?: string | null | undefined;
+}>;
+export type MotionComponent = z.infer<typeof MotionComponentSchema>;
+export declare const SceneSchema: z.ZodObject<{
+    id: z.ZodString;
+    name: z.ZodString;
+    durationMs: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    name: string;
+    id: string;
+    durationMs?: number | undefined;
+}, {
+    name: string;
+    id: string;
+    durationMs?: number | undefined;
+}>;
+export type Scene = z.infer<typeof SceneSchema>;
+export declare const GlobalTimingSchema: z.ZodDefault<z.ZodObject<{
+    totalDurationMs: z.ZodOptional<z.ZodNumber>;
+    defaultEasing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
+        type: z.ZodLiteral<"preset">;
+        name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+    }, "strip", z.ZodTypeAny, {
+        type: "preset";
+        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+    }, {
+        type: "preset";
+        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+    }>, z.ZodObject<{
+        type: z.ZodLiteral<"bezier">;
+        p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+        p2: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+    }, "strip", z.ZodTypeAny, {
+        type: "bezier";
+        p1: [number, number];
+        p2: [number, number];
+    }, {
+        type: "bezier";
+        p1: [number, number];
+        p2: [number, number];
+    }>, z.ZodObject<{
+        type: z.ZodLiteral<"spring">;
+        stiffness: z.ZodNumber;
+        damping: z.ZodNumber;
+        mass: z.ZodDefault<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        type: "spring";
+        stiffness: number;
+        damping: number;
+        mass: number;
+    }, {
+        type: "spring";
+        stiffness: number;
+        damping: number;
+        mass?: number | undefined;
+    }>]>>;
+    bpm: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    totalDurationMs?: number | undefined;
+    defaultEasing?: {
+        type: "bezier";
+        p1: [number, number];
+        p2: [number, number];
+    } | {
+        type: "spring";
+        stiffness: number;
+        damping: number;
+        mass: number;
+    } | {
+        type: "preset";
+        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+    } | undefined;
+    bpm?: number | undefined;
+}, {
+    totalDurationMs?: number | undefined;
+    defaultEasing?: {
+        type: "bezier";
+        p1: [number, number];
+        p2: [number, number];
+    } | {
+        type: "spring";
+        stiffness: number;
+        damping: number;
+        mass?: number | undefined;
+    } | {
+        type: "preset";
+        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+    } | undefined;
+    bpm?: number | undefined;
+}>>;
+export declare const MotionProjectSchema: z.ZodObject<{
+    id: z.ZodString;
+    name: z.ZodString;
+    description: z.ZodDefault<z.ZodString>;
+    scenes: z.ZodDefault<z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        name: z.ZodString;
+        durationMs: z.ZodOptional<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        name: string;
+        id: string;
+        durationMs?: number | undefined;
+    }, {
+        name: string;
+        id: string;
+        durationMs?: number | undefined;
+    }>, "many">>;
+    tokens: z.ZodDefault<z.ZodRecord<z.ZodString, z.ZodUnion<[z.ZodString, z.ZodNumber]>>>;
+    globalTiming: z.ZodDefault<z.ZodObject<{
+        totalDurationMs: z.ZodOptional<z.ZodNumber>;
+        defaultEasing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
+            type: z.ZodLiteral<"preset">;
+            name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+        }, "strip", z.ZodTypeAny, {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        }, {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        }>, z.ZodObject<{
+            type: z.ZodLiteral<"bezier">;
+            p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+            p2: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+        }, "strip", z.ZodTypeAny, {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        }, {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        }>, z.ZodObject<{
+            type: z.ZodLiteral<"spring">;
+            stiffness: z.ZodNumber;
+            damping: z.ZodNumber;
+            mass: z.ZodDefault<z.ZodNumber>;
+        }, "strip", z.ZodTypeAny, {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass: number;
+        }, {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass?: number | undefined;
+        }>]>>;
+        bpm: z.ZodOptional<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        totalDurationMs?: number | undefined;
+        defaultEasing?: {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        } | {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass: number;
+        } | {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        } | undefined;
+        bpm?: number | undefined;
+    }, {
+        totalDurationMs?: number | undefined;
+        defaultEasing?: {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        } | {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass?: number | undefined;
+        } | {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        } | undefined;
+        bpm?: number | undefined;
+    }>>;
+    status: z.ZodDefault<z.ZodEnum<["draft", "published"]>>;
+    sourceTemplateId: z.ZodDefault<z.ZodNullable<z.ZodString>>;
+    createdAt: z.ZodString;
+    updatedAt: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    status: "draft" | "published";
+    name: string;
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    description: string;
+    scenes: {
+        name: string;
+        id: string;
+        durationMs?: number | undefined;
+    }[];
+    tokens: Record<string, string | number>;
+    globalTiming: {
+        totalDurationMs?: number | undefined;
+        defaultEasing?: {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        } | {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass: number;
+        } | {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        } | undefined;
+        bpm?: number | undefined;
+    };
+    sourceTemplateId: string | null;
+}, {
+    name: string;
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    status?: "draft" | "published" | undefined;
+    description?: string | undefined;
+    scenes?: {
+        name: string;
+        id: string;
+        durationMs?: number | undefined;
+    }[] | undefined;
+    tokens?: Record<string, string | number> | undefined;
+    globalTiming?: {
+        totalDurationMs?: number | undefined;
+        defaultEasing?: {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        } | {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass?: number | undefined;
+        } | {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        } | undefined;
+        bpm?: number | undefined;
+    } | undefined;
+    sourceTemplateId?: string | null | undefined;
+}>;
+export type MotionProject = z.infer<typeof MotionProjectSchema>;
+/** The assembled, runnable spec — project metadata + all components. */
+export declare const MotionSpecSchema: z.ZodObject<{
+    project: z.ZodObject<{
+        id: z.ZodString;
+        name: z.ZodString;
+        description: z.ZodDefault<z.ZodString>;
+        scenes: z.ZodDefault<z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            name: z.ZodString;
+            durationMs: z.ZodOptional<z.ZodNumber>;
+        }, "strip", z.ZodTypeAny, {
+            name: string;
+            id: string;
+            durationMs?: number | undefined;
+        }, {
+            name: string;
+            id: string;
+            durationMs?: number | undefined;
+        }>, "many">>;
+        tokens: z.ZodDefault<z.ZodRecord<z.ZodString, z.ZodUnion<[z.ZodString, z.ZodNumber]>>>;
+        globalTiming: z.ZodDefault<z.ZodObject<{
+            totalDurationMs: z.ZodOptional<z.ZodNumber>;
+            defaultEasing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
+                type: z.ZodLiteral<"preset">;
+                name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+            }, "strip", z.ZodTypeAny, {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            }, {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            }>, z.ZodObject<{
+                type: z.ZodLiteral<"bezier">;
+                p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+                p2: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+            }, "strip", z.ZodTypeAny, {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            }, {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            }>, z.ZodObject<{
+                type: z.ZodLiteral<"spring">;
+                stiffness: z.ZodNumber;
+                damping: z.ZodNumber;
+                mass: z.ZodDefault<z.ZodNumber>;
+            }, "strip", z.ZodTypeAny, {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass: number;
+            }, {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass?: number | undefined;
+            }>]>>;
+            bpm: z.ZodOptional<z.ZodNumber>;
+        }, "strip", z.ZodTypeAny, {
+            totalDurationMs?: number | undefined;
+            defaultEasing?: {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            } | {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass: number;
+            } | {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            } | undefined;
+            bpm?: number | undefined;
+        }, {
+            totalDurationMs?: number | undefined;
+            defaultEasing?: {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            } | {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass?: number | undefined;
+            } | {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            } | undefined;
+            bpm?: number | undefined;
+        }>>;
+        status: z.ZodDefault<z.ZodEnum<["draft", "published"]>>;
+        sourceTemplateId: z.ZodDefault<z.ZodNullable<z.ZodString>>;
+        createdAt: z.ZodString;
+        updatedAt: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        status: "draft" | "published";
+        name: string;
+        id: string;
+        createdAt: string;
+        updatedAt: string;
+        description: string;
+        scenes: {
+            name: string;
+            id: string;
+            durationMs?: number | undefined;
+        }[];
+        tokens: Record<string, string | number>;
+        globalTiming: {
+            totalDurationMs?: number | undefined;
+            defaultEasing?: {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            } | {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass: number;
+            } | {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            } | undefined;
+            bpm?: number | undefined;
+        };
+        sourceTemplateId: string | null;
+    }, {
+        name: string;
+        id: string;
+        createdAt: string;
+        updatedAt: string;
+        status?: "draft" | "published" | undefined;
+        description?: string | undefined;
+        scenes?: {
+            name: string;
+            id: string;
+            durationMs?: number | undefined;
+        }[] | undefined;
+        tokens?: Record<string, string | number> | undefined;
+        globalTiming?: {
+            totalDurationMs?: number | undefined;
+            defaultEasing?: {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            } | {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass?: number | undefined;
+            } | {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            } | undefined;
+            bpm?: number | undefined;
+        } | undefined;
+        sourceTemplateId?: string | null | undefined;
+    }>;
+    components: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        projectId: z.ZodString;
+        sceneId: z.ZodDefault<z.ZodNullable<z.ZodString>>;
+        name: z.ZodString;
+        selector: z.ZodDefault<z.ZodNullable<z.ZodString>>;
+        templateId: z.ZodDefault<z.ZodNullable<z.ZodString>>;
+        durationMs: z.ZodDefault<z.ZodNumber>;
+        delayMs: z.ZodDefault<z.ZodNumber>;
+        iterationCount: z.ZodDefault<z.ZodUnion<[z.ZodNumber, z.ZodLiteral<"infinite">]>>;
+        direction: z.ZodDefault<z.ZodEnum<["normal", "reverse", "alternate", "alternate-reverse"]>>;
+        fillMode: z.ZodDefault<z.ZodEnum<["none", "forwards", "backwards", "both"]>>;
+        playState: z.ZodDefault<z.ZodEnum<["running", "paused"]>>;
+        trigger: z.ZodDefault<z.ZodEnum<["onLoad", "onClick", "onHover", "onScroll", "afterDelay"]>>;
+        easing: z.ZodDefault<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
+            type: z.ZodLiteral<"preset">;
+            name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+        }, "strip", z.ZodTypeAny, {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        }, {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        }>, z.ZodObject<{
+            type: z.ZodLiteral<"bezier">;
+            p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+            p2: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+        }, "strip", z.ZodTypeAny, {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        }, {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        }>, z.ZodObject<{
+            type: z.ZodLiteral<"spring">;
+            stiffness: z.ZodNumber;
+            damping: z.ZodNumber;
+            mass: z.ZodDefault<z.ZodNumber>;
+        }, "strip", z.ZodTypeAny, {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass: number;
+        }, {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass?: number | undefined;
+        }>]>>;
+        keyframes: z.ZodDefault<z.ZodArray<z.ZodObject<{
+            offset: z.ZodNumber;
+            properties: z.ZodDefault<z.ZodRecord<z.ZodEnum<["translateX", "translateY", "translateZ", "scale", "scaleX", "scaleY", "rotate", "rotateX", "rotateY", "rotateZ", "skewX", "skewY", "opacity", "blur", "color", "backgroundColor", "width", "height", "borderRadius", "fontSize", "letterSpacing", "boxShadow", "clipPath"]>, z.ZodUnion<[z.ZodNumber, z.ZodString]>>>;
+            easing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
+                type: z.ZodLiteral<"preset">;
+                name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+            }, "strip", z.ZodTypeAny, {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            }, {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            }>, z.ZodObject<{
+                type: z.ZodLiteral<"bezier">;
+                p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+                p2: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+            }, "strip", z.ZodTypeAny, {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            }, {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            }>, z.ZodObject<{
+                type: z.ZodLiteral<"spring">;
+                stiffness: z.ZodNumber;
+                damping: z.ZodNumber;
+                mass: z.ZodDefault<z.ZodNumber>;
+            }, "strip", z.ZodTypeAny, {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass: number;
+            }, {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass?: number | undefined;
+            }>]>>;
+        }, "strip", z.ZodTypeAny, {
+            offset: number;
+            properties: Partial<Record<"translateX" | "translateY" | "translateZ" | "scale" | "scaleX" | "scaleY" | "rotate" | "rotateX" | "rotateY" | "rotateZ" | "skewX" | "skewY" | "opacity" | "blur" | "color" | "backgroundColor" | "width" | "height" | "borderRadius" | "fontSize" | "letterSpacing" | "boxShadow" | "clipPath", string | number>>;
+            easing?: {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            } | {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass: number;
+            } | {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            } | undefined;
+        }, {
+            offset: number;
+            properties?: Partial<Record<"translateX" | "translateY" | "translateZ" | "scale" | "scaleX" | "scaleY" | "rotate" | "rotateX" | "rotateY" | "rotateZ" | "skewX" | "skewY" | "opacity" | "blur" | "color" | "backgroundColor" | "width" | "height" | "borderRadius" | "fontSize" | "letterSpacing" | "boxShadow" | "clipPath", string | number>> | undefined;
+            easing?: {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            } | {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass?: number | undefined;
+            } | {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            } | undefined;
+        }>, "many">>;
+        style: z.ZodDefault<z.ZodDefault<z.ZodRecord<z.ZodString, z.ZodUnion<[z.ZodString, z.ZodNumber]>>>>;
+        orderIndex: z.ZodDefault<z.ZodNumber>;
+        parentId: z.ZodDefault<z.ZodNullable<z.ZodString>>;
+        createdAt: z.ZodString;
+        updatedAt: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        name: string;
+        easing: {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        } | {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass: number;
+        } | {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        };
+        id: string;
+        projectId: string;
+        sceneId: string | null;
+        selector: string | null;
+        templateId: string | null;
+        durationMs: number;
+        delayMs: number;
+        iterationCount: number | "infinite";
+        direction: "reverse" | "normal" | "alternate" | "alternate-reverse";
+        fillMode: "none" | "forwards" | "backwards" | "both";
+        playState: "running" | "paused";
+        trigger: "onLoad" | "onClick" | "onHover" | "onScroll" | "afterDelay";
+        keyframes: {
+            offset: number;
+            properties: Partial<Record<"translateX" | "translateY" | "translateZ" | "scale" | "scaleX" | "scaleY" | "rotate" | "rotateX" | "rotateY" | "rotateZ" | "skewX" | "skewY" | "opacity" | "blur" | "color" | "backgroundColor" | "width" | "height" | "borderRadius" | "fontSize" | "letterSpacing" | "boxShadow" | "clipPath", string | number>>;
+            easing?: {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            } | {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass: number;
+            } | {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            } | undefined;
+        }[];
+        style: Record<string, string | number>;
+        orderIndex: number;
+        parentId: string | null;
+        createdAt: string;
+        updatedAt: string;
+    }, {
+        name: string;
+        id: string;
+        projectId: string;
+        createdAt: string;
+        updatedAt: string;
+        easing?: {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        } | {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass?: number | undefined;
+        } | {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        } | undefined;
+        sceneId?: string | null | undefined;
+        selector?: string | null | undefined;
+        templateId?: string | null | undefined;
+        durationMs?: number | undefined;
+        delayMs?: number | undefined;
+        iterationCount?: number | "infinite" | undefined;
+        direction?: "reverse" | "normal" | "alternate" | "alternate-reverse" | undefined;
+        fillMode?: "none" | "forwards" | "backwards" | "both" | undefined;
+        playState?: "running" | "paused" | undefined;
+        trigger?: "onLoad" | "onClick" | "onHover" | "onScroll" | "afterDelay" | undefined;
+        keyframes?: {
+            offset: number;
+            properties?: Partial<Record<"translateX" | "translateY" | "translateZ" | "scale" | "scaleX" | "scaleY" | "rotate" | "rotateX" | "rotateY" | "rotateZ" | "skewX" | "skewY" | "opacity" | "blur" | "color" | "backgroundColor" | "width" | "height" | "borderRadius" | "fontSize" | "letterSpacing" | "boxShadow" | "clipPath", string | number>> | undefined;
+            easing?: {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            } | {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass?: number | undefined;
+            } | {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            } | undefined;
+        }[] | undefined;
+        style?: Record<string, string | number> | undefined;
+        orderIndex?: number | undefined;
+        parentId?: string | null | undefined;
+    }>, "many">;
+}, "strip", z.ZodTypeAny, {
+    project: {
+        status: "draft" | "published";
+        name: string;
+        id: string;
+        createdAt: string;
+        updatedAt: string;
+        description: string;
+        scenes: {
+            name: string;
+            id: string;
+            durationMs?: number | undefined;
+        }[];
+        tokens: Record<string, string | number>;
+        globalTiming: {
+            totalDurationMs?: number | undefined;
+            defaultEasing?: {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            } | {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass: number;
+            } | {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            } | undefined;
+            bpm?: number | undefined;
+        };
+        sourceTemplateId: string | null;
+    };
+    components: {
+        name: string;
+        easing: {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        } | {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass: number;
+        } | {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        };
+        id: string;
+        projectId: string;
+        sceneId: string | null;
+        selector: string | null;
+        templateId: string | null;
+        durationMs: number;
+        delayMs: number;
+        iterationCount: number | "infinite";
+        direction: "reverse" | "normal" | "alternate" | "alternate-reverse";
+        fillMode: "none" | "forwards" | "backwards" | "both";
+        playState: "running" | "paused";
+        trigger: "onLoad" | "onClick" | "onHover" | "onScroll" | "afterDelay";
+        keyframes: {
+            offset: number;
+            properties: Partial<Record<"translateX" | "translateY" | "translateZ" | "scale" | "scaleX" | "scaleY" | "rotate" | "rotateX" | "rotateY" | "rotateZ" | "skewX" | "skewY" | "opacity" | "blur" | "color" | "backgroundColor" | "width" | "height" | "borderRadius" | "fontSize" | "letterSpacing" | "boxShadow" | "clipPath", string | number>>;
+            easing?: {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            } | {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass: number;
+            } | {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            } | undefined;
+        }[];
+        style: Record<string, string | number>;
+        orderIndex: number;
+        parentId: string | null;
+        createdAt: string;
+        updatedAt: string;
+    }[];
+}, {
+    project: {
+        name: string;
+        id: string;
+        createdAt: string;
+        updatedAt: string;
+        status?: "draft" | "published" | undefined;
+        description?: string | undefined;
+        scenes?: {
+            name: string;
+            id: string;
+            durationMs?: number | undefined;
+        }[] | undefined;
+        tokens?: Record<string, string | number> | undefined;
+        globalTiming?: {
+            totalDurationMs?: number | undefined;
+            defaultEasing?: {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            } | {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass?: number | undefined;
+            } | {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            } | undefined;
+            bpm?: number | undefined;
+        } | undefined;
+        sourceTemplateId?: string | null | undefined;
+    };
+    components: {
+        name: string;
+        id: string;
+        projectId: string;
+        createdAt: string;
+        updatedAt: string;
+        easing?: {
+            type: "bezier";
+            p1: [number, number];
+            p2: [number, number];
+        } | {
+            type: "spring";
+            stiffness: number;
+            damping: number;
+            mass?: number | undefined;
+        } | {
+            type: "preset";
+            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        } | undefined;
+        sceneId?: string | null | undefined;
+        selector?: string | null | undefined;
+        templateId?: string | null | undefined;
+        durationMs?: number | undefined;
+        delayMs?: number | undefined;
+        iterationCount?: number | "infinite" | undefined;
+        direction?: "reverse" | "normal" | "alternate" | "alternate-reverse" | undefined;
+        fillMode?: "none" | "forwards" | "backwards" | "both" | undefined;
+        playState?: "running" | "paused" | undefined;
+        trigger?: "onLoad" | "onClick" | "onHover" | "onScroll" | "afterDelay" | undefined;
+        keyframes?: {
+            offset: number;
+            properties?: Partial<Record<"translateX" | "translateY" | "translateZ" | "scale" | "scaleX" | "scaleY" | "rotate" | "rotateX" | "rotateY" | "rotateZ" | "skewX" | "skewY" | "opacity" | "blur" | "color" | "backgroundColor" | "width" | "height" | "borderRadius" | "fontSize" | "letterSpacing" | "boxShadow" | "clipPath", string | number>> | undefined;
+            easing?: {
+                type: "bezier";
+                p1: [number, number];
+                p2: [number, number];
+            } | {
+                type: "spring";
+                stiffness: number;
+                damping: number;
+                mass?: number | undefined;
+            } | {
+                type: "preset";
+                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            } | undefined;
+        }[] | undefined;
+        style?: Record<string, string | number> | undefined;
+        orderIndex?: number | undefined;
+        parentId?: string | null | undefined;
+    }[];
+}>;
+export type MotionSpec = z.infer<typeof MotionSpecSchema>;
+export declare const DEFAULT_EASING: Easing;
+//# sourceMappingURL=spec.d.ts.map

@@ -1,0 +1,29 @@
+{
+  "name": "kratefastmotion",
+  "version": "0.1.0",
+  "private": true,
+  "description": "KrateFastMotion — the AI-native motion design platform.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "workspaces": [
+    "kratefastmotion",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,web -c blue,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "npm -w @kratefastmotion/server run dev",
+    "dev:web": "npm -w @kratefastmotion/web run dev",
+    "build": "npm -w @kratefastmotion/server run build && npm -w @kratefastmotion/web run build",
+    "typecheck": "npm -w @kratefastmotion/server run typecheck && npm -w @kratefastmotion/web run typecheck",
+    "start": "npm run build && npm -w @kratefastmotion/server run start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "esbuild@0.21.5": true
+  }
+}
