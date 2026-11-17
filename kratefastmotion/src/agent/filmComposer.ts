@@ -109,7 +109,7 @@ export function composeFilm(
   });
 
   logger.info(
-    `film composed project=${projectId} scenes=${scenes.length} components=${plan.drafts.length} duration=${plan.totalDurationMs}ms style=${plan.style}`,
+    `film composed project=${projectId} scenes=${scenes.length} components=${plan.drafts.length} duration=${plan.totalDurationMs}ms style=${plan.style} motion=${plan.motion}`,
   );
 
   return {
@@ -127,7 +127,8 @@ export function filmSummary(result: ComposeFilmResult): string {
   const secs = (result.totalDurationMs / 1000).toFixed(1).replace(/\.0$/, "");
   return (
     `Composed "${result.title}" — ${result.sceneCount} scenes, ` +
-    `${result.componentCount} animated layers, ${secs}s runtime (${result.plan.style} direction).`
+    `${result.componentCount} animated layers, ${secs}s runtime ` +
+    `(${result.plan.style} direction, ${result.plan.motion} motion).`
   );
 }
 
@@ -144,6 +145,24 @@ export function isFilmIntent(message: string): boolean {
   const m = message.trim();
   if (m.length < 4) return false;
   return CREATE_VERB.test(m) && VISUAL_NOUN.test(m);
+}
+
+/** Nouns that unambiguously name a whole motion *piece*, not a single effect. */
+const PIECE_NOUN =
+  /\b(film|motion graphic|motion design|logo reveal|wordmark reveal|intro|outro|title card|title sequence|opening sequence|promo|teaser|trailer|showreel|reel|ident|sting|montage|sizzle|bumper|opener|end card|story|sequence|multi-scene|multi scene)\b/i;
+
+/**
+ * Whether a message asks for a whole *piece* (film, promo, title sequence, …)
+ * rather than a single named effect. The rule-based structured planner uses
+ * this to stand down: without it, a brief like
+ * "create a 30 second tech **motion** film" greedily captures "30 second tech"
+ * as a layer name and adds a stray layer instead of composing a film.
+ */
+export function isPieceRequest(message: string): boolean {
+  if (!message) return false;
+  const m = message.trim();
+  if (m.length < 4) return false;
+  return CREATE_VERB.test(m) && PIECE_NOUN.test(m);
 }
 
 /** Whether the project currently has no rendered layers at all. */

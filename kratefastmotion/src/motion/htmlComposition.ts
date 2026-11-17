@@ -1,6 +1,7 @@
-import type { MotionSpec, MotionComponent, Easing } from "@kratefastmotion/shared";
+import type { MotionSpec, MotionComponent, Easing, TransformProperty } from "@kratefastmotion/shared";
 import { easingToCss } from "../shared/motion/easing.js";
 import { buildCompositionTree, flattenToTimeline, type CompositionResult } from "./compositionEngine.js";
+import { buildTransformString, formatValue } from "./units.js";
 
 /**
  * HTML composition generator with seek protocol.
@@ -73,7 +74,9 @@ export function generateHtmlComposition(
 
     const staticStyles = Object.entries(comp.style ?? {})
       .filter(([key]) => !key.startsWith("_"))
-      .map(([key, val]) => `${camelToKebab(key)}: ${val}`)
+      .map(([key, val]) =>
+        `${camelToKebab(key)}: ${typeof val === "number" ? formatValue(key as TransformProperty, val) : val}`,
+      )
       .join("; ");
 
     return {
@@ -98,21 +101,28 @@ export function generateHtmlComposition(
 
     const keyframes = comp.keyframes?.length > 0
       ? comp.keyframes.map((kf) => {
-          const props = Object.entries(kf.properties).map(([key, val]) => {
-            if (key === "translateX") return `transform: translateX(${val}px)`;
-            if (key === "translateY") return `transform: translateY(${val}px)`;
-            if (key === "translateZ") return `transform: translateZ(${val}px)`;
-            if (key === "scale") return `transform: scale(${val})`;
-            if (key === "scaleX") return `transform: scaleX(${val})`;
-            if (key === "scaleY") return `transform: scaleY(${val})`;
-            if (key === "rotate") return `transform: rotate(${val}deg)`;
-            if (key === "rotateX") return `transform: rotateX(${val}deg)`;
-            if (key === "rotateY") return `transform: rotateY(${val}deg)`;
-            if (key === "rotateZ") return `transform: rotateZ(${val}deg)`;
-            if (key === "skewX") return `transform: skewX(${val}deg)`;
-            if (key === "skewY") return `transform: skewY(${val}deg)`;
-            return `${camelToKebab(key)}: ${val}`;
-          });
+          const props: string[] = [];
+          // All transform-family properties must collapse into ONE `transform`
+          // declaration: emitting one `transform:` per property meant later
+          // entries overwrote earlier ones (and `translateX(0px)` is not even
+          // valid JS), so transforms were dropped from HTML-composition exports.
+          const transform = buildTransformString(
+            kf.properties as Partial<Record<TransformProperty, string | number>>,
+          );
+          if (transform) props.push(`transform: '${transform}'`);
+          for (const [key, val] of Object.entries(kf.properties)) {
+            if (isTransformProp(key)) continue;
+            if (key === "blur") {
+              props.push(`filter: 'blur(${val}px)'`);
+              continue;
+            }
+            const cssKey = camelToKebab(key);
+            const cssVal =
+              typeof val === "number"
+                ? String(val)
+                : `'${String(val).replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
+            props.push(`'${cssKey}': ${cssVal}`);
+          }
           return `{ offset: ${kf.offset}, ${props.join(", ")} }`;
         })
       : [
@@ -270,7 +280,9 @@ export function generateHtmlComposition(
     .map((comp) => {
       const meta = splitStyle(comp.style ?? {});
       const tag = meta.tag;
-      const content = meta.content || escapeHtml(comp.name);
+      // An explicit "" means "shape, no text"; only fall back to the layer name
+      // when `_content` was never declared.
+      const content = meta.hasContent ? escapeHtml(meta.content) : escapeHtml(comp.name);
       const mediaAttrs = meta.src ? ` src="${escapeAttr(meta.src)}"` : "";
       const posterAttr = meta.poster ? ` poster="${escapeAttr(meta.poster)}"` : "";
       const loopAttr = meta.loop ? " loop" : "";
@@ -504,6 +516,8 @@ function isTransformProp(prop: string): boolean {
 function splitStyle(style: Record<string, string | number>): {
   cssStyle: Record<string, string | number>;
   content: string;
+  /** True when the layer declares `_content` at all — including an explicit "". */
+  hasContent: boolean;
   tag: string;
   src: string | null;
   poster: string | null;
@@ -514,6 +528,7 @@ function splitStyle(style: Record<string, string | number>): {
 } {
   const cssStyle: Record<string, string | number> = {};
   let content = "";
+  let hasContent = false;
   let tag = "div";
   let src: string | null = null;
   let poster: string | null = null;
@@ -523,7 +538,7 @@ function splitStyle(style: Record<string, string | number>): {
   let controls = false;
 
   for (const [k, v] of Object.entries(style)) {
-    if (k === "_content") content = String(v);
+    if (k === "_content") { content = String(v); hasContent = true; }
     else if (k === "_tag") tag = String(v);
     else if (k === "_src") src = String(v);
     else if (k === "_poster") poster = String(v);
@@ -534,5 +549,5 @@ function splitStyle(style: Record<string, string | number>): {
     else cssStyle[k] = v;
   }
 
-  return { cssStyle, content, tag, src, poster, loop, muted, autoplay, controls };
+  return { cssStyle, content, hasContent, tag, src, poster, loop, muted, autoplay, controls };
 }

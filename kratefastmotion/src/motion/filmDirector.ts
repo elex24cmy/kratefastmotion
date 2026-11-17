@@ -1,5 +1,5 @@
 import type { Easing, Keyframe, Scene } from "@kratefastmotion/shared";
-import { easingBezier } from "@kratefastmotion/shared";
+import { easingBezier, easingPreset } from "@kratefastmotion/shared";
 import { createId } from "../utils/id.js";
 import { draft, type ComponentDraft } from "./templates/helper.js";
 
@@ -19,12 +19,22 @@ import { draft, type ComponentDraft } from "./templates/helper.js";
  *  - per-keyframe bezier easing: fast-out entrance, accelerated exit
  *  - one global background with a slow Ken-Burns drift, per-scene accent glow
  *  - a type scale with a clear hierarchy (eyebrow / headline / subhead / rule)
+ *  - a motion-intensity dimension (`calm | balanced | kinetic`) that scales beat
+ *    amplitudes and, when kinetic, adds a continuous-motion layer pack
  */
 
 export const STAGE_WIDTH = 1920;
 export const STAGE_HEIGHT = 1080;
 
 export type FilmStyle = "cinematic" | "tech" | "playful" | "calm" | "energetic" | "default";
+
+/**
+ * How much the film moves. Style changes the palette and the words; motion
+ * intensity changes the choreography — beat amplitudes plus a continuous-motion
+ * layer pack — so "make it kinetic" produces a visibly livelier film without
+ * altering the restrained default.
+ */
+export type FilmMotion = "calm" | "balanced" | "kinetic";
 
 export interface FilmPalette {
   bgFrom: string;
@@ -76,6 +86,7 @@ export interface FilmBrief {
   features: string[];
   stats: FilmStat[];
   style: FilmStyle;
+  motion: FilmMotion;
   sceneCount: number;
   sceneDurationMs: number;
   totalDurationMs: number;
@@ -94,6 +105,7 @@ export interface FilmPlan {
   totalDurationMs: number;
   palette: FilmPalette;
   style: FilmStyle;
+  motion: FilmMotion;
   title: string;
 }
 
@@ -199,6 +211,45 @@ function detectStyle(prompt: string): FilmStyle {
   return best;
 }
 
+const KINETIC_WORDS = [
+  "kinetic", "energetic", "energy", "dynamic", "fast", "punchy", "explosive", "hyper",
+  "intense", "extreme", "adrenaline", "racing", "wild", "frantic", "rapid", "snappy",
+  "action", "sport", "sports", "hype", "powerful", "relentless", "nonstop", "non-stop",
+  "lots of motion", "lots of movement", "high energy", "high-energy", "high impact",
+  "high-impact", "dramatic movement", "sweeping", "whiplash", "electric", "buzz",
+  "particle", "particles", "drifting", "drift", "glide", "swirl", "orbit", "streaming",
+  "pulse", "zippy", "aggressive",
+];
+
+const CALM_WORDS = [
+  "calm", "gentle", "soft", "slow", "serene", "zen", "subtle", "minimal", "quiet",
+  "breathe", "breathing", "soothing", "relax", "peaceful", "still", "meditative",
+  "understated", "restrained",
+];
+
+/**
+ * Score motion vocabulary to pick a choreography intensity. An explicit style
+ * nudges the result (an "energetic" brief is never calm) but never decides it,
+ * so "a calm product film that feels kinetic" still reads as kinetic.
+ */
+function detectMotion(prompt: string, style: FilmStyle): FilmMotion {
+  const p = ` ${prompt.toLowerCase()} `;
+  let kinetic = 0;
+  let calm = 0;
+  for (const w of KINETIC_WORDS) if (p.includes(w)) kinetic += w.length > 6 ? 2 : 1;
+  for (const w of CALM_WORDS) if (p.includes(w)) calm += w.length > 6 ? 2 : 1;
+  if (style === "energetic") kinetic += 3;
+  if (style === "calm") calm += 3;
+  if (kinetic > calm) return "kinetic";
+  if (calm > kinetic) return "calm";
+  return "balanced";
+}
+
+/** Multiplier applied to every beat amplitude. Balanced (1) is the default look. */
+function motionScale(m: FilmMotion): number {
+  return m === "kinetic" ? 3 : m === "calm" ? 0.55 : 1;
+}
+
 function detectDurationMs(prompt: string): number {
   const p = prompt.toLowerCase();
   const min = p.match(/(\d+(?:\.\d+)?)\s*(?:-|\s)?\s*(?:minute|minutes|min)\b/);
@@ -216,22 +267,22 @@ function deriveFeatures(prompt: string, style: FilmStyle): string[] {
       .split(/,|\band\b|\bplus\b|&|\//i)
       .map((s) => s.trim().replace(/^(a|an|the)\s+/i, ""))
       .filter((s) => s.length > 2 && s.split(/\s+/).length <= 6)
-      .slice(0, 3);
+      .slice(0, 6);
     if (parts.length >= 2) return parts.map((s) => titleCase(s));
   }
   switch (style) {
     case "cinematic":
-      return ["Crafted frame by frame", "Sound-led pacing", "Colour-graded finish"];
+      return ["Crafted frame by frame", "Sound-led pacing", "Colour-graded finish", "Anamorphic light", "Editorial type", "Deliberate cuts"];
     case "tech":
-      return ["Real-time performance", "Composable layers", "Pixel-accurate timing"];
+      return ["Real-time performance", "Composable layers", "Pixel-accurate timing", "Vector-crisp output", "Instant preview", "Deterministic renders"];
     case "playful":
-      return ["Bright, bouncy motion", "Friendly type", "Delightful details"];
+      return ["Bright, bouncy motion", "Friendly type", "Delightful details", "Snappy transitions", "Loose easing", "Colour pops"];
     case "calm":
-      return ["Gentle easing", "Open composition", "Breathing rhythm"];
+      return ["Gentle easing", "Open composition", "Breathing rhythm", "Muted palette", "Slow reveals", "Quiet pacing"];
     case "energetic":
-      return ["High-contrast cuts", "Punchy accents", "Relentless pace"];
+      return ["High-contrast cuts", "Punchy accents", "Relentless pace", "Hard beats", "Big scale moves", "Zero dead air"];
     default:
-      return ["Considered composition", "Clear hierarchy", "Confident timing"];
+      return ["Considered composition", "Clear hierarchy", "Confident timing", "Balanced rhythm", "Purposeful motion", "Restrained detail"];
   }
 }
 
@@ -277,6 +328,7 @@ export function analyzeBrief(prompt: string, fallbackName = "KrateFastMotion"): 
     features: deriveFeatures(prompt, style),
     stats: deriveStats(style),
     style,
+    motion: detectMotion(prompt, style),
     sceneCount,
     sceneDurationMs,
     totalDurationMs: sceneCount * sceneDurationMs,
@@ -380,18 +432,20 @@ function mk(
 }
 
 function backgroundLayer(ctx: Ctx, totalMs: number): ComponentDraft {
-  const { palette } = ctx;
+  const { palette, brief } = ctx;
+  const a = motionScale(brief.motion);
   return mk(ctx, "Backdrop", null, {
     durationMs: totalMs,
     delayMs: 0,
     easing: EASE_IN_OUT,
     keyframes: [
       { offset: 0, properties: { scale: 1 } as Keyframe["properties"], easing: EASE_IN_OUT },
-      { offset: 1, properties: { scale: 1.06 } as Keyframe["properties"] },
+      { offset: 1, properties: { scale: 1 + 0.06 * a } as Keyframe["properties"] },
     ],
     style: fullBleed({
       background: `linear-gradient(135deg, ${palette.bgFrom} 0%, ${palette.bgTo} 100%)`,
       transformOrigin: "center center",
+      _content: "",
       zIndex: "0",
     }),
   });
@@ -409,27 +463,30 @@ function vignetteLayer(ctx: Ctx, totalMs: number): ComponentDraft {
     style: fullBleed({
       background: "radial-gradient(120% 120% at 50% 45%, rgba(0,0,0,0) 42%, rgba(0,0,0,0.55) 100%)",
       pointerEvents: "none",
+      _content: "",
       zIndex: "1",
     }),
   });
 }
 
 function glowLayer(ctx: Ctx, sceneId: string, sceneStart: number, sceneDuration: number, topPct = 48, size = 1500): ComponentDraft {
-  const { palette } = ctx;
+  const { palette, brief } = ctx;
+  const a = motionScale(brief.motion);
   return mk(ctx, "Accent Glow", sceneId, {
     durationMs: sceneDuration,
     delayMs: sceneStart,
     easing: EASE_IN_OUT,
     keyframes: [
-      { offset: 0, properties: { opacity: 0, scale: 0.85 } as Keyframe["properties"], easing: EASE_OUT },
+      { offset: 0, properties: { opacity: 0, scale: 1 - 0.15 * a } as Keyframe["properties"], easing: EASE_OUT },
       { offset: 0.3, properties: { opacity: 0.5, scale: 1 } as Keyframe["properties"], easing: EASE_IN_OUT },
-      { offset: 0.8, properties: { opacity: 0.42, scale: 1.04 } as Keyframe["properties"], easing: EASE_IN },
-      { offset: 1, properties: { opacity: 0, scale: 1.08 } as Keyframe["properties"] },
+      { offset: 0.8, properties: { opacity: 0.42, scale: 1 + 0.04 * a } as Keyframe["properties"], easing: EASE_IN },
+      { offset: 1, properties: { opacity: 0, scale: 1 + 0.08 * a } as Keyframe["properties"] },
     ],
     style: circle(size, topPct, {
       background: `radial-gradient(circle, ${palette.glow}66 0%, ${palette.glow}22 38%, rgba(0,0,0,0) 72%)`,
       filter: "blur(40px)",
       pointerEvents: "none",
+      _content: "",
       zIndex: "2",
     }),
   });
@@ -437,6 +494,7 @@ function glowLayer(ctx: Ctx, sceneId: string, sceneStart: number, sceneDuration:
 
 function titleScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[] {
   const { palette, brief } = ctx;
+  const a = motionScale(brief.motion);
   const base = scene.durationMs;
   const out: ComponentDraft[] = [];
   out.push(glowLayer(ctx, scene.id, start, base, 46, 1500));
@@ -444,7 +502,7 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
   out.push(mk(ctx, "Eyebrow", scene.id, {
     durationMs: base - 200,
     delayMs: start + 200,
-    keyframes: beat({ translateY: 18 }, { translateY: 0 }),
+    keyframes: beat({ translateY: 18 * a }, { translateY: 0 }),
     style: centeredText("34%", {
       color: palette.accent,
       fontFamily: MONO_STACK,
@@ -453,13 +511,14 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
       letterSpacing: "0.42em",
       textTransform: "uppercase",
       margin: "0px",
+      _content: brief.tagline,
       zIndex: "10",
     }),
   }));
   out.push(mk(ctx, "Headline", scene.id, {
     durationMs: base - 500,
     delayMs: start + 420,
-    keyframes: beat({ translateY: 46, scale: 0.97 }, { translateY: 0, scale: 1 }, { translateY: -22 }),
+    keyframes: beat({ translateY: 46 * a, scale: 1 - 0.03 * a }, { translateY: 0, scale: 1 }, { translateY: -22 * a }),
     style: centeredText("41%", {
       color: palette.text,
       fontFamily: FONT_STACK,
@@ -469,6 +528,7 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
       letterSpacing: "-0.02em",
       margin: "0px",
       textShadow: "0 18px 60px rgba(0,0,0,0.45)",
+      _content: brief.title,
       zIndex: "10",
     }),
   }));
@@ -491,13 +551,14 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
       borderRadius: "3px",
       background: `linear-gradient(90deg, ${palette.accent}, ${palette.accent2})`,
       transformOrigin: "center center",
+      _content: "",
       zIndex: "10",
     },
   }));
   out.push(mk(ctx, "Subhead", scene.id, {
     durationMs: base - 900,
     delayMs: start + 900,
-    keyframes: beat({ translateY: 20 }, { translateY: 0 }),
+    keyframes: beat({ translateY: 20 * a }, { translateY: 0 }),
     style: centeredText("68%", {
       color: palette.subtext,
       fontFamily: FONT_STACK,
@@ -505,6 +566,7 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
       fontWeight: "400",
       letterSpacing: "0.01em",
       margin: "0px",
+      _content: brief.subtitle,
       zIndex: "10",
     }),
   }));
@@ -513,25 +575,31 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
 
 function featuresScene(ctx: Ctx, scene: FilmScene, start: number, variant: number): ComponentDraft[] {
   const { palette, brief } = ctx;
+  const a = motionScale(brief.motion);
   const base = scene.durationMs;
   const out: ComponentDraft[] = [];
   out.push(glowLayer(ctx, scene.id, start, base, 50, 1300));
 
-  const eyebrow = variant % 2 === 0 ? "What's inside" : "Why it works";
+  const eyebrow = variant % 2 === 0 ? "What's inside" : "More to explore";
   out.push(mk(ctx, "Section Label", scene.id, {
     durationMs: base - 200,
     delayMs: start + 180,
-    keyframes: beat({ translateY: 16 }, { translateY: 0 }),
-    style: { left: "14%", top: "26%", width: "72%", color: palette.accent, fontFamily: MONO_STACK, fontSize: "20px", fontWeight: "600", letterSpacing: "0.36em", textTransform: "uppercase", margin: "0px", zIndex: "10" },
+    keyframes: beat({ translateY: 16 * a }, { translateY: 0 }),
+    style: { left: "14%", top: "26%", width: "72%", color: palette.accent, fontFamily: MONO_STACK, fontSize: "20px", fontWeight: "600", letterSpacing: "0.36em", textTransform: "uppercase", margin: "0px", _content: eyebrow, zIndex: "10" },
   }));
 
-  const rows = brief.features.slice(0, 3);
+  // Successive feature scenes show successive thirds of the brief's features,
+  // so a film with two feature scenes never repeats the same three lines.
+  const chunk = variant * 3;
+  const rows = brief.features.slice(chunk, chunk + 3).length
+    ? brief.features.slice(chunk, chunk + 3)
+    : brief.features.slice(0, 3);
   rows.forEach((label, i) => {
     const top = 40 + i * 13;
     out.push(mk(ctx, `Feature Bullet ${i + 1}`, scene.id, {
       durationMs: base - 500 - i * 120,
       delayMs: start + 420 + i * 180,
-      keyframes: beat({ translateX: -26 }, { translateX: 0 }),
+      keyframes: beat({ translateX: -26 * a }, { translateX: 0 }),
       style: {
         left: "14%",
         top: `${top}%`,
@@ -540,13 +608,14 @@ function featuresScene(ctx: Ctx, scene: FilmScene, start: number, variant: numbe
         borderRadius: "4px",
         background: i % 2 === 0 ? palette.accent : palette.accent2,
         boxShadow: `0 0 22px ${(i % 2 === 0 ? palette.accent : palette.accent2)}99`,
+        _content: "",
         zIndex: "10",
       },
     }));
     out.push(mk(ctx, `Feature ${i + 1}`, scene.id, {
       durationMs: base - 500 - i * 120,
       delayMs: start + 470 + i * 180,
-      keyframes: beat({ translateX: 24 }, { translateX: 0 }),
+      keyframes: beat({ translateX: 24 * a }, { translateX: 0 }),
       style: {
         left: "17.5%",
         top: `${top - 1.2}%`,
@@ -557,6 +626,7 @@ function featuresScene(ctx: Ctx, scene: FilmScene, start: number, variant: numbe
         fontWeight: "600",
         letterSpacing: "-0.01em",
         margin: "0px",
+        _content: label,
         zIndex: "10",
       },
     }));
@@ -564,18 +634,22 @@ function featuresScene(ctx: Ctx, scene: FilmScene, start: number, variant: numbe
   return out;
 }
 
-function statementScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[] {
+function statementScene(ctx: Ctx, scene: FilmScene, start: number, variant: number): ComponentDraft[] {
   const { palette, brief } = ctx;
+  const a = motionScale(brief.motion);
   const base = scene.durationMs;
   const out: ComponentDraft[] = [];
   out.push(glowLayer(ctx, scene.id, start, base, 48, 1700));
-  const line = brief.stats[0] ? brief.stats[0].value : "—";
-  const label = brief.stats[0] ? brief.stats[0].label : "";
+  // Each statement scene features a different headline stat so repeated
+  // statement beats don't show the same number twice.
+  const stat = brief.stats[variant % brief.stats.length];
+  const line = stat ? stat.value : "—";
+  const label = stat ? stat.label : "";
 
   out.push(mk(ctx, "Statement Figure", scene.id, {
     durationMs: base - 500,
     delayMs: start + 360,
-    keyframes: beat({ scale: 0.92, translateY: 30 }, { scale: 1, translateY: 0 }),
+    keyframes: beat({ scale: 1 - 0.08 * a, translateY: 30 * a }, { scale: 1, translateY: 0 }),
     style: centeredText("36%", {
       color: palette.text,
       fontFamily: FONT_STACK,
@@ -588,13 +662,14 @@ function statementScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDra
       WebkitBackgroundClip: "text",
       backgroundClip: "text",
       WebkitTextFillColor: "transparent",
+      _content: line,
       zIndex: "10",
     }),
   }));
   out.push(mk(ctx, "Statement Label", scene.id, {
     durationMs: base - 700,
     delayMs: start + 640,
-    keyframes: beat({ translateY: 18 }, { translateY: 0 }),
+    keyframes: beat({ translateY: 18 * a }, { translateY: 0 }),
     style: centeredText("64%", {
       color: palette.subtext,
       fontFamily: MONO_STACK,
@@ -603,16 +678,16 @@ function statementScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDra
       letterSpacing: "0.34em",
       textTransform: "uppercase",
       margin: "0px",
+      _content: label,
       zIndex: "10",
     }),
   }));
-  void line;
-  void label;
   return out;
 }
 
 function outroScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[] {
   const { palette, brief } = ctx;
+  const a = motionScale(brief.motion);
   const base = scene.durationMs;
   const out: ComponentDraft[] = [];
   out.push(glowLayer(ctx, scene.id, start, base, 46, 1200));
@@ -621,7 +696,7 @@ function outroScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
     durationMs: base - 500,
     delayMs: start + 300,
     easing: EASE_BACK,
-    keyframes: beatHold({ scale: 0.4, rotate: -12 }, { scale: 1, rotate: 0 }),
+    keyframes: beatHold({ scale: 1 - 0.6 * a, rotate: -12 * a }, { scale: 1, rotate: 0 }),
     style: {
       left: "50%",
       top: "36%",
@@ -646,7 +721,7 @@ function outroScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
   out.push(mk(ctx, "Wordmark", scene.id, {
     durationMs: base - 600,
     delayMs: start + 500,
-    keyframes: beatHold({ translateY: 24 }, { translateY: 0 }),
+    keyframes: beatHold({ translateY: 24 * a }, { translateY: 0 }),
     style: centeredText("52%", {
       color: palette.text,
       fontFamily: FONT_STACK,
@@ -654,13 +729,14 @@ function outroScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
       fontWeight: "800",
       letterSpacing: "-0.01em",
       margin: "0px",
+      _content: brief.tagline,
       zIndex: "10",
     }),
   }));
   out.push(mk(ctx, "Tagline", scene.id, {
     durationMs: base - 800,
     delayMs: start + 700,
-    keyframes: beatHold({ translateY: 18 }, { translateY: 0 }),
+    keyframes: beatHold({ translateY: 18 * a }, { translateY: 0 }),
     style: centeredText("63%", {
       color: palette.subtext,
       fontFamily: MONO_STACK,
@@ -669,6 +745,7 @@ function outroScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
       letterSpacing: "0.4em",
       textTransform: "uppercase",
       margin: "0px",
+      _content: brief.subtitle,
       zIndex: "10",
     }),
   }));
@@ -690,10 +767,140 @@ function outroScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
       borderRadius: "3px",
       background: palette.accent,
       transformOrigin: "center center",
+      _content: "",
       zIndex: "10",
     },
   }));
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Kinetic motion pack
+// ---------------------------------------------------------------------------
+//
+// Kinetic films get a layer of continuous motion under the scene beats: soft
+// shapes that drift across the whole runtime, a field of particles streaming
+// through every frame, and light sweeps cutting across the stage. These layers
+// are global (no sceneId) and loop, so no frame of a kinetic film is ever
+// static — even between beats. Balanced and calm films never get them.
+
+/** Deterministic pseudo-random in [0,1) so the same brief always composes the same film. */
+function rand(seed: number): number {
+  const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+/** Large soft shapes that cross the stage once over the whole film. */
+function driftField(ctx: Ctx, totalMs: number): ComponentDraft[] {
+  const { palette } = ctx;
+  const specs = [
+    { left: "16%", top: "28%", size: 900, dx: 300, dy: -170, from: palette.accent, to: palette.accent2, op: 0.2 },
+    { left: "84%", top: "72%", size: 1100, dx: -360, dy: 210, from: palette.accent2, to: palette.glow, op: 0.17 },
+    { left: "52%", top: "46%", size: 1400, dx: -220, dy: -250, from: palette.glow, to: palette.accent, op: 0.12 },
+  ];
+  return specs.map((s, i) =>
+    mk(ctx, `Drift ${i + 1}`, null, {
+      durationMs: totalMs,
+      delayMs: 0,
+      easing: EASE_IN_OUT,
+      keyframes: [
+        { offset: 0, properties: { translateX: -s.dx, translateY: -s.dy, scale: 0.85, opacity: 0 } as Keyframe["properties"], easing: EASE_IN_OUT },
+        { offset: 0.18, properties: { opacity: s.op } as Keyframe["properties"], easing: EASE_IN_OUT },
+        { offset: 0.82, properties: { opacity: s.op } as Keyframe["properties"], easing: EASE_IN_OUT },
+        { offset: 1, properties: { translateX: s.dx, translateY: s.dy, scale: 1.2, opacity: 0 } as Keyframe["properties"] },
+      ],
+      style: circle(s.size, 50, {
+        left: s.left,
+        top: s.top,
+        background: `radial-gradient(circle, ${s.from}66 0%, ${s.to}22 46%, rgba(0,0,0,0) 74%)`,
+        pointerEvents: "none",
+        _content: "",
+        zIndex: "1",
+      }),
+    }),
+  );
+}
+
+/** A field of dots streaming bottom-to-top on staggered infinite loops. */
+function particleField(ctx: Ctx): ComponentDraft[] {
+  const { palette } = ctx;
+  const colors = [palette.accent, palette.accent2, palette.text, palette.glow];
+  const count = 12;
+  const out: ComponentDraft[] = [];
+  for (let i = 0; i < count; i++) {
+    const r1 = rand(i + 1);
+    const r2 = rand(i + 41.7);
+    const r3 = rand(i + 97.3);
+    const size = 8 + Math.round(r1 * 16);
+    const left = 4 + r2 * 90;
+    const dur = 2400 + Math.round(r3 * 2600);
+    const delay = Math.round(r1 * dur);
+    const dx = Math.round((r2 - 0.5) * 260);
+    const rot = Math.round((r3 - 0.5) * 420);
+    out.push(
+      mk(ctx, `Particle ${i + 1}`, null, {
+        durationMs: dur,
+        delayMs: delay,
+        iterationCount: "infinite",
+        easing: easingPreset("linear"),
+        keyframes: [
+          { offset: 0, properties: { opacity: 0, translateY: 640, translateX: 0, scale: 0.5, rotate: 0 } as Keyframe["properties"] },
+          { offset: 0.18, properties: { opacity: 0.85, scale: 1 } as Keyframe["properties"] },
+          { offset: 0.82, properties: { opacity: 0.85, scale: 1 } as Keyframe["properties"] },
+          { offset: 1, properties: { opacity: 0, translateY: -640, translateX: dx, scale: 0.7, rotate: rot } as Keyframe["properties"] },
+        ],
+        style: {
+          left: `${left}%`,
+          top: "50%",
+          width: `${size}px`,
+          height: `${size}px`,
+          marginLeft: `${-size / 2}px`,
+          marginTop: `${-size / 2}px`,
+          borderRadius: i % 3 === 0 ? "50%" : "3px",
+          background: colors[i % colors.length],
+          pointerEvents: "none",
+          _content: "",
+          zIndex: "3",
+        },
+      }),
+    );
+  }
+  return out;
+}
+
+/** Thin light streaks sweeping across the stage on infinite loops. */
+function sweepField(ctx: Ctx): ComponentDraft[] {
+  const { palette } = ctx;
+  const specs = [
+    { top: "30%", rotate: -16, dur: 3600, delay: 0, from: palette.accent },
+    { top: "68%", rotate: 14, dur: 4400, delay: 900, from: palette.accent2 },
+  ];
+  return specs.map((s, i) =>
+    mk(ctx, `Sweep ${i + 1}`, null, {
+      durationMs: s.dur,
+      delayMs: s.delay,
+      iterationCount: "infinite",
+      easing: easingPreset("linear"),
+      keyframes: [
+        { offset: 0, properties: { opacity: 0, translateX: -900, rotate: s.rotate } as Keyframe["properties"] },
+        { offset: 0.15, properties: { opacity: 0.7, rotate: s.rotate } as Keyframe["properties"] },
+        { offset: 0.85, properties: { opacity: 0.7, rotate: s.rotate } as Keyframe["properties"] },
+        { offset: 1, properties: { opacity: 0, translateX: 900, rotate: s.rotate } as Keyframe["properties"] },
+      ],
+      style: {
+        left: "50%",
+        top: s.top,
+        width: "70%",
+        height: "3px",
+        marginLeft: "-35%",
+        borderRadius: "2px",
+        background: `linear-gradient(90deg, rgba(0,0,0,0), ${s.from}, rgba(0,0,0,0))`,
+        pointerEvents: "none",
+        _content: "",
+        zIndex: "4",
+      },
+    }),
+  );
 }
 
 /** Choose the scene kind sequence for a given scene count. */
@@ -726,12 +933,20 @@ export function buildFilm(brief: FilmBrief): FilmPlan {
   drafts.push(backgroundLayer(ctx, brief.totalDurationMs));
   drafts.push(vignetteLayer(ctx, brief.totalDurationMs));
 
+  // Kinetic films carry a continuous-motion pack beneath the scene beats.
+  if (brief.motion === "kinetic") {
+    drafts.push(...driftField(ctx, brief.totalDurationMs));
+    drafts.push(...particleField(ctx));
+    drafts.push(...sweepField(ctx));
+  }
+
   let start = 0;
   let featureVariant = 0;
+  let statementVariant = 0;
   scenes.forEach((scene) => {
     if (scene.kind === "title") drafts.push(...titleScene(ctx, scene, start));
     else if (scene.kind === "features") drafts.push(...featuresScene(ctx, scene, start, featureVariant++));
-    else if (scene.kind === "statement") drafts.push(...statementScene(ctx, scene, start));
+    else if (scene.kind === "statement") drafts.push(...statementScene(ctx, scene, start, statementVariant++));
     else drafts.push(...outroScene(ctx, scene, start));
     start += scene.durationMs;
   });
@@ -742,6 +957,7 @@ export function buildFilm(brief: FilmBrief): FilmPlan {
     totalDurationMs: brief.totalDurationMs,
     palette,
     style: brief.style,
+    motion: brief.motion,
     title: brief.title,
   };
 }

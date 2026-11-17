@@ -8,6 +8,7 @@
 
 import type { MotionSpec, ToolName } from "@kratefastmotion/shared";
 import { classifyIntent, resolveTemplateId, resolvePresetName } from "./intents.js";
+import { isPieceRequest } from "./filmComposer.js";
 
 export type ActionType =
   | "create_layer"
@@ -112,8 +113,9 @@ export function composeStructuredPlan(userMessage: string, spec: MotionSpec): St
   }
 
   // 1b. Create / template (skipped when the apply-to-component rule above
-  //     already resolved a template).
-  if (!applyEffectHandled) {
+  //     already resolved a template, or when the message asks for a whole
+  //     motion piece — that is composed by the film pipeline, not a stray layer).
+  if (!applyEffectHandled && !isPieceRequest(userMessage)) {
     const createM = userMessage.match(
       /\b(?:create|make|build|generate|design|add)\s+(?:a\s+|an\s+|the\s+)?([\w][\w\s-]*?)\s+(?:animation|effect|motion|transition|layer|element|component)\b/i,
     );

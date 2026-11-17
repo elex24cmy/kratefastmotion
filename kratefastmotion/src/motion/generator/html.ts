@@ -14,6 +14,8 @@ const STAGE_HEIGHT = 1080;
 function splitStyle(style: Record<string, string | number>): {
   cssStyle: Record<string, string | number>;
   content: string;
+  /** True when the layer declares `_content` at all — including an explicit "". */
+  hasContent: boolean;
   tag: string;
   src: string | null;
   poster: string | null;
@@ -24,6 +26,7 @@ function splitStyle(style: Record<string, string | number>): {
 } {
   const cssStyle: Record<string, string | number> = {};
   let content = "";
+  let hasContent = false;
   let tag = "div";
   let src: string | null = null;
   let poster: string | null = null;
@@ -32,7 +35,7 @@ function splitStyle(style: Record<string, string | number>): {
   let autoplay = true;
   let controls = false;
   for (const [k, v] of Object.entries(style)) {
-    if (k === "_content") content = String(v);
+    if (k === "_content") { content = String(v); hasContent = true; }
     else if (k === "_tag") tag = String(v);
     else if (k === "_src") src = String(v);
     else if (k === "_poster") poster = String(v);
@@ -43,7 +46,7 @@ function splitStyle(style: Record<string, string | number>): {
     else if (RESERVED_STYLE_KEYS.has(k)) continue;
     else cssStyle[k] = v;
   }
-  return { cssStyle, content, tag, src, poster, loop, muted, autoplay, controls };
+  return { cssStyle, content, hasContent, tag, src, poster, loop, muted, autoplay, controls };
 }
 
 interface WithMeta {
@@ -97,7 +100,10 @@ export function generateStandaloneHtml(spec: MotionSpec): string {
       if (isMedia) {
         return `    <${meta.tag}${cls}${attrs} data-om-name="${escapeHtml(c.name)}"></${meta.tag}>`;
       }
-      const content = meta.content
+      // Only fall back to the layer name when the layer never declared
+      // `_content`. An explicit "" means "this is a shape, draw no text" —
+      // matching the editor canvas, which renders the layer's content as-is.
+      const content = meta.hasContent
         ? escapeHtml(meta.content)
         : escapeHtml(c.name);
       return `    <${meta.tag}${cls} data-om-name="${escapeHtml(c.name)}">${content}</${meta.tag}>`;

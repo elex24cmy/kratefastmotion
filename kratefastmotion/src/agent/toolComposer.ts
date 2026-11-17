@@ -28,6 +28,8 @@ interface MatchContext {
   projectId: string;
   /** Whether the project already has components. */
   hasComponents: boolean;
+  /** The user's message with its original casing (patterns match on a lowercased copy). */
+  originalMessage: string;
 }
 
 /** Normalize a message for matching: lowercase, collapse whitespace. */
@@ -86,7 +88,7 @@ const PATTERNS: CompositionPattern[] = [
       return [
         {
           tool: "generate_film",
-          args: { projectId: ctx.projectId, prompt: msg },
+          args: { projectId: ctx.projectId, prompt: ctx.originalMessage },
           reason:
             "Compose an art-directed motion film (scenes, typography, lighting, staggered entrances) from the brief",
         },
@@ -2690,7 +2692,7 @@ export function composeTools(
   hasComponents: boolean,
 ): CompositionResult {
   const normalized = norm(message);
-  const ctx: MatchContext = { projectId, hasComponents };
+  const ctx: MatchContext = { projectId, hasComponents, originalMessage: message };
 
   // Collaboration requests are checked first so that keywords like
   // "spring", "physics", "mobile" inside a collaboration request don't

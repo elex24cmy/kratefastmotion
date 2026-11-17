@@ -1,4 +1,4 @@
-import type { MotionComponent } from "@kratefastmotion/shared";
+import type { KeyValue, MotionComponent, TransformProperty } from "@kratefastmotion/shared";
 import { easingToCss } from "@kratefastmotion/shared";
 import { buildTransformString, formatValue, isTransformProperty } from "../units.js";
 
@@ -39,13 +39,66 @@ export function camelToKebab(s: string): string {
   return s.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
 }
 
+type Keyframe = MotionComponent["keyframes"][number];
+
+/**
+ * A keyframe that declares *some* transform properties but not others replaces
+ * the whole `transform` value, silently resetting the omitted ones to identity.
+ *
+ * That is how a "travel + hold + fade" loop authored as
+ * `0% {translateY(640) scale(.5)} / 18% {scale(1)} / 82% {scale(1)} / 100% {translateY(-640)}`
+ * ended up frozen for the middle 64% of every cycle: the 18%/82% frames only
+ * restated `scale`, so the travel was replaced by `transform: scale(1)`.
+ *
+ * For every keyframe that declares at least one transform property, fill in the
+ * transform properties it omits by interpolating the neighbouring keyframes that
+ * do declare them. Keyframes that declare no transform at all are left untouched
+ * so CSS still interpolates them between the surrounding transform keyframes.
+ */
+function fillPartialTransforms(frames: Keyframe[]): Keyframe[] {
+  const used = new Set<TransformProperty>();
+  for (const f of frames) {
+    for (const key of Object.keys(f.properties)) {
+      if (isTransformProperty(key)) used.add(key as TransformProperty);
+    }
+  }
+  if (used.size === 0) return frames;
+
+  const sorted = [...frames].sort((a, b) => a.offset - b.offset);
+  const valueOf = (f: Keyframe, p: TransformProperty): KeyValue | undefined =>
+    (f.properties as Record<string, KeyValue>)[p];
+
+  return sorted.map((frame) => {
+    const declaresTransform = Object.keys(frame.properties).some((k) => isTransformProperty(k));
+    if (!declaresTransform) return frame;
+
+    const properties: Record<string, KeyValue> = { ...(frame.properties as Record<string, KeyValue>) };
+    for (const p of used) {
+      if (properties[p] !== undefined) continue;
+      const before = [...sorted].reverse().find((g) => g.offset <= frame.offset && valueOf(g, p) !== undefined);
+      const after = sorted.find((g) => g.offset >= frame.offset && valueOf(g, p) !== undefined);
+      const bv = before && valueOf(before, p);
+      const av = after && valueOf(after, p);
+      if (typeof bv === "number" && typeof av === "number" && before && after && after.offset > before.offset) {
+        const t = (frame.offset - before.offset) / (after.offset - before.offset);
+        properties[p] = bv + (av - bv) * t;
+      } else if (bv !== undefined) {
+        properties[p] = bv;
+      } else if (av !== undefined) {
+        properties[p] = av;
+      }
+    }
+    return { ...frame, properties } as Keyframe;
+  });
+}
+
 /** Generate @keyframes + the element rule for a single component. */
 export function generateComponentCss(component: MotionComponent): GeneratedCss {
   const animationName = `om-anim-${component.id.replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const selector = component.selector || `.om-c-${component.id}`;
 
   // ---- @keyframes ----
-  const frames = [...component.keyframes].sort((a, b) => a.offset - b.offset);
+  const frames = fillPartialTransforms(component.keyframes);
   const kfLines: string[] = [];
   for (const frame of frames) {
     const decls: string[] = [];

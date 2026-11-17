@@ -87,6 +87,8 @@ const POSITION_KEYS = ["left", "top", "right", "bottom", "inset"] as const;
 interface SplitStyle {
   css: Record<string, string | number>;
   content: string;
+  /** True when the layer declares `_content` at all — including an explicit "". */
+  hasContent: boolean;
   tag: string;
   src: string | null;
   poster: string | null;
@@ -99,6 +101,7 @@ interface SplitStyle {
 function splitStyle(style: Record<string, string | number>): SplitStyle {
   const css: Record<string, string | number> = {};
   let content = "";
+  let hasContent = false;
   let tag = "div";
   let src: string | null = null;
   let poster: string | null = null;
@@ -107,7 +110,7 @@ function splitStyle(style: Record<string, string | number>): SplitStyle {
   let autoplay = true;
   let controls = false;
   for (const [k, v] of Object.entries(style)) {
-    if (k === "_content") content = String(v);
+    if (k === "_content") { content = String(v); hasContent = true; }
     else if (k === "_tag") tag = String(v);
     else if (k === "_src") src = String(v);
     else if (k === "_poster") poster = String(v);
@@ -118,7 +121,7 @@ function splitStyle(style: Record<string, string | number>): SplitStyle {
     else if (isPrivateToken(k)) continue;
     else css[k] = v;
   }
-  return { css, content, tag, src, poster, loop, muted, autoplay, controls };
+  return { css, content, hasContent, tag, src, poster, loop, muted, autoplay, controls };
 }
 
 function camelToKebab(s: string): string {
@@ -156,6 +159,57 @@ function buildTransformString(props: Partial<Record<TransformProperty, KeyValue>
 
 function percent(offset: number): string {
   return `${(offset * 100).toFixed(2).replace(/\.?0+$/, "")}%`;
+}
+
+type Keyframe = MotionComponent["keyframes"][number];
+
+/**
+ * A keyframe that declares *some* transform properties but not others replaces
+ * the whole `transform` value, silently resetting the omitted ones to identity —
+ * so a "travel + hold + fade" loop whose middle frames only restate `scale`
+ * would freeze the shape instead of moving it. Fill the omitted transform
+ * properties by interpolating the neighbouring keyframes that do declare them.
+ * Keyframes that declare no transform at all are left untouched, so CSS still
+ * interpolates them between the surrounding transform keyframes.
+ *
+ * Mirrors `fillPartialTransforms` in the server's generator/css.ts so the editor
+ * canvas, the standalone preview and the export all agree.
+ */
+function fillPartialTransforms(frames: Keyframe[]): Keyframe[] {
+  const used = new Set<TransformProperty>();
+  for (const f of frames) {
+    for (const key of Object.keys(f.properties)) {
+      if (isTransformProperty(key)) used.add(key as TransformProperty);
+    }
+  }
+  if (used.size === 0) return frames;
+
+  const sorted = [...frames].sort((a, b) => a.offset - b.offset);
+  const valueOf = (f: Keyframe, p: TransformProperty): KeyValue | undefined =>
+    (f.properties as Record<string, KeyValue>)[p];
+
+  return sorted.map((frame) => {
+    const declaresTransform = Object.keys(frame.properties).some((k) => isTransformProperty(k));
+    if (!declaresTransform) return frame;
+
+    const properties: Record<string, KeyValue> = { ...(frame.properties as Record<string, KeyValue>) };
+    for (const p of used) {
+      if (properties[p] !== undefined) continue;
+      const before = [...sorted].reverse().find((g) => g.offset <= frame.offset && valueOf(g, p) !== undefined);
+      const after = sorted.find((g) => g.offset >= frame.offset && valueOf(g, p) !== undefined);
+      const bv = before && valueOf(before, p);
+      const av = after && valueOf(after, p);
+      if (typeof bv === "number" && typeof av === "number" && before && after && after.offset > before.offset) {
+        const t = (frame.offset - before.offset) / (after.offset - before.offset);
+        properties[p] = bv + (av - bv) * t;
+      } else if (bv !== undefined) {
+        properties[p] = bv;
+      } else if (av !== undefined) {
+        properties[p] = av;
+      }
+    }
+    return { ...frame, properties } as Keyframe;
+  });
 }
 
 function styleToCss(style: Record<string, string | number>): string {
@@ -230,7 +284,7 @@ export function renderSpec(components: MotionComponent[], speed = 1): RenderedSp
     }
     const animationName = `om-anim-${component.id.replace(/[^a-zA-Z0-9_-]/g, "")}`;
     const className = `om-c-${component.id}`;
-    const { css: cssStyle, content, tag, src, poster, loop, muted, autoplay, controls } = splitStyle(rawStyle);
+    const { css: cssStyle, content, hasContent, tag, src, poster, loop, muted, autoplay, controls } = splitStyle(rawStyle);
 
     // Stage-mode safety net: a layer that carries an explicit offset but no
     // `position` would be laid out in normal flow and pushed below the
@@ -250,7 +304,7 @@ export function renderSpec(components: MotionComponent[], speed = 1): RenderedSp
     const motionBlurRadius = motionBlurEnabled ? (mbIntensity * mbShutter) / 180 : 0;
 
     // @keyframes
-    const frames = [...component.keyframes].sort((a, b) => a.offset - b.offset);
+    const frames = fillPartialTransforms(component.keyframes);
     const kfLines: string[] = [];
     for (const frame of frames) {
       const decls: string[] = [];
@@ -490,7 +544,7 @@ export function renderSpec(components: MotionComponent[], speed = 1): RenderedSp
     nodes.push({
       tag,
       className,
-      content: content || component.name,
+      content: hasContent ? content : component.name,
       name: component.name,
       componentId: component.id,
       src,

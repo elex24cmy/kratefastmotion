@@ -40,6 +40,7 @@ export const filmExecutors: Partial<Record<ToolName, Executor>> = {
         components: result.componentCount,
         totalDurationMs: result.totalDurationMs,
         style: result.plan.style,
+        motion: result.plan.motion,
         palette: result.plan.palette,
       },
       editorCommands: [{ command: "refresh_canvas", args: {} }],
