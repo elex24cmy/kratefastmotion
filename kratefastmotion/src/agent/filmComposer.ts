@@ -3,6 +3,7 @@ import { createId, now } from "../utils/id.js";
 import { createComponent, deleteComponent, listComponents } from "../db/repositories/components.js";
 import { getProject, updateProject } from "../db/repositories/projects.js";
 import { analyzeBrief, buildFilm, STAGE_HEIGHT, STAGE_WIDTH, type FilmAssets, type FilmPlan } from "../motion/filmDirector.js";
+import { buildSocialEdit, type SocialEditOptions, type SocialEditResult } from "../motion/socialEdit.js";
 import { logger } from "../utils/logger.js";
 
 /**
@@ -54,7 +55,6 @@ export function composeFilm(
   const project = getProject(projectId);
   if (!project) throw new Error(`project not found: ${projectId}`);
 
-  const replace = opts.replace ?? true;
   const brand =
     opts.brand ??
     (project.name && project.name !== "Untitled motion" ? project.name : "KrateFastMotion");
@@ -66,6 +66,23 @@ export function composeFilm(
   }
 
   const plan = buildFilm(brief, opts.assets);
+  return persistPlan(projectId, plan, { replace: opts.replace });
+}
+
+/**
+ * Persist a composed plan — scenes, components, artboard and art direction —
+ * into a project. Shared by the film director and the social-edit composer so
+ * both produce an identically-shaped project.
+ */
+export function persistPlan(
+  projectId: string,
+  plan: FilmPlan,
+  opts: { replace?: boolean; extraTokens?: Record<string, string | number> } = {},
+): ComposeFilmResult {
+  const project = getProject(projectId);
+  if (!project) throw new Error(`project not found: ${projectId}`);
+
+  const replace = opts.replace ?? true;
   const ts = now();
 
   if (replace) {
@@ -92,6 +109,10 @@ export function composeFilm(
   const nextName =
     replace && (!project.name || project.name === "Untitled motion") ? plan.title : project.name;
 
+  // The artboard is the single source of truth for the design stage. A social
+  // edit composes against a portrait frame; the film director against 1920x1080.
+  const artboard = plan.artboard ?? { width: STAGE_WIDTH, height: STAGE_HEIGHT };
+
   updateProject(projectId, {
     name: nextName,
     scenes: replace ? scenes : [...project.scenes, ...scenes],
@@ -106,17 +127,18 @@ export function composeFilm(
       // beat amplitude instead of inventing its own colours.
       __filmStyle: plan.style,
       __filmMotion: plan.motion,
-      // The film is art-directed on a 1920x1080 stage. Publishing the artboard
-      // size keeps the editor canvas, the preview and the export in the same
-      // coordinate space, so px-sized layers (glows, headline type) scale
-      // correctly instead of being laid out against a 640x360 default.
-      artboardWidth: STAGE_WIDTH,
-      artboardHeight: STAGE_HEIGHT,
+      // Publishing the artboard size keeps the editor canvas, the preview and
+      // the export in the same coordinate space, so px-sized layers (glows,
+      // headline type) scale correctly instead of being laid out against a
+      // 640x360 default.
+      artboardWidth: artboard.width,
+      artboardHeight: artboard.height,
+      ...(opts.extraTokens ?? {}),
     },
   });
 
   logger.info(
-    `film composed project=${projectId} scenes=${scenes.length} components=${plan.drafts.length} duration=${plan.totalDurationMs}ms style=${plan.style} motion=${plan.motion}`,
+    `plan composed project=${projectId} scenes=${scenes.length} components=${plan.drafts.length} duration=${plan.totalDurationMs}ms style=${plan.style} motion=${plan.motion} artboard=${artboard.width}x${artboard.height}`,
   );
 
   return {
@@ -127,6 +149,20 @@ export function composeFilm(
     replaced: replace,
     title: plan.title,
   };
+}
+
+/**
+ * Compose a "talking head, cut to a rhythm" edit from base footage and a
+ * transcript, and persist it. Returns the plan so the caller can report the
+ * caption band and the resolved runtime.
+ */
+export function composeSocialEdit(projectId: string, opts: SocialEditOptions): SocialEditResult {
+  const plan = buildSocialEdit(opts);
+  persistPlan(projectId, plan, {
+    replace: true,
+    extraTokens: { __edit: "social", __captionBand: plan.captionBand.y },
+  });
+  return plan;
 }
 
 /** A short, human-readable summary of a composed film. */
