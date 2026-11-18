@@ -36,6 +36,19 @@ export interface Box {
 /** A box with a name, so audits can report which layers collide. */
 export interface NamedBox extends Box {
   name: string;
+  /**
+   * When the layer is on screen. Two layers whose windows never overlap cannot
+   * collide, so an audit that knows the timing stops reporting a caption and a
+   * keyword pop as an overlap when they are merely a second apart.
+   */
+  startMs?: number;
+  endMs?: number;
+  /**
+   * A layer that exists to be covered — a backdrop, a base video, a scrim.
+   * Everything else is allowed to sit on top of it, so it never counts as a
+   * collision and never hides a real one.
+   */
+  background?: boolean;
 }
 
 export interface Size {
@@ -75,12 +88,42 @@ export const ANCHORS: Anchor[] = [
 ];
 
 export function safeArea(margin = STAGE_MARGIN): Area {
+  return stageArea(STAGE_WIDTH, STAGE_HEIGHT, margin);
+}
+
+/**
+ * The content rectangle for an arbitrary stage size. The layout engine defaults
+ * to the 1920x1080 film stage, but a social edit composes against a portrait
+ * artboard, and every placement helper already accepts an explicit `area`.
+ */
+export function stageArea(width: number, height: number, margin = STAGE_MARGIN): Area {
   return {
     x: margin,
     y: margin,
-    w: STAGE_WIDTH - margin * 2,
-    h: STAGE_HEIGHT - margin * 2,
+    w: Math.max(1, width - margin * 2),
+    h: Math.max(1, height - margin * 2),
   };
+}
+
+/**
+ * The margin a stage keeps clear on every edge.
+ *
+ * The film stage keeps its fixed 96px margin, so films composed before the
+ * social work audit exactly as they always did. Every other artboard gets a
+ * margin proportional to its short side, which is what reads as a safe area at
+ * social sizes. This is the one place the rule lives: the layout engine, the
+ * caption engine and the graphics tool all derive their content rectangle from
+ * it, so a caption is never placed a few pixels outside the area the audit
+ * measures it against.
+ */
+export function contentMargin(width: number, height: number): number {
+  if (width === STAGE_WIDTH && height === STAGE_HEIGHT) return STAGE_MARGIN;
+  return Math.round(Math.min(width, height) * 0.055);
+}
+
+/** The content rectangle for a stage, using {@link contentMargin}. */
+export function contentArea(width: number, height: number): Area {
+  return stageArea(width, height, contentMargin(width, height));
 }
 
 /** The width of a single grid column. */
@@ -218,6 +261,16 @@ function intersectionArea(a: Box, b: Box): number {
   return w > 0 && h > 0 ? w * h : 0;
 }
 
+/**
+ * True when two layers can be on screen at the same moment. Layers that do not
+ * declare a window are assumed to be present for the whole scene, so the audit
+ * stays strict for everything that does not opt in.
+ */
+export function timeOverlap(a: NamedBox, b: NamedBox): boolean {
+  if (a.startMs == null || a.endMs == null || b.startMs == null || b.endMs == null) return true;
+  return a.startMs < b.endMs && b.startMs < a.endMs;
+}
+
 export interface Overlap {
   a: string;
   b: string;
@@ -238,6 +291,10 @@ export function findOverlaps(
       const a = boxes[i];
       const b = boxes[j];
       if (allow?.(a, b)) continue;
+      // A layer that exists to be covered is never a collision.
+      if (a.background || b.background) continue;
+      // Two layers that are never on screen together cannot collide.
+      if (!timeOverlap(a, b)) continue;
       if (clearOf(a, b, gap)) continue;
       const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
       const h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
@@ -262,6 +319,10 @@ export interface BoundsViolation {
 export function findOutOfBounds(boxes: NamedBox[], area: Area = safeArea()): BoundsViolation[] {
   const bad: BoundsViolation[] = [];
   for (const b of boxes) {
+    // A full-bleed layer is *meant* to run past the safe area — that is what
+    // full-bleed means. Flagging the base video for touching the frame edge
+    // would make every real composition look broken.
+    if (b.background) continue;
     const edges: BoundsViolation["edges"] = [];
     if (b.x < area.x - 0.5) edges.push("left");
     if (b.y < area.y - 0.5) edges.push("top");
@@ -515,6 +576,55 @@ export function fitWithin(size: Size, max: Size): Size {
  */
 export function textHeight(fontSize: number, lines: number, lineHeight = 1.2): number {
   return Math.ceil(fontSize * lineHeight * lines);
+}
+
+/**
+ * Place a vertical stack of boxes so that no two of them touch, balanced on a
+ * centre and kept inside a band.
+ *
+ * A multi-part graphic — a kicker over a phrase, a prompt over a chip over a
+ * footer — is a composition, not a set of independent labels. Placing each part
+ * at its own fraction of the stage height works at one aspect ratio and
+ * collides at the next: a 1920x1080 stage gives a large caption a taller box
+ * than a 1080x1350 stage does, and a fixed 0.38/0.5 pair that reads cleanly on
+ * one overlaps by 40px on the other. Measuring the parts and stacking them
+ * makes the composition correct at every size instead.
+ *
+ * Returns the top of each box, in the order given.
+ */
+export function stackColumn(
+  heights: number[],
+  opts: { centreY: number; gap: number; band?: { top: number; bottom: number } },
+): number[] {
+  if (!heights.length) return [];
+  const total = heights.reduce((sum, h) => sum + h, 0) + opts.gap * (heights.length - 1);
+  let top = Math.round(opts.centreY - total / 2);
+  if (opts.band) {
+    if (top < opts.band.top) top = Math.round(opts.band.top);
+    if (top + total > opts.band.bottom) top = Math.round(opts.band.bottom - total);
+  }
+  const tops: number[] = [];
+  let cursor = top;
+  for (const h of heights) {
+    tops.push(cursor);
+    cursor += h + opts.gap;
+  }
+  return tops;
+}
+
+/**
+ * The largest font size at which `chars` characters still fit `width`, clamped
+ * between a floor and a ceiling. A shared glyph-width estimate keeps every
+ * caller sizing text the same way the caption engine does.
+ */
+export function fitFontSize(
+  chars: number,
+  width: number,
+  opts: { glyphRatio?: number; min: number; max: number },
+): number {
+  const ratio = opts.glyphRatio ?? 0.56;
+  const fitted = Math.floor(width / (Math.max(1, chars) * ratio));
+  return Math.max(Math.min(opts.min, opts.max), Math.min(opts.max, fitted));
 }
 
 /* ------------------------------------------------------------- style glue --- */

@@ -8,14 +8,13 @@
 // back the collisions and out-of-bounds layers, so a model can self-correct
 // without ever seeing a pixel.
 
-import type { MotionComponent, ToolName } from "@kratefastmotion/shared";
+import type { ToolName } from "@kratefastmotion/shared";
 import {
   GRAPHIC_KINDS,
   GRAPHIC_PURPOSE,
   buildGraphic,
   type GraphicKind,
   type GraphicLayer,
-  type GraphicPalette,
 } from "../../motion/filmGraphics.js";
 import {
   ANCHORS,
@@ -30,13 +29,16 @@ import {
   freeSpace,
   groupAllows,
   place,
-  safeArea,
   styleToBox,
 } from "../../motion/layout.js";
-import { PALETTES, type FilmMotion, type FilmStyle } from "../../motion/filmDirector.js";
-import { createComponent, listComponents } from "../../db/repositories/components.js";
+import { styleFlag } from "../../motion/units.js";
+import { listComponents } from "../../db/repositories/components.js";
 import { getProject } from "../../db/repositories/projects.js";
-import { createId, now } from "../../utils/id.js";
+import { createId } from "../../utils/id.js";
+import { obstacleBoxes } from "./obstacles.js";
+import { persistLayers } from "./persistLayers.js";
+import { projectLook } from "./projectLook.js";
+import { projectArea } from "./projectStage.js";
 import type { ToolContext, ToolResult } from "./registry.js";
 
 type Executor = (args: Record<string, unknown>, ctx: ToolContext) => ToolResult | Promise<ToolResult>;
@@ -98,14 +100,7 @@ const AUTO_ORDER: Anchor[] = [
 
 /** Every measurable layer box in the project, optionally limited to one scene. */
 function occupiedBoxes(projectId: string, sceneId?: string): NamedBox[] {
-  const boxes: NamedBox[] = [];
-  for (const c of listComponents(projectId)) {
-    if (sceneId && c.sceneId !== sceneId) continue;
-    const box = styleToBox(c.style);
-    if (!box || box.w <= 0 || box.h <= 0) continue;
-    boxes.push({ name: c.name, ...box });
-  }
-  return boxes;
+  return obstacleBoxes(projectId, sceneId ?? undefined);
 }
 
 /** Where a scene starts on the project timeline, so a graphic added to a scene
@@ -120,64 +115,6 @@ function sceneStart(projectId: string, sceneId: string): { start: number; durati
     start += duration;
   }
   return null;
-}
-
-/** Palette + beat amplitude for the project, inherited from the film director
- *  when the project is a film, so an added graphic sits in the same world. */
-function projectLook(projectId: string, accent?: string): { palette: GraphicPalette; amp: number } {
-  const tokens = getProject(projectId)?.tokens ?? {};
-  const style = String(tokens.__filmStyle ?? "default") as FilmStyle;
-  const motion = String(tokens.__filmMotion ?? "balanced") as FilmMotion;
-  const palette = PALETTES[style] ?? PALETTES.default;
-  const amp = motion === "kinetic" ? 3 : motion === "calm" ? 0.55 : 1;
-  return { palette: accent ? { ...palette, accent } : palette, amp };
-}
-
-/** Turn one graphic's layers into persisted components. */
-function persist(
-  projectId: string,
-  sceneId: string | null,
-  layers: GraphicLayer[],
-  timeOffset: number,
-): string[] {
-  const all = listComponents(projectId);
-  let order = all.reduce((max, c) => Math.max(max, c.orderIndex), -1) + 1;
-  const ts = now();
-  const ids: string[] = [];
-
-  for (const layer of layers) {
-    const id = createId("c_");
-    const style: Record<string, string | number> = { ...layer.style, position: "absolute" };
-    if (layer.group) style._group = layer.group;
-    const component: MotionComponent = {
-      id,
-      projectId,
-      templateId: null,
-      name: layer.name,
-      selector: null,
-      sceneId,
-      orderIndex: order++,
-      easing: layer.easing ?? { type: "preset", name: "ease-out" },
-      // A layer's own lifetime never goes below 400ms: the kit subtracts a tail
-      // from the scene length, and a very short scene would otherwise produce a
-      // sub-frame animation that reads as a flicker.
-      durationMs: Math.max(400, Math.round(layer.durationMs)),
-      delayMs: Math.max(0, Math.round(timeOffset + layer.delayMs)),
-      iterationCount: layer.iterationCount ?? 1,
-      direction: layer.direction ?? "normal",
-      fillMode: "both",
-      playState: "running",
-      trigger: "onLoad",
-      keyframes: layer.keyframes,
-      style,
-      parentId: null,
-      createdAt: ts,
-      updatedAt: ts,
-    };
-    createComponent(component);
-    ids.push(id);
-  }
-  return ids;
 }
 
 export const graphicExecutors: Partial<Record<ToolName, Executor>> = {
@@ -203,7 +140,7 @@ export const graphicExecutors: Partial<Record<ToolName, Executor>> = {
     const hasValue = Boolean(value);
     const hasLabel = Boolean(label);
 
-    const area = safeArea();
+    const area = projectArea(ctx.projectId);
     const occupied = occupiedBoxes(ctx.projectId, sceneId ?? undefined);
     const avoid = args.avoidOverlap !== false;
     const firstChoice: Anchor =
@@ -278,7 +215,7 @@ export const graphicExecutors: Partial<Record<ToolName, Executor>> = {
       for (const layer of layers) layer.name = `${prefix} · ${layer.name}`;
     }
 
-    const ids = persist(ctx.projectId, sceneId, layers, timeOffset);
+    const ids = persistLayers(ctx.projectId, sceneId, layers, timeOffset);
 
     // Report what actually happened: the resolved box, whether the engine had to
     // shift or shrink it, and how much (if any) content it still covers — enough
@@ -324,25 +261,35 @@ export const graphicExecutors: Partial<Record<ToolName, Executor>> = {
     const unmeasured: string[] = [];
     for (const c of listComponents(ctx.projectId)) {
       if (filterScene && c.sceneId !== filterScene) continue;
+      // Audio has no visual box — a 1x1 hidden <audio> element is not a layout
+      // problem, and reporting it as out of bounds would bury the real ones.
+      if (String(c.style?._tag ?? "") === "audio") continue;
       const box = styleToBox(c.style);
       if (!box || box.w <= 0 || box.h <= 0) {
         unmeasured.push(c.name);
         continue;
       }
       const group = typeof c.style._group === "string" ? c.style._group : undefined;
+      // A full-bleed layer (base video, cutaway, colour card, scrim) exists to be
+      // covered, and a layer that is only on screen for part of the scene cannot
+      // collide with one that is not. Both facts come from the layer itself.
+      const background = c.style._background != null && styleFlag(c.style._background);
+      const startMs = c.delayMs;
+      const endMs = c.delayMs + c.durationMs;
       const key = c.sceneId ?? "__global__";
       const list = groups.get(key) ?? [];
-      list.push({ name: c.name, group, ...box });
+      list.push({ name: c.name, group, background, startMs, endMs, ...box });
       groups.set(key, list);
     }
 
     const sceneName = (id: string) =>
       project.scenes.find((s) => s.id === id)?.name ?? (id === "__global__" ? "Unscened" : id);
 
+    const area = projectArea(ctx.projectId);
     const reports = [...groups.entries()].map(([key, boxes]) => ({
       sceneId: key === "__global__" ? null : key,
       scene: sceneName(key),
-      audit: auditLayout(boxes, { allow: groupAllows, pad }),
+      audit: auditLayout(boxes, { allow: groupAllows, pad, area }),
     }));
 
     const failing = reports.filter((r) => !r.audit.ok);

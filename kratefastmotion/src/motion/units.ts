@@ -65,4 +65,20 @@ export function isFilterProperty(p: string): boolean {
   return p === "blur";
 }
 
+/**
+ * Read a boolean out of a component style token.
+ *
+ * Style values are `string | number`, so a flag arrives as `1`, `"1"`, `"true"`,
+ * `0`, `"0"` or `"false"` depending on who wrote it. `Boolean("0")` is `true`,
+ * which is exactly the trap this closes: a layer marked `_muted: "0"` was
+ * being muted anyway.
+ */
+export function styleFlag(value: string | number | boolean | undefined | null): boolean {
+  if (value == null) return false;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  const v = value.trim().toLowerCase();
+  return v !== "" && v !== "0" && v !== "false" && v !== "off" && v !== "no";
+}
+
 export { isTransformProperty };
