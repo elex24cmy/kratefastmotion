@@ -25,6 +25,14 @@ export const AddLayerInput = z.object({
     name: z.string(),
     selector: z.string().optional(),
     templateId: z.string().optional(),
+    text: z
+        .string()
+        .optional()
+        .describe("Text content for a text layer. Sets `_content` in the same call so the layer renders real copy instead of its name."),
+    style: z
+        .record(z.string(), z.union([z.string(), z.number()]))
+        .optional()
+        .describe("Optional static CSS applied to the new layer (e.g. { fontSize: 96, color: \"#fff\", textAlign: \"center\" })."),
 });
 export const RemoveComponentInput = z.object({
     projectId: zIdField,
@@ -48,6 +56,14 @@ export const GenerateFilmInput = z.object({
         .optional()
         .describe("Art-direction style override. Inferred from the prompt when omitted."),
     replace: z.boolean().optional().describe("Replace existing layers instead of appending (default true)."),
+    logoAssetId: z
+        .string()
+        .optional()
+        .describe("Asset id (see list_assets) to feature as the brand mark in the title scene and end card."),
+    mediaAssetIds: z
+        .array(z.string())
+        .optional()
+        .describe("Asset ids to feature as full-bleed media beats (one per id)."),
 });
 /* ----------------------------- Tuning tools ----------------------------- */
 export const SetEasingInput = z.object({
@@ -418,10 +434,19 @@ export const AddShapeInput = z.object({
     y: z.number().optional(),
     width: z.number().int().positive().optional(),
     height: z.number().int().positive().optional(),
+    text: z.string().optional().describe("Copy for shape \"text\" — sets `_content` in the same call."),
+    style: z
+        .record(z.string(), z.union([z.string(), z.number()]))
+        .optional()
+        .describe("Optional static CSS applied to the new shape (e.g. { backgroundColor: \"#7dd3fc\" })."),
 });
 export const AddImageInput = z.object({
     projectId: zIdField,
-    src: z.string().describe("Image URL or data URI"),
+    src: z.string().optional().describe("Image URL or data URI. Alternatively pass assetId for a file already in the library."),
+    assetId: z
+        .string()
+        .optional()
+        .describe("Id (or filename) of a file in the asset library — see list_assets. Resolved to its served URL."),
     name: z.string().optional(),
     x: z.number().optional(),
     y: z.number().optional(),
@@ -431,7 +456,11 @@ export const AddImageInput = z.object({
 });
 export const AddVideoInput = z.object({
     projectId: zIdField,
-    src: z.string().describe("Video URL or data URI"),
+    src: z.string().optional().describe("Video URL or data URI. Alternatively pass assetId for a file already in the library."),
+    assetId: z
+        .string()
+        .optional()
+        .describe("Id (or filename) of a file in the asset library — see list_assets. Resolved to its served URL."),
     name: z.string().optional(),
     x: z.number().optional(),
     y: z.number().optional(),
@@ -444,11 +473,35 @@ export const AddVideoInput = z.object({
 });
 export const AddAudioInput = z.object({
     projectId: zIdField,
-    src: z.string().describe("Audio URL or data URI"),
+    src: z.string().optional().describe("Audio URL or data URI. Alternatively pass assetId for a file already in the library."),
+    assetId: z
+        .string()
+        .optional()
+        .describe("Id (or filename) of a file in the asset library — see list_assets. Resolved to its served URL."),
     name: z.string().optional(),
     delayMs: z.number().int().nonnegative().optional(),
     loop: z.boolean().optional(),
     muted: z.boolean().optional(),
+});
+/* --------------------------- Asset library tools -------------------------- */
+export const ListAssetsInput = z.object({
+    projectId: zIdField,
+    kind: z
+        .enum(["image", "video", "audio", "all"])
+        .optional()
+        .describe("Filter by media kind (default all)."),
+});
+export const ImportAssetInput = z.object({
+    projectId: zIdField,
+    name: z.string().describe("Filename to store under, e.g. 'acme-logo.png'. The extension selects the media kind."),
+    url: z
+        .string()
+        .optional()
+        .describe("Remote http(s) URL or a data: URI to fetch and store. Alternatively pass data."),
+    data: z.string().optional().describe("Base64-encoded file bytes. Alternatively pass url."),
+    mimeType: z.string().optional().describe("Mime type when it cannot be inferred from the name or data URI."),
+    width: z.number().int().positive().optional().describe("Intrinsic pixel width, if known."),
+    height: z.number().int().positive().optional().describe("Intrinsic pixel height, if known."),
 });
 export const AddTypewriterTextInput = z.object({
     projectId: zIdField,
@@ -3197,6 +3250,8 @@ export const TOOL_INPUT_SCHEMAS = {
     add_image: AddImageInput,
     add_video: AddVideoInput,
     add_audio: AddAudioInput,
+    list_assets: ListAssetsInput,
+    import_asset: ImportAssetInput,
     add_typewriter_text: AddTypewriterTextInput,
     add_scene_transition: AddSceneTransitionInput,
     add_camera_move: AddCameraMoveInput,
@@ -3684,7 +3739,7 @@ export const TOOL_DESCRIPTIONS = {
     add_layer: "Add a new animatable component (layer) to a project. Returns the new componentId.",
     remove_component: "Remove a component from a project.",
     add_scene: "Add a new scene to a multi-scene project.",
-    generate_film: "Compose a complete, art-directed motion film from a brief: builds real scenes (title, feature highlights, statement, logo outro) with a background, accent lighting, a typographic hierarchy, staggered entrances, and clean exits, then persists them as animatable layers. Use this — not generate_story alone — whenever the user asks to create, make, or build a film, animation, motion graphic, logo reveal, intro/outro, promo, teaser, or multi-scene sequence. Returns the composed film's title, scene count, layer count, and runtime.",
+    generate_film: "Compose a complete, art-directed motion film from a brief: builds real scenes (title, feature highlights, statement, logo outro) with a background, accent lighting, a typographic hierarchy, kinetic word-by-word headline reveals, staggered entrances, a visible cut between scenes, and clean exits, then persists them as animatable layers. Pass logoAssetId (from list_assets) to open on the user's own logo and repeat it on the end card, and mediaAssetIds for full-bleed b-roll behind the statement beats. Use this — not generate_story alone — whenever the user asks to create, make, or build a film, animation, motion graphic, logo reveal, intro/outro, promo, teaser, or multi-scene sequence. Returns the composed film's title, scene count, layer count, and runtime.",
     set_easing: "Set the easing curve of a component. 17 presets available: linear, ease, ease-in, ease-out, ease-in-out, ease-in-quad, ease-out-quad, ease-in-out-quad, ease-in-cubic, ease-out-cubic, ease-in-out-cubic, bounce, back, elastic, snappy, smooth, soft. Also supports custom bezier (x1,y1,x2,y2) and spring (stiffness,damping,mass). Use for 'make it bouncy / smooth / snappy / soft' or specific CSS easing names.",
     set_spring: "Convenience: set a spring easing with stiffness, damping, and mass.",
     set_duration: "Set the animation duration in milliseconds. Use for 'slower / faster'.",
@@ -3740,9 +3795,11 @@ export const TOOL_DESCRIPTIONS = {
     select_components: "Select multiple components by id, optionally clearing existing selection first. Use when the user says 'select all', 'select multiple', or 'select these layers'.",
     toggle_snap: "Enable or disable snap-to-grid with optional grid size (1-50px). Use when the user says 'turn on snap', 'disable snapping', or 'set grid size to 16'.",
     add_shape: "Add a shape to the canvas — rectangle, circle, text, triangle, star, pentagon, line, or arrow. Optionally set position (x/y) and size (width/height). Use when the user says 'add a rectangle', 'create a star', or 'add an arrow'.",
-    add_image: "Add an image component to the canvas from a URL or data URI. Supports object-fit (cover/contain/fill). Use when the user says 'add an image', 'insert a picture', or 'place a photo'.",
-    add_video: "Add a video component to the canvas from a URL or data URI. Supports muted, loop, and autoplay options. Use when the user says 'add a video', 'embed a clip', or 'place a video'.",
-    add_audio: "Add an audio component for background music or voiceover. Supports delay, loop, and muted options. Use when the user says 'add background music', 'add a voiceover', or 'play a sound'.",
+    add_image: "Add an image component to the canvas from a URL, data URI, or assetId from list_assets. Supports object-fit (cover/contain/fill). Use when the user says 'add an image', 'insert a picture', or 'place a photo'.",
+    add_video: "Add a video component to the canvas from a URL, data URI, or assetId from list_assets. Supports muted, loop, and autoplay options. Use when the user says 'add a video', 'embed a clip', or 'place a video'.",
+    add_audio: "Add an audio component for background music or voiceover from a URL, data URI, or assetId from list_assets. Supports delay, loop, and muted options. Use when the user says 'add background music', 'add a voiceover', or 'play a sound'.",
+    list_assets: "List every file in the local asset library (images, video, audio) with id, name, kind and URL. Call this before placing media so you can pass a real assetId instead of guessing a path. Use when the user says 'use my logo', 'add the file I uploaded', or 'what assets do I have'.",
+    import_asset: "Import a file into the local asset library from a remote URL, a data: URI, or base64 bytes, and return its assetId. Use to bring in media the user references by link before placing it with add_image/add_video/add_audio.",
     add_typewriter_text: "Add text that reveals character-by-character with an optional blinking cursor. Use when the user says 'typewriter effect', 'type on text', or 'reveal text gradually'.",
     add_scene_transition: "Add a cinematic transition effect between scenes — dissolve, wipe, slide, zoom, or flash. Use when the user says 'add a transition', 'cross-dissolve', or 'wipe to next scene'.",
     add_camera_move: "Animate a virtual camera movement — pan left/right/up/down, zoom in/out, or combined zoom-pan. Use when the user says 'pan camera', 'zoom in', 'camera movement', or 'dolly shot'.",

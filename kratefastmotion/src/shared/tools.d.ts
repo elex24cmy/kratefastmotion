@@ -39,18 +39,24 @@ export declare const AddLayerInput: z.ZodObject<{
     name: z.ZodString;
     selector: z.ZodOptional<z.ZodString>;
     templateId: z.ZodOptional<z.ZodString>;
+    text: z.ZodOptional<z.ZodString>;
+    style: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnion<[z.ZodString, z.ZodNumber]>>>;
 }, "strip", z.ZodTypeAny, {
     name: string;
     projectId: string;
     sceneId?: string | undefined;
     selector?: string | undefined;
     templateId?: string | undefined;
+    style?: Record<string, string | number> | undefined;
+    text?: string | undefined;
 }, {
     name: string;
     projectId: string;
     sceneId?: string | undefined;
     selector?: string | undefined;
     templateId?: string | undefined;
+    style?: Record<string, string | number> | undefined;
+    text?: string | undefined;
 }>;
 export declare const RemoveComponentInput: z.ZodObject<{
     projectId: z.ZodString;
@@ -81,18 +87,24 @@ export declare const GenerateFilmInput: z.ZodObject<{
     title: z.ZodOptional<z.ZodString>;
     style: z.ZodOptional<z.ZodEnum<["cinematic", "tech", "playful", "calm", "energetic", "default"]>>;
     replace: z.ZodOptional<z.ZodBoolean>;
+    logoAssetId: z.ZodOptional<z.ZodString>;
+    mediaAssetIds: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
 }, "strip", z.ZodTypeAny, {
     projectId: string;
     prompt: string;
     style?: "default" | "cinematic" | "tech" | "playful" | "calm" | "energetic" | undefined;
     title?: string | undefined;
     replace?: boolean | undefined;
+    logoAssetId?: string | undefined;
+    mediaAssetIds?: string[] | undefined;
 }, {
     projectId: string;
     prompt: string;
     style?: "default" | "cinematic" | "tech" | "playful" | "calm" | "energetic" | undefined;
     title?: string | undefined;
     replace?: boolean | undefined;
+    logoAssetId?: string | undefined;
+    mediaAssetIds?: string[] | undefined;
 }>;
 export declare const SetEasingInput: z.ZodObject<{
     projectId: z.ZodString;
@@ -1318,12 +1330,16 @@ export declare const AddShapeInput: z.ZodObject<{
     y: z.ZodOptional<z.ZodNumber>;
     width: z.ZodOptional<z.ZodNumber>;
     height: z.ZodOptional<z.ZodNumber>;
+    text: z.ZodOptional<z.ZodString>;
+    style: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnion<[z.ZodString, z.ZodNumber]>>>;
 }, "strip", z.ZodTypeAny, {
     shape: "text" | "line" | "circle" | "rectangle" | "triangle" | "star" | "polygon" | "arrow";
     projectId: string;
     width?: number | undefined;
     height?: number | undefined;
     name?: string | undefined;
+    style?: Record<string, string | number> | undefined;
+    text?: string | undefined;
     x?: number | undefined;
     y?: number | undefined;
 }, {
@@ -1332,12 +1348,15 @@ export declare const AddShapeInput: z.ZodObject<{
     width?: number | undefined;
     height?: number | undefined;
     name?: string | undefined;
+    style?: Record<string, string | number> | undefined;
+    text?: string | undefined;
     x?: number | undefined;
     y?: number | undefined;
 }>;
 export declare const AddImageInput: z.ZodObject<{
     projectId: z.ZodString;
-    src: z.ZodString;
+    src: z.ZodOptional<z.ZodString>;
+    assetId: z.ZodOptional<z.ZodString>;
     name: z.ZodOptional<z.ZodString>;
     x: z.ZodOptional<z.ZodNumber>;
     y: z.ZodOptional<z.ZodNumber>;
@@ -1346,26 +1365,29 @@ export declare const AddImageInput: z.ZodObject<{
     fit: z.ZodOptional<z.ZodEnum<["cover", "contain", "fill"]>>;
 }, "strip", z.ZodTypeAny, {
     projectId: string;
-    src: string;
     width?: number | undefined;
     height?: number | undefined;
     name?: string | undefined;
     x?: number | undefined;
     y?: number | undefined;
     fit?: "fill" | "cover" | "contain" | undefined;
+    src?: string | undefined;
+    assetId?: string | undefined;
 }, {
     projectId: string;
-    src: string;
     width?: number | undefined;
     height?: number | undefined;
     name?: string | undefined;
     x?: number | undefined;
     y?: number | undefined;
     fit?: "fill" | "cover" | "contain" | undefined;
+    src?: string | undefined;
+    assetId?: string | undefined;
 }>;
 export declare const AddVideoInput: z.ZodObject<{
     projectId: z.ZodString;
-    src: z.ZodString;
+    src: z.ZodOptional<z.ZodString>;
+    assetId: z.ZodOptional<z.ZodString>;
     name: z.ZodOptional<z.ZodString>;
     x: z.ZodOptional<z.ZodNumber>;
     y: z.ZodOptional<z.ZodNumber>;
@@ -1377,50 +1399,90 @@ export declare const AddVideoInput: z.ZodObject<{
     delayMs: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     projectId: string;
-    src: string;
     width?: number | undefined;
     height?: number | undefined;
     name?: string | undefined;
     delayMs?: number | undefined;
     x?: number | undefined;
     y?: number | undefined;
+    src?: string | undefined;
+    assetId?: string | undefined;
     muted?: boolean | undefined;
     loop?: boolean | undefined;
     autoplay?: boolean | undefined;
 }, {
     projectId: string;
-    src: string;
     width?: number | undefined;
     height?: number | undefined;
     name?: string | undefined;
     delayMs?: number | undefined;
     x?: number | undefined;
     y?: number | undefined;
+    src?: string | undefined;
+    assetId?: string | undefined;
     muted?: boolean | undefined;
     loop?: boolean | undefined;
     autoplay?: boolean | undefined;
 }>;
 export declare const AddAudioInput: z.ZodObject<{
     projectId: z.ZodString;
-    src: z.ZodString;
+    src: z.ZodOptional<z.ZodString>;
+    assetId: z.ZodOptional<z.ZodString>;
     name: z.ZodOptional<z.ZodString>;
     delayMs: z.ZodOptional<z.ZodNumber>;
     loop: z.ZodOptional<z.ZodBoolean>;
     muted: z.ZodOptional<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
     projectId: string;
-    src: string;
     name?: string | undefined;
     delayMs?: number | undefined;
+    src?: string | undefined;
+    assetId?: string | undefined;
     muted?: boolean | undefined;
     loop?: boolean | undefined;
 }, {
     projectId: string;
-    src: string;
     name?: string | undefined;
     delayMs?: number | undefined;
+    src?: string | undefined;
+    assetId?: string | undefined;
     muted?: boolean | undefined;
     loop?: boolean | undefined;
+}>;
+export declare const ListAssetsInput: z.ZodObject<{
+    projectId: z.ZodString;
+    kind: z.ZodOptional<z.ZodEnum<["image", "video", "audio", "all"]>>;
+}, "strip", z.ZodTypeAny, {
+    projectId: string;
+    kind?: "image" | "video" | "audio" | "all" | undefined;
+}, {
+    projectId: string;
+    kind?: "image" | "video" | "audio" | "all" | undefined;
+}>;
+export declare const ImportAssetInput: z.ZodObject<{
+    projectId: z.ZodString;
+    name: z.ZodString;
+    url: z.ZodOptional<z.ZodString>;
+    data: z.ZodOptional<z.ZodString>;
+    mimeType: z.ZodOptional<z.ZodString>;
+    width: z.ZodOptional<z.ZodNumber>;
+    height: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    name: string;
+    projectId: string;
+    width?: number | undefined;
+    height?: number | undefined;
+    url?: string | undefined;
+    data?: string | undefined;
+    mimeType?: string | undefined;
+}, {
+    name: string;
+    projectId: string;
+    width?: number | undefined;
+    height?: number | undefined;
+    url?: string | undefined;
+    data?: string | undefined;
+    mimeType?: string | undefined;
 }>;
 export declare const AddTypewriterTextInput: z.ZodObject<{
     projectId: z.ZodString;
@@ -3908,7 +3970,7 @@ export declare const SetRangeSelectorInput: z.ZodObject<{
     start: number;
     end: number;
     unit: "characters" | "words" | "lines";
-    basedOn: "characters" | "words" | "lines" | "all";
+    basedOn: "all" | "characters" | "words" | "lines";
 }, {
     projectId: string;
     componentId: string;
@@ -3918,7 +3980,7 @@ export declare const SetRangeSelectorInput: z.ZodObject<{
     start?: number | undefined;
     end?: number | undefined;
     unit?: "characters" | "words" | "lines" | undefined;
-    basedOn?: "characters" | "words" | "lines" | "all" | undefined;
+    basedOn?: "all" | "characters" | "words" | "lines" | undefined;
 }>;
 export declare const SetTextWigglerInput: z.ZodObject<{
     projectId: z.ZodString;
@@ -8381,18 +8443,24 @@ export declare const TOOL_INPUT_SCHEMAS: {
         name: z.ZodString;
         selector: z.ZodOptional<z.ZodString>;
         templateId: z.ZodOptional<z.ZodString>;
+        text: z.ZodOptional<z.ZodString>;
+        style: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnion<[z.ZodString, z.ZodNumber]>>>;
     }, "strip", z.ZodTypeAny, {
         name: string;
         projectId: string;
         sceneId?: string | undefined;
         selector?: string | undefined;
         templateId?: string | undefined;
+        style?: Record<string, string | number> | undefined;
+        text?: string | undefined;
     }, {
         name: string;
         projectId: string;
         sceneId?: string | undefined;
         selector?: string | undefined;
         templateId?: string | undefined;
+        style?: Record<string, string | number> | undefined;
+        text?: string | undefined;
     }>;
     readonly remove_component: z.ZodObject<{
         projectId: z.ZodString;
@@ -8423,18 +8491,24 @@ export declare const TOOL_INPUT_SCHEMAS: {
         title: z.ZodOptional<z.ZodString>;
         style: z.ZodOptional<z.ZodEnum<["cinematic", "tech", "playful", "calm", "energetic", "default"]>>;
         replace: z.ZodOptional<z.ZodBoolean>;
+        logoAssetId: z.ZodOptional<z.ZodString>;
+        mediaAssetIds: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
     }, "strip", z.ZodTypeAny, {
         projectId: string;
         prompt: string;
         style?: "default" | "cinematic" | "tech" | "playful" | "calm" | "energetic" | undefined;
         title?: string | undefined;
         replace?: boolean | undefined;
+        logoAssetId?: string | undefined;
+        mediaAssetIds?: string[] | undefined;
     }, {
         projectId: string;
         prompt: string;
         style?: "default" | "cinematic" | "tech" | "playful" | "calm" | "energetic" | undefined;
         title?: string | undefined;
         replace?: boolean | undefined;
+        logoAssetId?: string | undefined;
+        mediaAssetIds?: string[] | undefined;
     }>;
     readonly set_easing: z.ZodObject<{
         projectId: z.ZodString;
@@ -9631,12 +9705,16 @@ export declare const TOOL_INPUT_SCHEMAS: {
         y: z.ZodOptional<z.ZodNumber>;
         width: z.ZodOptional<z.ZodNumber>;
         height: z.ZodOptional<z.ZodNumber>;
+        text: z.ZodOptional<z.ZodString>;
+        style: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnion<[z.ZodString, z.ZodNumber]>>>;
     }, "strip", z.ZodTypeAny, {
         shape: "text" | "line" | "circle" | "rectangle" | "triangle" | "star" | "polygon" | "arrow";
         projectId: string;
         width?: number | undefined;
         height?: number | undefined;
         name?: string | undefined;
+        style?: Record<string, string | number> | undefined;
+        text?: string | undefined;
         x?: number | undefined;
         y?: number | undefined;
     }, {
@@ -9645,12 +9723,15 @@ export declare const TOOL_INPUT_SCHEMAS: {
         width?: number | undefined;
         height?: number | undefined;
         name?: string | undefined;
+        style?: Record<string, string | number> | undefined;
+        text?: string | undefined;
         x?: number | undefined;
         y?: number | undefined;
     }>;
     readonly add_image: z.ZodObject<{
         projectId: z.ZodString;
-        src: z.ZodString;
+        src: z.ZodOptional<z.ZodString>;
+        assetId: z.ZodOptional<z.ZodString>;
         name: z.ZodOptional<z.ZodString>;
         x: z.ZodOptional<z.ZodNumber>;
         y: z.ZodOptional<z.ZodNumber>;
@@ -9659,26 +9740,29 @@ export declare const TOOL_INPUT_SCHEMAS: {
         fit: z.ZodOptional<z.ZodEnum<["cover", "contain", "fill"]>>;
     }, "strip", z.ZodTypeAny, {
         projectId: string;
-        src: string;
         width?: number | undefined;
         height?: number | undefined;
         name?: string | undefined;
         x?: number | undefined;
         y?: number | undefined;
         fit?: "fill" | "cover" | "contain" | undefined;
+        src?: string | undefined;
+        assetId?: string | undefined;
     }, {
         projectId: string;
-        src: string;
         width?: number | undefined;
         height?: number | undefined;
         name?: string | undefined;
         x?: number | undefined;
         y?: number | undefined;
         fit?: "fill" | "cover" | "contain" | undefined;
+        src?: string | undefined;
+        assetId?: string | undefined;
     }>;
     readonly add_video: z.ZodObject<{
         projectId: z.ZodString;
-        src: z.ZodString;
+        src: z.ZodOptional<z.ZodString>;
+        assetId: z.ZodOptional<z.ZodString>;
         name: z.ZodOptional<z.ZodString>;
         x: z.ZodOptional<z.ZodNumber>;
         y: z.ZodOptional<z.ZodNumber>;
@@ -9690,50 +9774,90 @@ export declare const TOOL_INPUT_SCHEMAS: {
         delayMs: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         projectId: string;
-        src: string;
         width?: number | undefined;
         height?: number | undefined;
         name?: string | undefined;
         delayMs?: number | undefined;
         x?: number | undefined;
         y?: number | undefined;
+        src?: string | undefined;
+        assetId?: string | undefined;
         muted?: boolean | undefined;
         loop?: boolean | undefined;
         autoplay?: boolean | undefined;
     }, {
         projectId: string;
-        src: string;
         width?: number | undefined;
         height?: number | undefined;
         name?: string | undefined;
         delayMs?: number | undefined;
         x?: number | undefined;
         y?: number | undefined;
+        src?: string | undefined;
+        assetId?: string | undefined;
         muted?: boolean | undefined;
         loop?: boolean | undefined;
         autoplay?: boolean | undefined;
     }>;
     readonly add_audio: z.ZodObject<{
         projectId: z.ZodString;
-        src: z.ZodString;
+        src: z.ZodOptional<z.ZodString>;
+        assetId: z.ZodOptional<z.ZodString>;
         name: z.ZodOptional<z.ZodString>;
         delayMs: z.ZodOptional<z.ZodNumber>;
         loop: z.ZodOptional<z.ZodBoolean>;
         muted: z.ZodOptional<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
         projectId: string;
-        src: string;
         name?: string | undefined;
         delayMs?: number | undefined;
+        src?: string | undefined;
+        assetId?: string | undefined;
         muted?: boolean | undefined;
         loop?: boolean | undefined;
     }, {
         projectId: string;
-        src: string;
         name?: string | undefined;
         delayMs?: number | undefined;
+        src?: string | undefined;
+        assetId?: string | undefined;
         muted?: boolean | undefined;
         loop?: boolean | undefined;
+    }>;
+    readonly list_assets: z.ZodObject<{
+        projectId: z.ZodString;
+        kind: z.ZodOptional<z.ZodEnum<["image", "video", "audio", "all"]>>;
+    }, "strip", z.ZodTypeAny, {
+        projectId: string;
+        kind?: "image" | "video" | "audio" | "all" | undefined;
+    }, {
+        projectId: string;
+        kind?: "image" | "video" | "audio" | "all" | undefined;
+    }>;
+    readonly import_asset: z.ZodObject<{
+        projectId: z.ZodString;
+        name: z.ZodString;
+        url: z.ZodOptional<z.ZodString>;
+        data: z.ZodOptional<z.ZodString>;
+        mimeType: z.ZodOptional<z.ZodString>;
+        width: z.ZodOptional<z.ZodNumber>;
+        height: z.ZodOptional<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        name: string;
+        projectId: string;
+        width?: number | undefined;
+        height?: number | undefined;
+        url?: string | undefined;
+        data?: string | undefined;
+        mimeType?: string | undefined;
+    }, {
+        name: string;
+        projectId: string;
+        width?: number | undefined;
+        height?: number | undefined;
+        url?: string | undefined;
+        data?: string | undefined;
+        mimeType?: string | undefined;
     }>;
     readonly add_typewriter_text: z.ZodObject<{
         projectId: z.ZodString;
@@ -12057,7 +12181,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
         start: number;
         end: number;
         unit: "characters" | "words" | "lines";
-        basedOn: "characters" | "words" | "lines" | "all";
+        basedOn: "all" | "characters" | "words" | "lines";
     }, {
         projectId: string;
         componentId: string;
@@ -12067,7 +12191,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
         start?: number | undefined;
         end?: number | undefined;
         unit?: "characters" | "words" | "lines" | undefined;
-        basedOn?: "characters" | "words" | "lines" | "all" | undefined;
+        basedOn?: "all" | "characters" | "words" | "lines" | undefined;
     }>;
     readonly set_text_wiggler: z.ZodObject<{
         projectId: z.ZodString;

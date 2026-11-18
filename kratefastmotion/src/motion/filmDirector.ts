@@ -109,6 +109,21 @@ export interface FilmPlan {
   title: string;
 }
 
+/** A file from the asset library that a film can feature. */
+export interface FilmAsset {
+  /** Served URL (already resolved from an asset id by the caller). */
+  src: string;
+  name?: string;
+  kind: "image" | "video";
+}
+
+export interface FilmAssets {
+  /** Brand mark shown in the opening title and again on the end card. */
+  logo?: FilmAsset;
+  /** Media used as full-bleed b-roll behind the statement beats, in order. */
+  media?: FilmAsset[];
+}
+
 // ---------------------------------------------------------------------------
 // Brief analysis
 // ---------------------------------------------------------------------------
@@ -361,17 +376,21 @@ function circle(size: number, topPct: number, extra: Record<string, string | num
   };
 }
 
-/** Entrance → hold → exit, with fast-out in and accelerated out. */
+/** Entrance → hold → exit, with fast-out in and accelerated out. `drift` is
+ *  merged into the hold so a layer keeps creeping after it lands — the
+ *  reference films never let type sit completely still. */
 function beat(
   from: Record<string, string | number>,
   hold: Record<string, string | number>,
   exit: Record<string, string | number> = {},
+  drift: Record<string, string | number> = {},
 ): Keyframe[] {
+  const drifted = { ...hold, ...drift };
   return [
     { offset: 0, properties: { opacity: 0, ...from } as Keyframe["properties"], easing: EASE_OUT },
     { offset: 0.18, properties: { opacity: 1, ...hold } as Keyframe["properties"], easing: EASE_IN_OUT },
-    { offset: 0.82, properties: { opacity: 1, ...hold } as Keyframe["properties"], easing: EASE_IN },
-    { offset: 1, properties: { opacity: 0, ...hold, ...exit } as Keyframe["properties"] },
+    { offset: 0.82, properties: { opacity: 1, ...drifted } as Keyframe["properties"], easing: EASE_IN },
+    { offset: 1, properties: { opacity: 0, ...drifted, ...exit } as Keyframe["properties"] },
   ];
 }
 
@@ -384,11 +403,43 @@ function beat(
 function beatHold(
   from: Record<string, string | number>,
   hold: Record<string, string | number>,
+  drift: Record<string, string | number> = {},
 ): Keyframe[] {
+  const drifted = { ...hold, ...drift };
   return [
     { offset: 0, properties: { opacity: 0, ...from } as Keyframe["properties"], easing: EASE_OUT },
     { offset: 0.22, properties: { opacity: 1, ...hold } as Keyframe["properties"], easing: EASE_IN_OUT },
-    { offset: 1, properties: { opacity: 1, ...hold } as Keyframe["properties"] },
+    { offset: 1, properties: { opacity: 1, ...drifted } as Keyframe["properties"] },
+  ];
+}
+
+/**
+ * Kinetic typography: a short title breaks into one line per word so each word
+ * can wipe in on its own beat — the "stacked type" look a motion designer uses
+ * for a two- or three-word lockup. Longer titles stay on a single line so the
+ * composition never overflows the stage.
+ */
+function headlineLines(title: string): string[] {
+  const words = title.split(/\s+/).filter(Boolean);
+  if (words.length < 2 || words.length > 3) return [title];
+  if (words.some((w) => w.replace(/[^\w]/g, "").length > 12)) return [title];
+  return words;
+}
+
+/**
+ * Headline beat: rises into place behind a vertical clip wipe (the glyphs are
+ * revealed from the baseline upward), keeps drifting a touch while held so the
+ * type is never completely still, then lifts out. `clipPath` is a first-class
+ * animatable property, so the preview, the editor canvas, the code export and
+ * the video export all render this identically.
+ */
+function headlineBeat(a: number): Keyframe[] {
+  const open = "inset(0% 0 0 0)";
+  return [
+    { offset: 0, properties: { opacity: 0, translateY: 56 * a, scale: 0.97, clipPath: "inset(100% 0 0 0)" } as Keyframe["properties"], easing: EASE_OUT },
+    { offset: 0.17, properties: { opacity: 1, translateY: 0, scale: 1, clipPath: open } as Keyframe["properties"], easing: EASE_IN_OUT },
+    { offset: 0.82, properties: { opacity: 1, translateY: -6 * a, scale: 1 + 0.015 * a, clipPath: open } as Keyframe["properties"], easing: EASE_IN },
+    { offset: 1, properties: { opacity: 0, translateY: -26 * a, scale: 1 + 0.03 * a, clipPath: open } as Keyframe["properties"] },
   ];
 }
 
@@ -397,7 +448,6 @@ interface Ctx {
   brief: FilmBrief;
   idx: number;
 }
-
 function mk(
   ctx: Ctx,
   name: string,
@@ -492,18 +542,167 @@ function glowLayer(ctx: Ctx, sceneId: string, sceneStart: number, sceneDuration:
   });
 }
 
-function titleScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[] {
+/**
+ * Brand mark from the asset library, shown above the opening title and again on
+ * the end card. Sized with `object-fit: contain` so a wide logo and a square
+ * icon both sit correctly in the same box.
+ */
+function logoLayer(
+  ctx: Ctx,
+  scene: FilmScene,
+  start: number,
+  asset: FilmAsset,
+  opts: { topPct: number; width: number; height: number; delayMs?: number; hold?: boolean },
+): ComponentDraft {
+  const { brief } = ctx;
+  const a = motionScale(brief.motion);
+  const w = opts.width;
+  const entrance = opts.hold
+    ? beatHold({ scale: 1 - 0.28 * a, opacity: 0 }, { scale: 1, opacity: 1 })
+    : beat({ scale: 1 - 0.28 * a, opacity: 0 }, { scale: 1, opacity: 1 });
+  return mk(ctx, "Brand Logo", scene.id, {
+    durationMs: scene.durationMs - 400,
+    delayMs: start + (opts.delayMs ?? 160),
+    easing: EASE_BACK,
+    keyframes: entrance,
+    style: {
+      left: "50%",
+      top: `${opts.topPct}%`,
+      width: `${w}px`,
+      height: `${opts.height}px`,
+      marginLeft: `${-w / 2}px`,
+      objectFit: "contain",
+      filter: `drop-shadow(0 18px 46px ${ctx.palette.accent}44)`,
+      _tag: asset.kind === "video" ? "video" : "img",
+      _src: asset.src,
+      ...(asset.kind === "video" ? { _muted: 1, _loop: 1, _autoplay: 1 } : {}),
+      _content: "",
+      zIndex: "11",
+    },
+  });
+}
+
+/**
+ * Full-bleed b-roll behind a statement beat, plus a scrim so the overlaid
+ * figure and label stay legible against arbitrary media. The media drifts
+ * slowly for the whole scene, so the frame is never static.
+ */
+function mediaBackdrop(ctx: Ctx, scene: FilmScene, start: number, asset: FilmAsset): ComponentDraft[] {
+  const { palette, brief } = ctx;
+  const a = motionScale(brief.motion);
+  const isVideo = asset.kind === "video";
+  const out: ComponentDraft[] = [];
+  out.push(
+    mk(ctx, "Media Backdrop", scene.id, {
+      durationMs: scene.durationMs,
+      delayMs: start,
+      easing: EASE_IN_OUT,
+      keyframes: [
+        { offset: 0, properties: { opacity: 0, scale: 1 } as Keyframe["properties"], easing: EASE_OUT },
+        { offset: 0.22, properties: { opacity: 0.92, scale: 1 + 0.02 * a } as Keyframe["properties"], easing: EASE_IN_OUT },
+        { offset: 0.8, properties: { opacity: 0.92, scale: 1 + 0.05 * a } as Keyframe["properties"], easing: EASE_IN },
+        { offset: 1, properties: { opacity: 0, scale: 1 + 0.07 * a } as Keyframe["properties"] },
+      ],
+      style: fullBleed({
+        objectFit: "cover",
+        _tag: isVideo ? "video" : "img",
+        _src: asset.src,
+        ...(isVideo ? { _muted: 1, _loop: 1, _autoplay: 1 } : {}),
+        _content: "",
+        zIndex: "1",
+      }),
+    }),
+  );
+  out.push(
+    mk(ctx, "Media Scrim", scene.id, {
+      durationMs: scene.durationMs,
+      delayMs: start,
+      easing: EASE_IN_OUT,
+      keyframes: [
+        { offset: 0, properties: { opacity: 0 } as Keyframe["properties"], easing: EASE_OUT },
+        { offset: 0.22, properties: { opacity: 1 } as Keyframe["properties"], easing: EASE_IN_OUT },
+        { offset: 0.8, properties: { opacity: 1 } as Keyframe["properties"], easing: EASE_IN },
+        { offset: 1, properties: { opacity: 0 } as Keyframe["properties"] },
+      ],
+      style: fullBleed({
+        background: `linear-gradient(180deg, ${palette.bgFrom}e6 0%, ${palette.bgFrom}73 42%, ${palette.bgFrom}f2 100%)`,
+        pointerEvents: "none",
+        _content: "",
+        zIndex: "2",
+      }),
+    }),
+  );
+  return out;
+}
+
+/**
+ * A short accent flash at a scene boundary. Real ads cut between beats; without
+ * a visible seam our scenes cross-fade into each other and read as one long
+ * slide. A 420ms flash on the accent colour makes each scene land as a cut.
+ */
+function cutFlash(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft {
+  const { palette, brief } = ctx;
+  const peak = brief.motion === "kinetic" ? 0.16 : brief.motion === "calm" ? 0.05 : 0.1;
+  return mk(ctx, "Scene Cut", scene.id, {
+    durationMs: 420,
+    delayMs: start,
+    easing: EASE_IN_OUT,
+    keyframes: [
+      { offset: 0, properties: { opacity: 0 } as Keyframe["properties"], easing: EASE_OUT },
+      { offset: 0.28, properties: { opacity: peak } as Keyframe["properties"], easing: EASE_IN_OUT },
+      { offset: 1, properties: { opacity: 0 } as Keyframe["properties"] },
+    ],
+    style: fullBleed({
+      background: `linear-gradient(90deg, ${palette.accent}00, ${palette.accent}, ${palette.accent2}00)`,
+      pointerEvents: "none",
+      _content: "",
+      zIndex: "12",
+    }),
+  });
+}
+
+function titleScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAssets): ComponentDraft[] {
   const { palette, brief } = ctx;
   const a = motionScale(brief.motion);
   const base = scene.durationMs;
   const out: ComponentDraft[] = [];
   out.push(glowLayer(ctx, scene.id, start, base, 46, 1500));
 
+  // Brand mark from the library, if the brief carried one — the film opens on
+  // the user's own logo instead of a generic monogram.
+  if (assets.logo) {
+    out.push(logoLayer(ctx, scene, start, assets.logo, { topPct: 21, width: 340, height: 92, delayMs: 120 }));
+  }
+
+  // Kinetic typography: each word of a short title gets its own line, its own
+  // stagger and its own clip wipe. A single long title stays on one line.
+  const lines = headlineLines(brief.title);
+  const stacked = lines.length > 1;
+  const headlineSize = stacked ? (lines.length === 2 ? 118 : 96) : 132;
+  const lineHeight = stacked ? 1.06 : 1.02;
+  const lineHeightPx = headlineSize * lineHeight;
+  const blockHeight = lines.length * lineHeightPx;
+
+  // Lay the text stack out as one block so it stays centred whether the title
+  // is one line or three, and whether or not a logo occupies the top third.
+  const EYEBROW_H = 28;
+  const RULE_H = 5;
+  const SUBHEAD_H = 36;
+  const GAP_EYEBROW = 30;
+  const GAP_RULE = 58;
+  const GAP_SUBHEAD = 46;
+  const stackHeight = EYEBROW_H + GAP_EYEBROW + blockHeight + GAP_RULE + RULE_H + GAP_SUBHEAD + SUBHEAD_H;
+  const stackTop = ((assets.logo ? 55 : 52) / 100) * STAGE_HEIGHT - stackHeight / 2;
+  const eyebrowTop = stackTop;
+  const blockTop = eyebrowTop + EYEBROW_H + GAP_EYEBROW;
+  const ruleTop = blockTop + blockHeight + GAP_RULE;
+  const subheadTop = ruleTop + RULE_H + GAP_SUBHEAD;
+
   out.push(mk(ctx, "Eyebrow", scene.id, {
     durationMs: base - 200,
     delayMs: start + 200,
-    keyframes: beat({ translateY: 18 * a }, { translateY: 0 }),
-    style: centeredText("34%", {
+    keyframes: beat({ translateY: 18 * a }, { translateY: 0 }, {}, { translateY: -5 * a }),
+    style: centeredText(`${eyebrowTop.toFixed(1)}px`, {
       color: palette.accent,
       fontFamily: MONO_STACK,
       fontSize: "22px",
@@ -515,23 +714,26 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
       zIndex: "10",
     }),
   }));
-  out.push(mk(ctx, "Headline", scene.id, {
-    durationMs: base - 500,
-    delayMs: start + 420,
-    keyframes: beat({ translateY: 46 * a, scale: 1 - 0.03 * a }, { translateY: 0, scale: 1 }, { translateY: -22 * a }),
-    style: centeredText("41%", {
-      color: palette.text,
-      fontFamily: FONT_STACK,
-      fontSize: "132px",
-      fontWeight: "800",
-      lineHeight: "1.02",
-      letterSpacing: "-0.02em",
-      margin: "0px",
-      textShadow: "0 18px 60px rgba(0,0,0,0.45)",
-      _content: brief.title,
-      zIndex: "10",
-    }),
-  }));
+
+  lines.forEach((line, i) => {
+    out.push(mk(ctx, stacked ? `Headline ${i + 1}` : "Headline", scene.id, {
+      durationMs: base - 500 - i * 120,
+      delayMs: start + 420 + i * 150,
+      keyframes: headlineBeat(a),
+      style: centeredText(`${(blockTop + i * lineHeightPx).toFixed(1)}px`, {
+        color: palette.text,
+        fontFamily: FONT_STACK,
+        fontSize: `${headlineSize}px`,
+        fontWeight: "800",
+        lineHeight: String(lineHeight),
+        letterSpacing: "-0.02em",
+        margin: "0px",
+        textShadow: "0 18px 60px rgba(0,0,0,0.45)",
+        _content: line,
+        zIndex: "10",
+      }),
+    }));
+  });
   out.push(mk(ctx, "Rule", scene.id, {
     durationMs: base - 700,
     delayMs: start + 720,
@@ -544,7 +746,7 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
     ],
     style: {
       left: "50%",
-      top: "62%",
+      top: `${ruleTop.toFixed(1)}px`,
       width: "220px",
       height: "5px",
       marginLeft: "-110px",
@@ -558,8 +760,8 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
   out.push(mk(ctx, "Subhead", scene.id, {
     durationMs: base - 900,
     delayMs: start + 900,
-    keyframes: beat({ translateY: 20 * a }, { translateY: 0 }),
-    style: centeredText("68%", {
+    keyframes: beat({ translateY: 20 * a }, { translateY: 0 }, {}, { translateY: -6 * a }),
+    style: centeredText(`${subheadTop.toFixed(1)}px`, {
       color: palette.subtext,
       fontFamily: FONT_STACK,
       fontSize: "30px",
@@ -584,7 +786,7 @@ function featuresScene(ctx: Ctx, scene: FilmScene, start: number, variant: numbe
   out.push(mk(ctx, "Section Label", scene.id, {
     durationMs: base - 200,
     delayMs: start + 180,
-    keyframes: beat({ translateY: 16 * a }, { translateY: 0 }),
+    keyframes: beat({ translateY: 16 * a }, { translateY: 0 }, {}, { translateY: -4 * a }),
     style: { left: "14%", top: "26%", width: "72%", color: palette.accent, fontFamily: MONO_STACK, fontSize: "20px", fontWeight: "600", letterSpacing: "0.36em", textTransform: "uppercase", margin: "0px", _content: eyebrow, zIndex: "10" },
   }));
 
@@ -599,7 +801,7 @@ function featuresScene(ctx: Ctx, scene: FilmScene, start: number, variant: numbe
     out.push(mk(ctx, `Feature Bullet ${i + 1}`, scene.id, {
       durationMs: base - 500 - i * 120,
       delayMs: start + 420 + i * 180,
-      keyframes: beat({ translateX: -26 * a }, { translateX: 0 }),
+      keyframes: beat({ translateX: -26 * a }, { translateX: 0 }, {}, { translateX: 8 * a }),
       style: {
         left: "14%",
         top: `${top}%`,
@@ -615,7 +817,7 @@ function featuresScene(ctx: Ctx, scene: FilmScene, start: number, variant: numbe
     out.push(mk(ctx, `Feature ${i + 1}`, scene.id, {
       durationMs: base - 500 - i * 120,
       delayMs: start + 470 + i * 180,
-      keyframes: beat({ translateX: 24 * a }, { translateX: 0 }),
+      keyframes: beat({ translateX: 24 * a }, { translateX: 0 }, {}, { translateX: 8 * a }),
       style: {
         left: "17.5%",
         top: `${top - 1.2}%`,
@@ -634,11 +836,13 @@ function featuresScene(ctx: Ctx, scene: FilmScene, start: number, variant: numbe
   return out;
 }
 
-function statementScene(ctx: Ctx, scene: FilmScene, start: number, variant: number): ComponentDraft[] {
+function statementScene(ctx: Ctx, scene: FilmScene, start: number, variant: number, media?: FilmAsset): ComponentDraft[] {
   const { palette, brief } = ctx;
   const a = motionScale(brief.motion);
   const base = scene.durationMs;
   const out: ComponentDraft[] = [];
+  // Media b-roll sits under everything so the figure and label read on top.
+  if (media) out.push(...mediaBackdrop(ctx, scene, start, media));
   out.push(glowLayer(ctx, scene.id, start, base, 48, 1700));
   // Each statement scene features a different headline stat so repeated
   // statement beats don't show the same number twice.
@@ -649,7 +853,7 @@ function statementScene(ctx: Ctx, scene: FilmScene, start: number, variant: numb
   out.push(mk(ctx, "Statement Figure", scene.id, {
     durationMs: base - 500,
     delayMs: start + 360,
-    keyframes: beat({ scale: 1 - 0.08 * a, translateY: 30 * a }, { scale: 1, translateY: 0 }),
+    keyframes: beat({ scale: 1 - 0.08 * a, translateY: 30 * a }, { scale: 1, translateY: 0 }, {}, { scale: 1 + 0.035 * a }),
     style: centeredText("36%", {
       color: palette.text,
       fontFamily: FONT_STACK,
@@ -669,7 +873,7 @@ function statementScene(ctx: Ctx, scene: FilmScene, start: number, variant: numb
   out.push(mk(ctx, "Statement Label", scene.id, {
     durationMs: base - 700,
     delayMs: start + 640,
-    keyframes: beat({ translateY: 18 * a }, { translateY: 0 }),
+    keyframes: beat({ translateY: 18 * a }, { translateY: 0 }, {}, { translateY: -5 * a }),
     style: centeredText("64%", {
       color: palette.subtext,
       fontFamily: MONO_STACK,
@@ -685,43 +889,49 @@ function statementScene(ctx: Ctx, scene: FilmScene, start: number, variant: numb
   return out;
 }
 
-function outroScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[] {
+function outroScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAssets): ComponentDraft[] {
   const { palette, brief } = ctx;
   const a = motionScale(brief.motion);
   const base = scene.durationMs;
   const out: ComponentDraft[] = [];
   out.push(glowLayer(ctx, scene.id, start, base, 46, 1200));
 
-  out.push(mk(ctx, "Logo Mark", scene.id, {
-    durationMs: base - 500,
-    delayMs: start + 300,
-    easing: EASE_BACK,
-    keyframes: beatHold({ scale: 1 - 0.6 * a, rotate: -12 * a }, { scale: 1, rotate: 0 }),
-    style: {
-      left: "50%",
-      top: "36%",
-      width: "112px",
-      height: "112px",
-      marginLeft: "-56px",
-      borderRadius: "28px",
-      background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent2})`,
-      color: "#0b0e14",
-      fontFamily: FONT_STACK,
-      fontSize: "46px",
-      fontWeight: "800",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      boxShadow: `0 24px 70px ${palette.accent}55`,
-      _content: brief.mark,
-      _tag: "div",
-      zIndex: "10",
-    },
-  }));
+  // The end card carries the user's own mark when the brief supplied one; the
+  // composed monogram is the fallback so the card is never empty.
+  if (assets.logo) {
+    out.push(logoLayer(ctx, scene, start, assets.logo, { topPct: 29, width: 400, height: 118, delayMs: 300, hold: true }));
+  } else {
+    out.push(mk(ctx, "Logo Mark", scene.id, {
+      durationMs: base - 500,
+      delayMs: start + 300,
+      easing: EASE_BACK,
+      keyframes: beatHold({ scale: 1 - 0.6 * a, rotate: -12 * a }, { scale: 1, rotate: 0 }),
+      style: {
+        left: "50%",
+        top: "36%",
+        width: "112px",
+        height: "112px",
+        marginLeft: "-56px",
+        borderRadius: "28px",
+        background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent2})`,
+        color: "#0b0e14",
+        fontFamily: FONT_STACK,
+        fontSize: "46px",
+        fontWeight: "800",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: `0 24px 70px ${palette.accent}55`,
+        _content: brief.mark,
+        _tag: "div",
+        zIndex: "10",
+      },
+    }));
+  }
   out.push(mk(ctx, "Wordmark", scene.id, {
     durationMs: base - 600,
     delayMs: start + 500,
-    keyframes: beatHold({ translateY: 24 * a }, { translateY: 0 }),
+    keyframes: beatHold({ translateY: 24 * a }, { translateY: 0 }, { translateY: -6 * a }),
     style: centeredText("52%", {
       color: palette.text,
       fontFamily: FONT_STACK,
@@ -736,7 +946,7 @@ function outroScene(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft[]
   out.push(mk(ctx, "Tagline", scene.id, {
     durationMs: base - 800,
     delayMs: start + 700,
-    keyframes: beatHold({ translateY: 18 * a }, { translateY: 0 }),
+    keyframes: beatHold({ translateY: 18 * a }, { translateY: 0 }, { translateY: -5 * a }),
     style: centeredText("63%", {
       color: palette.subtext,
       fontFamily: MONO_STACK,
@@ -915,7 +1125,7 @@ function sceneSequence(count: number): FilmSceneKind[] {
 }
 
 /** Build a complete film (scenes + component drafts) from a brief. */
-export function buildFilm(brief: FilmBrief): FilmPlan {
+export function buildFilm(brief: FilmBrief, assets: FilmAssets = {}): FilmPlan {
   const palette = PALETTES[brief.style];
   const kinds = sceneSequence(brief.sceneCount);
 
@@ -943,11 +1153,19 @@ export function buildFilm(brief: FilmBrief): FilmPlan {
   let start = 0;
   let featureVariant = 0;
   let statementVariant = 0;
-  scenes.forEach((scene) => {
-    if (scene.kind === "title") drafts.push(...titleScene(ctx, scene, start));
+  let mediaCursor = 0;
+  const media = assets.media ?? [];
+  scenes.forEach((scene, i) => {
+    if (scene.kind === "title") drafts.push(...titleScene(ctx, scene, start, assets));
     else if (scene.kind === "features") drafts.push(...featuresScene(ctx, scene, start, featureVariant++));
-    else if (scene.kind === "statement") drafts.push(...statementScene(ctx, scene, start, statementVariant++));
-    else drafts.push(...outroScene(ctx, scene, start));
+    else if (scene.kind === "statement") {
+      // Media beats cycle through the supplied assets so each statement scene
+      // shows different b-roll rather than repeating the first one.
+      const asset = media.length ? media[mediaCursor++ % media.length] : undefined;
+      drafts.push(...statementScene(ctx, scene, start, statementVariant++, asset));
+    } else drafts.push(...outroScene(ctx, scene, start, assets));
+    // Every boundary after the opening reads as a cut, not a cross-fade.
+    if (i > 0) drafts.push(cutFlash(ctx, scene, start));
     start += scene.durationMs;
   });
 

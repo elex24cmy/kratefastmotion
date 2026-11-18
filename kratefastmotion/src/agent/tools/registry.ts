@@ -19,6 +19,7 @@ import { timelineExecutors } from "./timelineTools.js";
 import { paintKeyingTransitionExecutors } from "./paintKeyingTransitionTools.js";
 import { generatorExecutors } from "./generatorTools.js";
 import { filmExecutors } from "./filmTools.js";
+import { assetExecutors } from "./assetTools.js";
 
 export interface ToolContext {
   projectId: string;
@@ -58,6 +59,7 @@ const EXECUTORS: Partial<Record<ToolName, ToolExecutor>> = {
   ...paintKeyingTransitionExecutors,
   ...generatorExecutors,
   ...filmExecutors,
+  ...assetExecutors,
 };
 
 // Usage counters for the analytics endpoint — tracks per-tool calls,

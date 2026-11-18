@@ -2,7 +2,7 @@ import type { MotionComponent, Scene } from "@kratefastmotion/shared";
 import { createId, now } from "../utils/id.js";
 import { createComponent, deleteComponent, listComponents } from "../db/repositories/components.js";
 import { getProject, updateProject } from "../db/repositories/projects.js";
-import { analyzeBrief, buildFilm, STAGE_HEIGHT, STAGE_WIDTH, type FilmPlan } from "../motion/filmDirector.js";
+import { analyzeBrief, buildFilm, STAGE_HEIGHT, STAGE_WIDTH, type FilmAssets, type FilmPlan } from "../motion/filmDirector.js";
 import { logger } from "../utils/logger.js";
 
 /**
@@ -21,6 +21,8 @@ export interface ComposeFilmOptions {
   brand?: string;
   /** Extra art-direction hints appended to the brief (e.g. style keywords). */
   hints?: string;
+  /** Uploaded media the film should feature (logo in the title/end card, b-roll). */
+  assets?: FilmAssets;
 }
 
 export interface ComposeFilmResult {
@@ -63,7 +65,7 @@ export function composeFilm(
     brief.mark = markFor(opts.title);
   }
 
-  const plan = buildFilm(brief);
+  const plan = buildFilm(brief, opts.assets);
   const ts = now();
 
   if (replace) {

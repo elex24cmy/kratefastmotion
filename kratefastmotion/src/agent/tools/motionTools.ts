@@ -1,6 +1,7 @@
 import type { Easing, Keyframe, MotionComponent, ToolName, TransformProperty } from "@kratefastmotion/shared";
 import { easingSpring } from "@kratefastmotion/shared";
 import { createId, now } from "../../utils/id.js";
+import { findAsset } from "../../assets/store.js";
 import {
   getComponent,
   patchComponent,
@@ -140,6 +141,24 @@ function ok(summary: string, specChanged = true, data?: unknown): ToolResult {
 }
 function fail(summary: string): ToolResult {
   return { ok: false, summary, specChanged: false };
+}
+
+/**
+ * Resolve a media source from either an explicit `src` (URL / data URI) or an
+ * `assetId` pointing into the local asset library. Keeps `add_image`,
+ * `add_video` and `add_audio` interchangeable: an AI can paste a URL, or ask
+ * `list_assets` and pass a real library id.
+ */
+function resolveMediaSrc(args: Record<string, unknown>): { src: string; assetName?: string } | { error: string } {
+  const rawSrc = args.src != null ? String(args.src).trim() : "";
+  if (rawSrc) return { src: rawSrc };
+
+  const ref = args.assetId != null ? String(args.assetId).trim() : "";
+  if (!ref) return { error: "provide either src (URL or data URI) or assetId (see list_assets)" };
+
+  const asset = findAsset(ref);
+  if (!asset) return { error: `no asset in the library matches "${ref}" — call list_assets to see what is available` };
+  return { src: asset.url, assetName: asset.name };
 }
 
 /** Apply alpha opacity to a hex color, returning an rgba() string. Accepts
@@ -505,8 +524,18 @@ export const motionExecutors: Partial<Record<ToolName, Executor>> = {
     const sceneId = args.sceneId ? String(args.sceneId) : null;
     const ts = now();
     const d = draft(name, { selector, sceneId });
+    // A text layer created in one call: `text` sets the rendered copy and
+    // `style` layers any extra CSS on top of the draft defaults.
+    const extraStyle: Record<string, string | number> = {};
+    if (typeof args.text === "string") extraStyle._content = args.text;
+    if (args.style && typeof args.style === "object") {
+      for (const [k, v] of Object.entries(args.style as Record<string, unknown>)) {
+        if (typeof v === "string" || typeof v === "number") extraStyle[k] = v;
+      }
+    }
     const component: MotionComponent = {
       ...d,
+      style: Object.keys(extraStyle).length ? { ...d.style, ...extraStyle } : d.style,
       id: createId("c_"),
       projectId: ctx.projectId,
       templateId: null,
@@ -514,7 +543,8 @@ export const motionExecutors: Partial<Record<ToolName, Executor>> = {
       updatedAt: ts,
     };
     createComponent(component);
-    return ok(`added layer "${name}" (${component.id})`, true, { componentId: component.id });
+    const detail = typeof args.text === "string" ? ` text=${JSON.stringify(String(args.text).slice(0, 40))}` : "";
+    return ok(`added layer "${name}" (${component.id})${detail}`, true, { componentId: component.id });
   },
 
   remove_component: (args, ctx) => {
@@ -1401,7 +1431,12 @@ export const motionExecutors: Partial<Record<ToolName, Executor>> = {
       style.display = "flex";
       style.alignItems = "center";
       style.justifyContent = "center";
-      (style as Record<string, unknown>)._content = "Text";
+      (style as Record<string, unknown>)._content = args.text != null ? String(args.text) : "Text";
+    }
+    if (args.style && typeof args.style === "object") {
+      for (const [k, v] of Object.entries(args.style as Record<string, unknown>)) {
+        if (typeof v === "string" || typeof v === "number") style[k] = v;
+      }
     }
     const all = listComponents(ctx.projectId);
     const maxOrder = all.reduce((max, c) => Math.max(max, c.orderIndex), -1);
@@ -1432,8 +1467,10 @@ export const motionExecutors: Partial<Record<ToolName, Executor>> = {
   },
 
   add_image: (args, ctx) => {
-    const src = String(args.src);
-    const name = args.name ? String(args.name) : "Image";
+    const resolved = resolveMediaSrc(args);
+    if ("error" in resolved) return fail(resolved.error);
+    const src = resolved.src;
+    const name = args.name ? String(args.name) : resolved.assetName ?? "Image";
     const x = args.x != null ? Number(args.x) : 40;
     const y = args.y != null ? Number(args.y) : 40;
     const w = args.width != null ? Number(args.width) : 320;
@@ -1483,8 +1520,10 @@ export const motionExecutors: Partial<Record<ToolName, Executor>> = {
   },
 
   add_video: (args, ctx) => {
-    const src = String(args.src);
-    const name = args.name ? String(args.name) : "Video";
+    const resolved = resolveMediaSrc(args);
+    if ("error" in resolved) return fail(resolved.error);
+    const src = resolved.src;
+    const name = args.name ? String(args.name) : resolved.assetName ?? "Video";
     const x = args.x != null ? Number(args.x) : 40;
     const y = args.y != null ? Number(args.y) : 40;
     const w = args.width != null ? Number(args.width) : 480;
@@ -1536,8 +1575,10 @@ export const motionExecutors: Partial<Record<ToolName, Executor>> = {
   },
 
   add_audio: (args, ctx) => {
-    const src = String(args.src);
-    const name = args.name ? String(args.name) : "Audio";
+    const resolved = resolveMediaSrc(args);
+    if ("error" in resolved) return fail(resolved.error);
+    const src = resolved.src;
+    const name = args.name ? String(args.name) : resolved.assetName ?? "Audio";
     const delayMs = args.delayMs != null ? Number(args.delayMs) : 0;
     const loop = Boolean(args.loop);
     const muted = Boolean(args.muted);
