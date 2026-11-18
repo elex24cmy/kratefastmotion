@@ -175,6 +175,276 @@ export declare const CheckLayoutInput: z.ZodObject<{
     sceneId?: string | undefined;
     pad?: number | undefined;
 }>;
+/** Mirrors `EFFECT_KINDS` in the motion package; kept literal so the shared
+ *  package stays free of motion imports. */
+export declare const EffectKindSchema: z.ZodEnum<["film_grain", "vignette", "grade", "bloom", "light_sweep", "scanlines", "letterbox", "chromatic", "glitch", "light_leak", "flash"]>;
+export declare const GradeToneSchema: z.ZodEnum<["teal-orange", "warm", "cool", "noir", "vibrant"]>;
+export declare const ApplyEffectInput: z.ZodObject<{
+    projectId: z.ZodString;
+    effect: z.ZodEnum<["film_grain", "vignette", "grade", "bloom", "light_sweep", "scanlines", "letterbox", "chromatic", "glitch", "light_leak", "flash"]>;
+    intensity: z.ZodOptional<z.ZodNumber>;
+    tone: z.ZodOptional<z.ZodEnum<["teal-orange", "warm", "cool", "noir", "vibrant"]>>;
+    durationMs: z.ZodOptional<z.ZodNumber>;
+    delayMs: z.ZodOptional<z.ZodNumber>;
+    zIndex: z.ZodOptional<z.ZodNumber>;
+    accent: z.ZodOptional<z.ZodString>;
+    name: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    projectId: string;
+    effect: "film_grain" | "vignette" | "grade" | "bloom" | "light_sweep" | "scanlines" | "letterbox" | "chromatic" | "glitch" | "light_leak" | "flash";
+    name?: string | undefined;
+    durationMs?: number | undefined;
+    delayMs?: number | undefined;
+    accent?: string | undefined;
+    tone?: "teal-orange" | "warm" | "cool" | "noir" | "vibrant" | undefined;
+    intensity?: number | undefined;
+    zIndex?: number | undefined;
+}, {
+    projectId: string;
+    effect: "film_grain" | "vignette" | "grade" | "bloom" | "light_sweep" | "scanlines" | "letterbox" | "chromatic" | "glitch" | "light_leak" | "flash";
+    name?: string | undefined;
+    durationMs?: number | undefined;
+    delayMs?: number | undefined;
+    accent?: string | undefined;
+    tone?: "teal-orange" | "warm" | "cool" | "noir" | "vibrant" | undefined;
+    intensity?: number | undefined;
+    zIndex?: number | undefined;
+}>;
+/** Mirrors the art-direction styles in the motion package; kept literal so the
+ *  shared package stays free of motion imports. */
+export declare const FilmStyleSchema: z.ZodEnum<["cinematic", "tech", "playful", "calm", "energetic", "default"]>;
+export declare const SocialOrientationSchema: z.ZodEnum<["vertical", "portrait", "square", "landscape"]>;
+export declare const AddCaptionsInput: z.ZodObject<{
+    projectId: z.ZodString;
+    transcript: z.ZodString;
+    wordsPerPage: z.ZodOptional<z.ZodNumber>;
+    bandY: z.ZodOptional<z.ZodNumber>;
+    fontSize: z.ZodOptional<z.ZodNumber>;
+    startMs: z.ZodOptional<z.ZodNumber>;
+    endMs: z.ZodOptional<z.ZodNumber>;
+    totalDurationMs: z.ZodOptional<z.ZodNumber>;
+    scrim: z.ZodOptional<z.ZodBoolean>;
+    accent: z.ZodOptional<z.ZodString>;
+    zIndex: z.ZodOptional<z.ZodNumber>;
+    sceneId: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    projectId: string;
+    transcript: string;
+    fontSize?: number | undefined;
+    sceneId?: string | undefined;
+    totalDurationMs?: number | undefined;
+    accent?: string | undefined;
+    zIndex?: number | undefined;
+    wordsPerPage?: number | undefined;
+    bandY?: number | undefined;
+    startMs?: number | undefined;
+    endMs?: number | undefined;
+    scrim?: boolean | undefined;
+}, {
+    projectId: string;
+    transcript: string;
+    fontSize?: number | undefined;
+    sceneId?: string | undefined;
+    totalDurationMs?: number | undefined;
+    accent?: string | undefined;
+    zIndex?: number | undefined;
+    wordsPerPage?: number | undefined;
+    bandY?: number | undefined;
+    startMs?: number | undefined;
+    endMs?: number | undefined;
+    scrim?: boolean | undefined;
+}>;
+export declare const AddKeywordPopInput: z.ZodObject<{
+    projectId: z.ZodString;
+    transcript: z.ZodString;
+    words: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    count: z.ZodOptional<z.ZodNumber>;
+    bandY: z.ZodOptional<z.ZodNumber>;
+    fontSize: z.ZodOptional<z.ZodNumber>;
+    accent: z.ZodOptional<z.ZodString>;
+    zIndex: z.ZodOptional<z.ZodNumber>;
+    sceneId: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    projectId: string;
+    transcript: string;
+    fontSize?: number | undefined;
+    sceneId?: string | undefined;
+    count?: number | undefined;
+    accent?: string | undefined;
+    zIndex?: number | undefined;
+    bandY?: number | undefined;
+    words?: string[] | undefined;
+}, {
+    projectId: string;
+    transcript: string;
+    fontSize?: number | undefined;
+    sceneId?: string | undefined;
+    count?: number | undefined;
+    accent?: string | undefined;
+    zIndex?: number | undefined;
+    bandY?: number | undefined;
+    words?: string[] | undefined;
+}>;
+export declare const AddCutawayInput: z.ZodObject<{
+    projectId: z.ZodString;
+    src: z.ZodOptional<z.ZodString>;
+    assetId: z.ZodOptional<z.ZodString>;
+    startMs: z.ZodNumber;
+    durationMs: z.ZodOptional<z.ZodNumber>;
+    inSeconds: z.ZodOptional<z.ZodNumber>;
+    fit: z.ZodOptional<z.ZodEnum<["cover", "contain"]>>;
+    muted: z.ZodOptional<z.ZodBoolean>;
+    sceneId: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    projectId: string;
+    startMs: number;
+    sceneId?: string | undefined;
+    durationMs?: number | undefined;
+    muted?: boolean | undefined;
+    src?: string | undefined;
+    assetId?: string | undefined;
+    inSeconds?: number | undefined;
+    fit?: "cover" | "contain" | undefined;
+}, {
+    projectId: string;
+    startMs: number;
+    sceneId?: string | undefined;
+    durationMs?: number | undefined;
+    muted?: boolean | undefined;
+    src?: string | undefined;
+    assetId?: string | undefined;
+    inSeconds?: number | undefined;
+    fit?: "cover" | "contain" | undefined;
+}>;
+export declare const AddBeatCardInput: z.ZodObject<{
+    projectId: z.ZodString;
+    text: z.ZodString;
+    kicker: z.ZodOptional<z.ZodString>;
+    startMs: z.ZodNumber;
+    durationMs: z.ZodOptional<z.ZodNumber>;
+    accent: z.ZodOptional<z.ZodString>;
+    sceneId: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    projectId: string;
+    text: string;
+    startMs: number;
+    sceneId?: string | undefined;
+    durationMs?: number | undefined;
+    accent?: string | undefined;
+    kicker?: string | undefined;
+}, {
+    projectId: string;
+    text: string;
+    startMs: number;
+    sceneId?: string | undefined;
+    durationMs?: number | undefined;
+    accent?: string | undefined;
+    kicker?: string | undefined;
+}>;
+export declare const AddCtaCardInput: z.ZodObject<{
+    projectId: z.ZodString;
+    cta: z.ZodOptional<z.ZodString>;
+    keyword: z.ZodOptional<z.ZodString>;
+    brand: z.ZodOptional<z.ZodString>;
+    startMs: z.ZodOptional<z.ZodNumber>;
+    totalDurationMs: z.ZodOptional<z.ZodNumber>;
+    durationMs: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    projectId: string;
+    durationMs?: number | undefined;
+    totalDurationMs?: number | undefined;
+    startMs?: number | undefined;
+    cta?: string | undefined;
+    keyword?: string | undefined;
+    brand?: string | undefined;
+}, {
+    projectId: string;
+    durationMs?: number | undefined;
+    totalDurationMs?: number | undefined;
+    startMs?: number | undefined;
+    cta?: string | undefined;
+    keyword?: string | undefined;
+    brand?: string | undefined;
+}>;
+export declare const EditTalkingHeadInput: z.ZodObject<{
+    projectId: z.ZodString;
+    videoAssetId: z.ZodOptional<z.ZodString>;
+    videoSrc: z.ZodOptional<z.ZodString>;
+    videoInSeconds: z.ZodOptional<z.ZodNumber>;
+    transcript: z.ZodString;
+    durationSeconds: z.ZodOptional<z.ZodNumber>;
+    totalDurationMs: z.ZodOptional<z.ZodNumber>;
+    cutawayAssetIds: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    musicAssetId: z.ZodOptional<z.ZodString>;
+    musicVolume: z.ZodOptional<z.ZodNumber>;
+    orientation: z.ZodOptional<z.ZodEnum<["vertical", "portrait", "square", "landscape"]>>;
+    artboardWidth: z.ZodOptional<z.ZodNumber>;
+    artboardHeight: z.ZodOptional<z.ZodNumber>;
+    wordsPerPage: z.ZodOptional<z.ZodNumber>;
+    keywords: z.ZodOptional<z.ZodUnion<[z.ZodNumber, z.ZodArray<z.ZodString, "many">]>>;
+    beatCards: z.ZodOptional<z.ZodNumber>;
+    keyword: z.ZodOptional<z.ZodString>;
+    cta: z.ZodOptional<z.ZodString>;
+    title: z.ZodOptional<z.ZodString>;
+    brand: z.ZodOptional<z.ZodString>;
+    style: z.ZodOptional<z.ZodEnum<["cinematic", "tech", "playful", "calm", "energetic", "default"]>>;
+    prompt: z.ZodOptional<z.ZodString>;
+    cutawayEveryMs: z.ZodOptional<z.ZodNumber>;
+    cutawayDurationMs: z.ZodOptional<z.ZodNumber>;
+    punchMs: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    projectId: string;
+    transcript: string;
+    style?: "default" | "cinematic" | "tech" | "playful" | "calm" | "energetic" | undefined;
+    totalDurationMs?: number | undefined;
+    prompt?: string | undefined;
+    title?: string | undefined;
+    wordsPerPage?: number | undefined;
+    cta?: string | undefined;
+    keyword?: string | undefined;
+    brand?: string | undefined;
+    videoAssetId?: string | undefined;
+    videoSrc?: string | undefined;
+    videoInSeconds?: number | undefined;
+    durationSeconds?: number | undefined;
+    cutawayAssetIds?: string[] | undefined;
+    musicAssetId?: string | undefined;
+    musicVolume?: number | undefined;
+    orientation?: "vertical" | "portrait" | "square" | "landscape" | undefined;
+    artboardWidth?: number | undefined;
+    artboardHeight?: number | undefined;
+    keywords?: number | string[] | undefined;
+    beatCards?: number | undefined;
+    cutawayEveryMs?: number | undefined;
+    cutawayDurationMs?: number | undefined;
+    punchMs?: number | undefined;
+}, {
+    projectId: string;
+    transcript: string;
+    style?: "default" | "cinematic" | "tech" | "playful" | "calm" | "energetic" | undefined;
+    totalDurationMs?: number | undefined;
+    prompt?: string | undefined;
+    title?: string | undefined;
+    wordsPerPage?: number | undefined;
+    cta?: string | undefined;
+    keyword?: string | undefined;
+    brand?: string | undefined;
+    videoAssetId?: string | undefined;
+    videoSrc?: string | undefined;
+    videoInSeconds?: number | undefined;
+    durationSeconds?: number | undefined;
+    cutawayAssetIds?: string[] | undefined;
+    musicAssetId?: string | undefined;
+    musicVolume?: number | undefined;
+    orientation?: "vertical" | "portrait" | "square" | "landscape" | undefined;
+    artboardWidth?: number | undefined;
+    artboardHeight?: number | undefined;
+    keywords?: number | string[] | undefined;
+    beatCards?: number | undefined;
+    cutawayEveryMs?: number | undefined;
+    cutawayDurationMs?: number | undefined;
+    punchMs?: number | undefined;
+}>;
 export declare const SetEasingInput: z.ZodObject<{
     projectId: z.ZodString;
     componentId: z.ZodString;
@@ -823,8 +1093,8 @@ export declare const StaggerComponentsInput: z.ZodObject<{
 }, {
     projectId: string;
     direction?: "reverse" | "center" | "forward" | undefined;
-    stepMs?: number | undefined;
     startMs?: number | undefined;
+    stepMs?: number | undefined;
 }>;
 export declare const MatchTemplateInput: z.ZodObject<{
     projectId: z.ZodString;
@@ -1260,20 +1530,20 @@ export declare const SetCanvasViewInput: z.ZodObject<{
     fit: z.ZodOptional<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
     projectId: string;
+    fit?: boolean | undefined;
     pan?: {
         x: number;
         y: number;
     } | undefined;
     zoom?: number | undefined;
-    fit?: boolean | undefined;
 }, {
     projectId: string;
+    fit?: boolean | undefined;
     pan?: {
         x: number;
         y: number;
     } | undefined;
     zoom?: number | undefined;
-    fit?: boolean | undefined;
 }>;
 export declare const LockLayerInput: z.ZodObject<{
     projectId: z.ZodString;
@@ -1437,21 +1707,21 @@ export declare const AddImageInput: z.ZodObject<{
     width?: number | undefined;
     height?: number | undefined;
     name?: string | undefined;
-    x?: number | undefined;
-    y?: number | undefined;
-    fit?: "fill" | "cover" | "contain" | undefined;
     src?: string | undefined;
     assetId?: string | undefined;
+    fit?: "fill" | "cover" | "contain" | undefined;
+    x?: number | undefined;
+    y?: number | undefined;
 }, {
     projectId: string;
     width?: number | undefined;
     height?: number | undefined;
     name?: string | undefined;
-    x?: number | undefined;
-    y?: number | undefined;
-    fit?: "fill" | "cover" | "contain" | undefined;
     src?: string | undefined;
     assetId?: string | undefined;
+    fit?: "fill" | "cover" | "contain" | undefined;
+    x?: number | undefined;
+    y?: number | undefined;
 }>;
 export declare const AddVideoInput: z.ZodObject<{
     projectId: z.ZodString;
@@ -1473,10 +1743,10 @@ export declare const AddVideoInput: z.ZodObject<{
     name?: string | undefined;
     delayMs?: number | undefined;
     muted?: boolean | undefined;
-    x?: number | undefined;
-    y?: number | undefined;
     src?: string | undefined;
     assetId?: string | undefined;
+    x?: number | undefined;
+    y?: number | undefined;
     loop?: boolean | undefined;
     autoplay?: boolean | undefined;
 }, {
@@ -1486,10 +1756,10 @@ export declare const AddVideoInput: z.ZodObject<{
     name?: string | undefined;
     delayMs?: number | undefined;
     muted?: boolean | undefined;
-    x?: number | undefined;
-    y?: number | undefined;
     src?: string | undefined;
     assetId?: string | undefined;
+    x?: number | undefined;
+    y?: number | undefined;
     loop?: boolean | undefined;
     autoplay?: boolean | undefined;
 }>;
@@ -1591,13 +1861,13 @@ export declare const AddSceneTransitionInput: z.ZodObject<{
     delayMs: z.ZodOptional<z.ZodNumber>;
     color: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    type: "dissolve" | "wipe-left" | "wipe-right" | "wipe-up" | "wipe-down" | "slide-left" | "slide-right" | "zoom-in" | "zoom-out" | "flash";
+    type: "flash" | "dissolve" | "wipe-left" | "wipe-right" | "wipe-up" | "wipe-down" | "slide-left" | "slide-right" | "zoom-in" | "zoom-out";
     projectId: string;
     color?: string | undefined;
     durationMs?: number | undefined;
     delayMs?: number | undefined;
 }, {
-    type: "dissolve" | "wipe-left" | "wipe-right" | "wipe-up" | "wipe-down" | "slide-left" | "slide-right" | "zoom-in" | "zoom-out" | "flash";
+    type: "flash" | "dissolve" | "wipe-left" | "wipe-right" | "wipe-up" | "wipe-down" | "slide-left" | "slide-right" | "zoom-in" | "zoom-out";
     projectId: string;
     color?: string | undefined;
     durationMs?: number | undefined;
@@ -2301,14 +2571,14 @@ export declare const EnableMotionBlurInput: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     projectId: string;
     componentId: string;
-    enabled: boolean;
     intensity: number;
+    enabled: boolean;
     shutterAngle: number;
 }, {
     projectId: string;
     componentId: string;
-    enabled?: boolean | undefined;
     intensity?: number | undefined;
+    enabled?: boolean | undefined;
     shutterAngle?: number | undefined;
 }>;
 export declare const AddNullObjectInput: z.ZodObject<{
@@ -3790,16 +4060,16 @@ export declare const ApplyGlowInput: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     projectId: string;
     componentId: string;
-    threshold: number;
     intensity: number;
+    threshold: number;
     radius: number;
     color?: string | undefined;
 }, {
     projectId: string;
     componentId: string;
     color?: string | undefined;
-    threshold?: number | undefined;
     intensity?: number | undefined;
+    threshold?: number | undefined;
     radius?: number | undefined;
 }>;
 export declare const ApplyMosaicInput: z.ZodObject<{
@@ -4038,8 +4308,8 @@ export declare const SetRangeSelectorInput: z.ZodObject<{
     mode: "add" | "subtract" | "intersect" | "min" | "max";
     start: number;
     end: number;
-    unit: "characters" | "words" | "lines";
-    basedOn: "all" | "characters" | "words" | "lines";
+    unit: "words" | "characters" | "lines";
+    basedOn: "words" | "all" | "characters" | "lines";
 }, {
     projectId: string;
     componentId: string;
@@ -4048,8 +4318,8 @@ export declare const SetRangeSelectorInput: z.ZodObject<{
     mode?: "add" | "subtract" | "intersect" | "min" | "max" | undefined;
     start?: number | undefined;
     end?: number | undefined;
-    unit?: "characters" | "words" | "lines" | undefined;
-    basedOn?: "all" | "characters" | "words" | "lines" | undefined;
+    unit?: "words" | "characters" | "lines" | undefined;
+    basedOn?: "words" | "all" | "characters" | "lines" | undefined;
 }>;
 export declare const SetTextWigglerInput: z.ZodObject<{
     projectId: z.ZodString;
@@ -4764,15 +5034,15 @@ export declare const CameraShakeProceduralInput: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     projectId: string;
     componentId: string;
-    rotation: boolean;
     intensity: number;
+    rotation: boolean;
     frequency: number;
     seed: number;
 }, {
     projectId: string;
     componentId: string;
-    rotation?: boolean | undefined;
     intensity?: number | undefined;
+    rotation?: boolean | undefined;
     frequency?: number | undefined;
     seed?: number | undefined;
 }>;
@@ -5070,8 +5340,8 @@ export declare const PaintAnimatorInput: z.ZodObject<{
     projectId: string;
     durationMs: number;
     componentId: string;
-    mode: "reveal" | "write-on" | "grow-from-start" | "grow-from-end";
     startMs: number;
+    mode: "reveal" | "write-on" | "grow-from-start" | "grow-from-end";
     endValue: number;
     strokeId?: string | undefined;
 }, {
@@ -5079,8 +5349,8 @@ export declare const PaintAnimatorInput: z.ZodObject<{
     componentId: string;
     easing?: "linear" | "ease" | "ease-in" | "ease-out" | undefined;
     durationMs?: number | undefined;
-    mode?: "reveal" | "write-on" | "grow-from-start" | "grow-from-end" | undefined;
     startMs?: number | undefined;
+    mode?: "reveal" | "write-on" | "grow-from-start" | "grow-from-end" | undefined;
     strokeId?: string | undefined;
     endValue?: number | undefined;
 }>;
@@ -6215,7 +6485,7 @@ export declare const SetMotionProfileInput: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     projectId: string;
     componentId: string;
-    role?: "background" | "data" | "hero" | "supporting" | "cta" | "decorative" | "navigation" | undefined;
+    role?: "cta" | "background" | "data" | "hero" | "supporting" | "decorative" | "navigation" | undefined;
     temperament?: "playful" | "calm" | "dramatic" | "urgent" | "bold" | "subtle" | "precise" | "friendly" | undefined;
     interactionStyle?: "passive" | "reactive" | "interactive" | undefined;
     visualWeight?: number | undefined;
@@ -6223,7 +6493,7 @@ export declare const SetMotionProfileInput: z.ZodObject<{
 }, {
     projectId: string;
     componentId: string;
-    role?: "background" | "data" | "hero" | "supporting" | "cta" | "decorative" | "navigation" | undefined;
+    role?: "cta" | "background" | "data" | "hero" | "supporting" | "decorative" | "navigation" | undefined;
     temperament?: "playful" | "calm" | "dramatic" | "urgent" | "bold" | "subtle" | "precise" | "friendly" | undefined;
     interactionStyle?: "passive" | "reactive" | "interactive" | undefined;
     visualWeight?: number | undefined;
@@ -6808,7 +7078,7 @@ export declare const SynthesizeWaveformInput: z.ZodObject<{
     amplitude: number;
     phase: number;
     loopCount: number | "infinite";
-    waveform: "triangle" | "sine" | "square" | "sawtooth" | "noise" | "pulse";
+    waveform: "square" | "triangle" | "sine" | "sawtooth" | "noise" | "pulse";
     keyframeCount: number;
     componentName?: string | undefined;
 }, {
@@ -6816,7 +7086,7 @@ export declare const SynthesizeWaveformInput: z.ZodObject<{
     property: "translateX" | "translateY" | "scale" | "scaleX" | "scaleY" | "rotate" | "opacity";
     frequency: number;
     amplitude: number;
-    waveform: "triangle" | "sine" | "square" | "sawtooth" | "noise" | "pulse";
+    waveform: "square" | "triangle" | "sine" | "sawtooth" | "noise" | "pulse";
     offset?: number | undefined;
     durationMs?: number | undefined;
     phase?: number | undefined;
@@ -7476,9 +7746,9 @@ export declare const ListNarrativeArcsInput: z.ZodOptional<z.ZodObject<{}, "stri
 export declare const ListMotionThemesInput: z.ZodObject<{
     personality: z.ZodOptional<z.ZodEnum<["precise", "organic", "playful", "dramatic", "minimal", "luxurious", "technical", "warm"]>>;
 }, "strip", z.ZodTypeAny, {
-    personality?: "playful" | "dramatic" | "minimal" | "organic" | "precise" | "luxurious" | "technical" | "warm" | undefined;
+    personality?: "playful" | "warm" | "dramatic" | "minimal" | "organic" | "precise" | "luxurious" | "technical" | undefined;
 }, {
-    personality?: "playful" | "dramatic" | "minimal" | "organic" | "precise" | "luxurious" | "technical" | "warm" | undefined;
+    personality?: "playful" | "warm" | "dramatic" | "minimal" | "organic" | "precise" | "luxurious" | "technical" | undefined;
 }>;
 export declare const ApplyMotionThemeInput: z.ZodObject<{
     projectId: z.ZodString;
@@ -7522,12 +7792,12 @@ export declare const GenerateVariantsInput: z.ZodObject<{
     projectId: string;
     count?: number | undefined;
     seed?: number | undefined;
-    strategies?: ("easing" | "direction" | "choreography" | "intensity" | "timing" | "palette")[] | undefined;
+    strategies?: ("easing" | "direction" | "intensity" | "choreography" | "timing" | "palette")[] | undefined;
 }, {
     projectId: string;
     count?: number | undefined;
     seed?: number | undefined;
-    strategies?: ("easing" | "direction" | "choreography" | "intensity" | "timing" | "palette")[] | undefined;
+    strategies?: ("easing" | "direction" | "intensity" | "choreography" | "timing" | "palette")[] | undefined;
 }>;
 export declare const EvolveMotionInput: z.ZodObject<{
     projectId: z.ZodString;
@@ -7576,9 +7846,9 @@ export declare const AnalyzeCreativeContextInput: z.ZodObject<{
 export declare const ListSemanticConceptsInput: z.ZodObject<{
     category: z.ZodOptional<z.ZodEnum<["emotion", "brand", "energy", "aesthetic"]>>;
 }, "strip", z.ZodTypeAny, {
-    category?: "emotion" | "brand" | "energy" | "aesthetic" | undefined;
+    category?: "brand" | "emotion" | "energy" | "aesthetic" | undefined;
 }, {
-    category?: "emotion" | "brand" | "energy" | "aesthetic" | undefined;
+    category?: "brand" | "emotion" | "energy" | "aesthetic" | undefined;
 }>;
 export declare const InferIntentInput: z.ZodObject<{
     description: z.ZodString;
@@ -9208,8 +9478,8 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }, {
         projectId: string;
         direction?: "reverse" | "center" | "forward" | undefined;
-        stepMs?: number | undefined;
         startMs?: number | undefined;
+        stepMs?: number | undefined;
     }>;
     readonly match_template: z.ZodObject<{
         projectId: z.ZodString;
@@ -9645,20 +9915,20 @@ export declare const TOOL_INPUT_SCHEMAS: {
         fit: z.ZodOptional<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
         projectId: string;
+        fit?: boolean | undefined;
         pan?: {
             x: number;
             y: number;
         } | undefined;
         zoom?: number | undefined;
-        fit?: boolean | undefined;
     }, {
         projectId: string;
+        fit?: boolean | undefined;
         pan?: {
             x: number;
             y: number;
         } | undefined;
         zoom?: number | undefined;
-        fit?: boolean | undefined;
     }>;
     readonly lock_layer: z.ZodObject<{
         projectId: z.ZodString;
@@ -9862,6 +10132,268 @@ export declare const TOOL_INPUT_SCHEMAS: {
         sceneId?: string | undefined;
         pad?: number | undefined;
     }>;
+    readonly apply_effect: z.ZodObject<{
+        projectId: z.ZodString;
+        effect: z.ZodEnum<["film_grain", "vignette", "grade", "bloom", "light_sweep", "scanlines", "letterbox", "chromatic", "glitch", "light_leak", "flash"]>;
+        intensity: z.ZodOptional<z.ZodNumber>;
+        tone: z.ZodOptional<z.ZodEnum<["teal-orange", "warm", "cool", "noir", "vibrant"]>>;
+        durationMs: z.ZodOptional<z.ZodNumber>;
+        delayMs: z.ZodOptional<z.ZodNumber>;
+        zIndex: z.ZodOptional<z.ZodNumber>;
+        accent: z.ZodOptional<z.ZodString>;
+        name: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        projectId: string;
+        effect: "film_grain" | "vignette" | "grade" | "bloom" | "light_sweep" | "scanlines" | "letterbox" | "chromatic" | "glitch" | "light_leak" | "flash";
+        name?: string | undefined;
+        durationMs?: number | undefined;
+        delayMs?: number | undefined;
+        accent?: string | undefined;
+        tone?: "teal-orange" | "warm" | "cool" | "noir" | "vibrant" | undefined;
+        intensity?: number | undefined;
+        zIndex?: number | undefined;
+    }, {
+        projectId: string;
+        effect: "film_grain" | "vignette" | "grade" | "bloom" | "light_sweep" | "scanlines" | "letterbox" | "chromatic" | "glitch" | "light_leak" | "flash";
+        name?: string | undefined;
+        durationMs?: number | undefined;
+        delayMs?: number | undefined;
+        accent?: string | undefined;
+        tone?: "teal-orange" | "warm" | "cool" | "noir" | "vibrant" | undefined;
+        intensity?: number | undefined;
+        zIndex?: number | undefined;
+    }>;
+    readonly add_captions: z.ZodObject<{
+        projectId: z.ZodString;
+        transcript: z.ZodString;
+        wordsPerPage: z.ZodOptional<z.ZodNumber>;
+        bandY: z.ZodOptional<z.ZodNumber>;
+        fontSize: z.ZodOptional<z.ZodNumber>;
+        startMs: z.ZodOptional<z.ZodNumber>;
+        endMs: z.ZodOptional<z.ZodNumber>;
+        totalDurationMs: z.ZodOptional<z.ZodNumber>;
+        scrim: z.ZodOptional<z.ZodBoolean>;
+        accent: z.ZodOptional<z.ZodString>;
+        zIndex: z.ZodOptional<z.ZodNumber>;
+        sceneId: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        projectId: string;
+        transcript: string;
+        fontSize?: number | undefined;
+        sceneId?: string | undefined;
+        totalDurationMs?: number | undefined;
+        accent?: string | undefined;
+        zIndex?: number | undefined;
+        wordsPerPage?: number | undefined;
+        bandY?: number | undefined;
+        startMs?: number | undefined;
+        endMs?: number | undefined;
+        scrim?: boolean | undefined;
+    }, {
+        projectId: string;
+        transcript: string;
+        fontSize?: number | undefined;
+        sceneId?: string | undefined;
+        totalDurationMs?: number | undefined;
+        accent?: string | undefined;
+        zIndex?: number | undefined;
+        wordsPerPage?: number | undefined;
+        bandY?: number | undefined;
+        startMs?: number | undefined;
+        endMs?: number | undefined;
+        scrim?: boolean | undefined;
+    }>;
+    readonly add_keyword_pop: z.ZodObject<{
+        projectId: z.ZodString;
+        transcript: z.ZodString;
+        words: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        count: z.ZodOptional<z.ZodNumber>;
+        bandY: z.ZodOptional<z.ZodNumber>;
+        fontSize: z.ZodOptional<z.ZodNumber>;
+        accent: z.ZodOptional<z.ZodString>;
+        zIndex: z.ZodOptional<z.ZodNumber>;
+        sceneId: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        projectId: string;
+        transcript: string;
+        fontSize?: number | undefined;
+        sceneId?: string | undefined;
+        count?: number | undefined;
+        accent?: string | undefined;
+        zIndex?: number | undefined;
+        bandY?: number | undefined;
+        words?: string[] | undefined;
+    }, {
+        projectId: string;
+        transcript: string;
+        fontSize?: number | undefined;
+        sceneId?: string | undefined;
+        count?: number | undefined;
+        accent?: string | undefined;
+        zIndex?: number | undefined;
+        bandY?: number | undefined;
+        words?: string[] | undefined;
+    }>;
+    readonly add_cutaway: z.ZodObject<{
+        projectId: z.ZodString;
+        src: z.ZodOptional<z.ZodString>;
+        assetId: z.ZodOptional<z.ZodString>;
+        startMs: z.ZodNumber;
+        durationMs: z.ZodOptional<z.ZodNumber>;
+        inSeconds: z.ZodOptional<z.ZodNumber>;
+        fit: z.ZodOptional<z.ZodEnum<["cover", "contain"]>>;
+        muted: z.ZodOptional<z.ZodBoolean>;
+        sceneId: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        projectId: string;
+        startMs: number;
+        sceneId?: string | undefined;
+        durationMs?: number | undefined;
+        muted?: boolean | undefined;
+        src?: string | undefined;
+        assetId?: string | undefined;
+        inSeconds?: number | undefined;
+        fit?: "cover" | "contain" | undefined;
+    }, {
+        projectId: string;
+        startMs: number;
+        sceneId?: string | undefined;
+        durationMs?: number | undefined;
+        muted?: boolean | undefined;
+        src?: string | undefined;
+        assetId?: string | undefined;
+        inSeconds?: number | undefined;
+        fit?: "cover" | "contain" | undefined;
+    }>;
+    readonly add_beat_card: z.ZodObject<{
+        projectId: z.ZodString;
+        text: z.ZodString;
+        kicker: z.ZodOptional<z.ZodString>;
+        startMs: z.ZodNumber;
+        durationMs: z.ZodOptional<z.ZodNumber>;
+        accent: z.ZodOptional<z.ZodString>;
+        sceneId: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        projectId: string;
+        text: string;
+        startMs: number;
+        sceneId?: string | undefined;
+        durationMs?: number | undefined;
+        accent?: string | undefined;
+        kicker?: string | undefined;
+    }, {
+        projectId: string;
+        text: string;
+        startMs: number;
+        sceneId?: string | undefined;
+        durationMs?: number | undefined;
+        accent?: string | undefined;
+        kicker?: string | undefined;
+    }>;
+    readonly add_cta_card: z.ZodObject<{
+        projectId: z.ZodString;
+        cta: z.ZodOptional<z.ZodString>;
+        keyword: z.ZodOptional<z.ZodString>;
+        brand: z.ZodOptional<z.ZodString>;
+        startMs: z.ZodOptional<z.ZodNumber>;
+        totalDurationMs: z.ZodOptional<z.ZodNumber>;
+        durationMs: z.ZodOptional<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        projectId: string;
+        durationMs?: number | undefined;
+        totalDurationMs?: number | undefined;
+        startMs?: number | undefined;
+        cta?: string | undefined;
+        keyword?: string | undefined;
+        brand?: string | undefined;
+    }, {
+        projectId: string;
+        durationMs?: number | undefined;
+        totalDurationMs?: number | undefined;
+        startMs?: number | undefined;
+        cta?: string | undefined;
+        keyword?: string | undefined;
+        brand?: string | undefined;
+    }>;
+    readonly edit_talking_head: z.ZodObject<{
+        projectId: z.ZodString;
+        videoAssetId: z.ZodOptional<z.ZodString>;
+        videoSrc: z.ZodOptional<z.ZodString>;
+        videoInSeconds: z.ZodOptional<z.ZodNumber>;
+        transcript: z.ZodString;
+        durationSeconds: z.ZodOptional<z.ZodNumber>;
+        totalDurationMs: z.ZodOptional<z.ZodNumber>;
+        cutawayAssetIds: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        musicAssetId: z.ZodOptional<z.ZodString>;
+        musicVolume: z.ZodOptional<z.ZodNumber>;
+        orientation: z.ZodOptional<z.ZodEnum<["vertical", "portrait", "square", "landscape"]>>;
+        artboardWidth: z.ZodOptional<z.ZodNumber>;
+        artboardHeight: z.ZodOptional<z.ZodNumber>;
+        wordsPerPage: z.ZodOptional<z.ZodNumber>;
+        keywords: z.ZodOptional<z.ZodUnion<[z.ZodNumber, z.ZodArray<z.ZodString, "many">]>>;
+        beatCards: z.ZodOptional<z.ZodNumber>;
+        keyword: z.ZodOptional<z.ZodString>;
+        cta: z.ZodOptional<z.ZodString>;
+        title: z.ZodOptional<z.ZodString>;
+        brand: z.ZodOptional<z.ZodString>;
+        style: z.ZodOptional<z.ZodEnum<["cinematic", "tech", "playful", "calm", "energetic", "default"]>>;
+        prompt: z.ZodOptional<z.ZodString>;
+        cutawayEveryMs: z.ZodOptional<z.ZodNumber>;
+        cutawayDurationMs: z.ZodOptional<z.ZodNumber>;
+        punchMs: z.ZodOptional<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        projectId: string;
+        transcript: string;
+        style?: "default" | "cinematic" | "tech" | "playful" | "calm" | "energetic" | undefined;
+        totalDurationMs?: number | undefined;
+        prompt?: string | undefined;
+        title?: string | undefined;
+        wordsPerPage?: number | undefined;
+        cta?: string | undefined;
+        keyword?: string | undefined;
+        brand?: string | undefined;
+        videoAssetId?: string | undefined;
+        videoSrc?: string | undefined;
+        videoInSeconds?: number | undefined;
+        durationSeconds?: number | undefined;
+        cutawayAssetIds?: string[] | undefined;
+        musicAssetId?: string | undefined;
+        musicVolume?: number | undefined;
+        orientation?: "vertical" | "portrait" | "square" | "landscape" | undefined;
+        artboardWidth?: number | undefined;
+        artboardHeight?: number | undefined;
+        keywords?: number | string[] | undefined;
+        beatCards?: number | undefined;
+        cutawayEveryMs?: number | undefined;
+        cutawayDurationMs?: number | undefined;
+        punchMs?: number | undefined;
+    }, {
+        projectId: string;
+        transcript: string;
+        style?: "default" | "cinematic" | "tech" | "playful" | "calm" | "energetic" | undefined;
+        totalDurationMs?: number | undefined;
+        prompt?: string | undefined;
+        title?: string | undefined;
+        wordsPerPage?: number | undefined;
+        cta?: string | undefined;
+        keyword?: string | undefined;
+        brand?: string | undefined;
+        videoAssetId?: string | undefined;
+        videoSrc?: string | undefined;
+        videoInSeconds?: number | undefined;
+        durationSeconds?: number | undefined;
+        cutawayAssetIds?: string[] | undefined;
+        musicAssetId?: string | undefined;
+        musicVolume?: number | undefined;
+        orientation?: "vertical" | "portrait" | "square" | "landscape" | undefined;
+        artboardWidth?: number | undefined;
+        artboardHeight?: number | undefined;
+        keywords?: number | string[] | undefined;
+        beatCards?: number | undefined;
+        cutawayEveryMs?: number | undefined;
+        cutawayDurationMs?: number | undefined;
+        punchMs?: number | undefined;
+    }>;
     readonly add_image: z.ZodObject<{
         projectId: z.ZodString;
         src: z.ZodOptional<z.ZodString>;
@@ -9877,21 +10409,21 @@ export declare const TOOL_INPUT_SCHEMAS: {
         width?: number | undefined;
         height?: number | undefined;
         name?: string | undefined;
-        x?: number | undefined;
-        y?: number | undefined;
-        fit?: "fill" | "cover" | "contain" | undefined;
         src?: string | undefined;
         assetId?: string | undefined;
+        fit?: "fill" | "cover" | "contain" | undefined;
+        x?: number | undefined;
+        y?: number | undefined;
     }, {
         projectId: string;
         width?: number | undefined;
         height?: number | undefined;
         name?: string | undefined;
-        x?: number | undefined;
-        y?: number | undefined;
-        fit?: "fill" | "cover" | "contain" | undefined;
         src?: string | undefined;
         assetId?: string | undefined;
+        fit?: "fill" | "cover" | "contain" | undefined;
+        x?: number | undefined;
+        y?: number | undefined;
     }>;
     readonly add_video: z.ZodObject<{
         projectId: z.ZodString;
@@ -9913,10 +10445,10 @@ export declare const TOOL_INPUT_SCHEMAS: {
         name?: string | undefined;
         delayMs?: number | undefined;
         muted?: boolean | undefined;
-        x?: number | undefined;
-        y?: number | undefined;
         src?: string | undefined;
         assetId?: string | undefined;
+        x?: number | undefined;
+        y?: number | undefined;
         loop?: boolean | undefined;
         autoplay?: boolean | undefined;
     }, {
@@ -9926,10 +10458,10 @@ export declare const TOOL_INPUT_SCHEMAS: {
         name?: string | undefined;
         delayMs?: number | undefined;
         muted?: boolean | undefined;
-        x?: number | undefined;
-        y?: number | undefined;
         src?: string | undefined;
         assetId?: string | undefined;
+        x?: number | undefined;
+        y?: number | undefined;
         loop?: boolean | undefined;
         autoplay?: boolean | undefined;
     }>;
@@ -10031,13 +10563,13 @@ export declare const TOOL_INPUT_SCHEMAS: {
         delayMs: z.ZodOptional<z.ZodNumber>;
         color: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
-        type: "dissolve" | "wipe-left" | "wipe-right" | "wipe-up" | "wipe-down" | "slide-left" | "slide-right" | "zoom-in" | "zoom-out" | "flash";
+        type: "flash" | "dissolve" | "wipe-left" | "wipe-right" | "wipe-up" | "wipe-down" | "slide-left" | "slide-right" | "zoom-in" | "zoom-out";
         projectId: string;
         color?: string | undefined;
         durationMs?: number | undefined;
         delayMs?: number | undefined;
     }, {
-        type: "dissolve" | "wipe-left" | "wipe-right" | "wipe-up" | "wipe-down" | "slide-left" | "slide-right" | "zoom-in" | "zoom-out" | "flash";
+        type: "flash" | "dissolve" | "wipe-left" | "wipe-right" | "wipe-up" | "wipe-down" | "slide-left" | "slide-right" | "zoom-in" | "zoom-out";
         projectId: string;
         color?: string | undefined;
         durationMs?: number | undefined;
@@ -10577,14 +11109,14 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }, "strip", z.ZodTypeAny, {
         projectId: string;
         componentId: string;
-        enabled: boolean;
         intensity: number;
+        enabled: boolean;
         shutterAngle: number;
     }, {
         projectId: string;
         componentId: string;
-        enabled?: boolean | undefined;
         intensity?: number | undefined;
+        enabled?: boolean | undefined;
         shutterAngle?: number | undefined;
     }>;
     readonly add_null_object: z.ZodObject<{
@@ -12066,16 +12598,16 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }, "strip", z.ZodTypeAny, {
         projectId: string;
         componentId: string;
-        threshold: number;
         intensity: number;
+        threshold: number;
         radius: number;
         color?: string | undefined;
     }, {
         projectId: string;
         componentId: string;
         color?: string | undefined;
-        threshold?: number | undefined;
         intensity?: number | undefined;
+        threshold?: number | undefined;
         radius?: number | undefined;
     }>;
     readonly apply_mosaic: z.ZodObject<{
@@ -12314,8 +12846,8 @@ export declare const TOOL_INPUT_SCHEMAS: {
         mode: "add" | "subtract" | "intersect" | "min" | "max";
         start: number;
         end: number;
-        unit: "characters" | "words" | "lines";
-        basedOn: "all" | "characters" | "words" | "lines";
+        unit: "words" | "characters" | "lines";
+        basedOn: "words" | "all" | "characters" | "lines";
     }, {
         projectId: string;
         componentId: string;
@@ -12324,8 +12856,8 @@ export declare const TOOL_INPUT_SCHEMAS: {
         mode?: "add" | "subtract" | "intersect" | "min" | "max" | undefined;
         start?: number | undefined;
         end?: number | undefined;
-        unit?: "characters" | "words" | "lines" | undefined;
-        basedOn?: "all" | "characters" | "words" | "lines" | undefined;
+        unit?: "words" | "characters" | "lines" | undefined;
+        basedOn?: "words" | "all" | "characters" | "lines" | undefined;
     }>;
     readonly set_text_wiggler: z.ZodObject<{
         projectId: z.ZodString;
@@ -13040,15 +13572,15 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }, "strip", z.ZodTypeAny, {
         projectId: string;
         componentId: string;
-        rotation: boolean;
         intensity: number;
+        rotation: boolean;
         frequency: number;
         seed: number;
     }, {
         projectId: string;
         componentId: string;
-        rotation?: boolean | undefined;
         intensity?: number | undefined;
+        rotation?: boolean | undefined;
         frequency?: number | undefined;
         seed?: number | undefined;
     }>;
@@ -13346,8 +13878,8 @@ export declare const TOOL_INPUT_SCHEMAS: {
         projectId: string;
         durationMs: number;
         componentId: string;
-        mode: "reveal" | "write-on" | "grow-from-start" | "grow-from-end";
         startMs: number;
+        mode: "reveal" | "write-on" | "grow-from-start" | "grow-from-end";
         endValue: number;
         strokeId?: string | undefined;
     }, {
@@ -13355,8 +13887,8 @@ export declare const TOOL_INPUT_SCHEMAS: {
         componentId: string;
         easing?: "linear" | "ease" | "ease-in" | "ease-out" | undefined;
         durationMs?: number | undefined;
-        mode?: "reveal" | "write-on" | "grow-from-start" | "grow-from-end" | undefined;
         startMs?: number | undefined;
+        mode?: "reveal" | "write-on" | "grow-from-start" | "grow-from-end" | undefined;
         strokeId?: string | undefined;
         endValue?: number | undefined;
     }>;
@@ -14491,7 +15023,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }, "strip", z.ZodTypeAny, {
         projectId: string;
         componentId: string;
-        role?: "background" | "data" | "hero" | "supporting" | "cta" | "decorative" | "navigation" | undefined;
+        role?: "cta" | "background" | "data" | "hero" | "supporting" | "decorative" | "navigation" | undefined;
         temperament?: "playful" | "calm" | "dramatic" | "urgent" | "bold" | "subtle" | "precise" | "friendly" | undefined;
         interactionStyle?: "passive" | "reactive" | "interactive" | undefined;
         visualWeight?: number | undefined;
@@ -14499,7 +15031,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }, {
         projectId: string;
         componentId: string;
-        role?: "background" | "data" | "hero" | "supporting" | "cta" | "decorative" | "navigation" | undefined;
+        role?: "cta" | "background" | "data" | "hero" | "supporting" | "decorative" | "navigation" | undefined;
         temperament?: "playful" | "calm" | "dramatic" | "urgent" | "bold" | "subtle" | "precise" | "friendly" | undefined;
         interactionStyle?: "passive" | "reactive" | "interactive" | undefined;
         visualWeight?: number | undefined;
@@ -15428,7 +15960,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
         amplitude: number;
         phase: number;
         loopCount: number | "infinite";
-        waveform: "triangle" | "sine" | "square" | "sawtooth" | "noise" | "pulse";
+        waveform: "square" | "triangle" | "sine" | "sawtooth" | "noise" | "pulse";
         keyframeCount: number;
         componentName?: string | undefined;
     }, {
@@ -15436,7 +15968,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
         property: "translateX" | "translateY" | "scale" | "scaleX" | "scaleY" | "rotate" | "opacity";
         frequency: number;
         amplitude: number;
-        waveform: "triangle" | "sine" | "square" | "sawtooth" | "noise" | "pulse";
+        waveform: "square" | "triangle" | "sine" | "sawtooth" | "noise" | "pulse";
         offset?: number | undefined;
         durationMs?: number | undefined;
         phase?: number | undefined;
@@ -15926,9 +16458,9 @@ export declare const TOOL_INPUT_SCHEMAS: {
     readonly list_motion_themes: z.ZodObject<{
         personality: z.ZodOptional<z.ZodEnum<["precise", "organic", "playful", "dramatic", "minimal", "luxurious", "technical", "warm"]>>;
     }, "strip", z.ZodTypeAny, {
-        personality?: "playful" | "dramatic" | "minimal" | "organic" | "precise" | "luxurious" | "technical" | "warm" | undefined;
+        personality?: "playful" | "warm" | "dramatic" | "minimal" | "organic" | "precise" | "luxurious" | "technical" | undefined;
     }, {
-        personality?: "playful" | "dramatic" | "minimal" | "organic" | "precise" | "luxurious" | "technical" | "warm" | undefined;
+        personality?: "playful" | "warm" | "dramatic" | "minimal" | "organic" | "precise" | "luxurious" | "technical" | undefined;
     }>;
     readonly apply_motion_theme: z.ZodObject<{
         projectId: z.ZodString;
@@ -15972,12 +16504,12 @@ export declare const TOOL_INPUT_SCHEMAS: {
         projectId: string;
         count?: number | undefined;
         seed?: number | undefined;
-        strategies?: ("easing" | "direction" | "choreography" | "intensity" | "timing" | "palette")[] | undefined;
+        strategies?: ("easing" | "direction" | "intensity" | "choreography" | "timing" | "palette")[] | undefined;
     }, {
         projectId: string;
         count?: number | undefined;
         seed?: number | undefined;
-        strategies?: ("easing" | "direction" | "choreography" | "intensity" | "timing" | "palette")[] | undefined;
+        strategies?: ("easing" | "direction" | "intensity" | "choreography" | "timing" | "palette")[] | undefined;
     }>;
     readonly evolve_motion: z.ZodObject<{
         projectId: z.ZodString;
@@ -16026,9 +16558,9 @@ export declare const TOOL_INPUT_SCHEMAS: {
     readonly list_semantic_concepts: z.ZodObject<{
         category: z.ZodOptional<z.ZodEnum<["emotion", "brand", "energy", "aesthetic"]>>;
     }, "strip", z.ZodTypeAny, {
-        category?: "emotion" | "brand" | "energy" | "aesthetic" | undefined;
+        category?: "brand" | "emotion" | "energy" | "aesthetic" | undefined;
     }, {
-        category?: "emotion" | "brand" | "energy" | "aesthetic" | undefined;
+        category?: "brand" | "emotion" | "energy" | "aesthetic" | undefined;
     }>;
     readonly infer_intent: z.ZodObject<{
         description: z.ZodString;

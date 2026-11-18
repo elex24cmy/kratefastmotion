@@ -1140,8 +1140,8 @@ export declare const ChatEventSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObje
     suggestedNext: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
 }, "strip", z.ZodTypeAny, {
     type: "quality_report";
-    overall: number;
     grade: string;
+    overall: number;
     pass: boolean;
     autofixCount: number;
     dimensions: {
@@ -1153,8 +1153,8 @@ export declare const ChatEventSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObje
     suggestedNext: string[];
 }, {
     type: "quality_report";
-    overall: number;
     grade: string;
+    overall: number;
     pass: boolean;
     autofixCount: number;
     dimensions: {

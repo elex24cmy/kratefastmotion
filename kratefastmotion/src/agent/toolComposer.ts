@@ -63,6 +63,18 @@ const PATTERNS: CompositionPattern[] = [
       // Only compose a whole film onto an empty canvas; when the project
       // already has layers we leave the decision to the LLM.
       if (ctx.hasComponents) return null;
+      // A talking-head edit is not a film. It needs the caller's own footage and
+      // their transcript, so it is composed by edit_talking_head — yield and let
+      // the model call it rather than inventing a film from the brief.
+      if (
+        has(
+          msg, "transcript", "subtitle", "subtitles", "caption", "captions", "talking head",
+          "talking-head", "b-roll", "broll", "cutaway", "cutaways", "srt", "vtt",
+          "my clip", "my video", "this clip", "this video", "footage", "voiceover script",
+        )
+      ) {
+        return null;
+      }
       if (!/\b(create|make|build|design|generate|produce|compose|animate|render|craft)\b/.test(msg)) {
         return null;
       }

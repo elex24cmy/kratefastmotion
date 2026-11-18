@@ -117,6 +117,124 @@ export const CheckLayoutInput = z.object({
     sceneId: z.string().optional().describe("Audit only this scene. Omit to audit every scene in the project."),
     pad: z.number().min(0).optional().describe("Required clearance in pixels between layers. Two layers closer than this are reported as collisions, so pass pad: 16 to demand breathing room rather than merely \\\"not touching\\\". Defaults to 0."),
 });
+/* ------------------------ Effect (look) tools ------------------------ */
+/** Mirrors `EFFECT_KINDS` in the motion package; kept literal so the shared
+ *  package stays free of motion imports. */
+export const EffectKindSchema = z.enum([
+    "film_grain",
+    "vignette",
+    "grade",
+    "bloom",
+    "light_sweep",
+    "scanlines",
+    "letterbox",
+    "chromatic",
+    "glitch",
+    "light_leak",
+    "flash",
+]);
+export const GradeToneSchema = z.enum(["teal-orange", "warm", "cool", "noir", "vibrant"]);
+export const ApplyEffectInput = z.object({
+    projectId: zIdField,
+    effect: EffectKindSchema.describe("Which effect to apply as a full-bleed finish over the whole film. film_grain: animated grain, an analogue texture. vignette: soft edge darkening that focuses the centre. grade: a colour-grade wash (pick a tone) so flat colour reads as lit. bloom: a glow that makes light bleed. light_sweep: a highlight sweeping across the frame on a loop. scanlines: fine CRT lines. letterbox: cinematic bars top and bottom. chromatic: red/cyan lens fringing at the edges. glitch: short bursts of RGB tearing. light_leak: a warm corner flare that breathes. flash: a quick white-to-accent flash."),
+    intensity: z.number().min(0).max(1).optional().describe("Strength 0..1. Each effect has a sensible default; raise it for a heavier look, lower it for a subtle one."),
+    tone: GradeToneSchema.optional().describe("Grade tone, only read by `grade`: teal-orange (cinematic), warm, cool, noir or vibrant. Defaults to teal-orange."),
+    durationMs: z.number().int().positive().optional().describe("How long a static look spans. Defaults to the whole film runtime. Looping effects (grain, bloom, sweep, glitch, leak) and the one-shot flash keep their own length."),
+    delayMs: z.number().int().nonnegative().optional().describe("Delay before the effect appears, in ms. Use to land a flash on a cut."),
+    zIndex: z.number().int().optional().describe("Stacking order. Defaults per effect (30..50, above content)."),
+    accent: z.string().optional().describe("Accent colour as a hex string, used by grade/flash. Defaults to the project's palette accent."),
+    name: z.string().optional().describe("Optional name prefix for the layer(s)."),
+});
+/* ------------------------ Social edit tools ------------------------ */
+/** Mirrors the art-direction styles in the motion package; kept literal so the
+ *  shared package stays free of motion imports. */
+export const FilmStyleSchema = z.enum(["cinematic", "tech", "playful", "calm", "energetic", "default"]);
+export const SocialOrientationSchema = z.enum(["vertical", "portrait", "square", "landscape"]);
+const TranscriptField = z
+    .string()
+    .min(1)
+    .describe("The spoken words. Accepts SRT, WebVTT or plain prose — timings are read from SRT/VTT when present, and plain text is paced across the clip. There is no speech-to-text, so these words have to be supplied.");
+export const AddCaptionsInput = z.object({
+    projectId: zIdField,
+    transcript: TranscriptField,
+    wordsPerPage: z.number().int().min(1).max(8).optional().describe("Words shown together per caption. 1 gives the word-by-word kinetic look; 3 is the usual phrase-at-a-time read. Defaults to 3."),
+    bandY: z.number().min(0.1).max(0.95).optional().describe("Vertical centre of the caption band as a fraction of the stage height. 0.7 sits low, over the chest — the usual social placement. Defaults to 0.7."),
+    fontSize: z.number().int().positive().optional().describe("Largest caption size in stage pixels. Longer pages scale down to fit, so a page never wraps. Defaults to 8.2% of the stage width."),
+    startMs: z.number().int().nonnegative().optional().describe("Where plain-text pacing begins. Ignored when the transcript carries timings."),
+    endMs: z.number().int().positive().optional().describe("Where plain-text pacing ends. Defaults to the project's total duration."),
+    totalDurationMs: z.number().int().positive().optional().describe("Clip length in ms, used to pace plain text when endMs is not given."),
+    scrim: z.boolean().optional().describe("Draw a soft dark band behind the words so they stay legible over any footage (default true)."),
+    accent: z.string().optional().describe("Accent colour as a hex string. Defaults to the project's palette accent."),
+    zIndex: z.number().int().optional().describe("Stacking order for the caption layers. Defaults to 40."),
+    sceneId: z.string().optional().describe("Attach the captions to one scene. Omit for timeline-level captions."),
+});
+export const AddKeywordPopInput = z.object({
+    projectId: zIdField,
+    transcript: TranscriptField,
+    words: z.array(z.string()).optional().describe("Exact words to punch up, in any order. Omit to auto-pick the punchiest words from the transcript."),
+    count: z.number().int().min(1).max(16).optional().describe("How many words to auto-pick when `words` is omitted. Defaults to 6."),
+    bandY: z.number().min(0.1).max(0.9).optional().describe("Vertical centre of the punch as a fraction of the stage height. 0.34 sits above the caption band. Defaults to 0.34."),
+    fontSize: z.number().int().positive().optional().describe("Largest punch size in stage pixels. Defaults to 15% of the stage width."),
+    accent: z.string().optional().describe("Accent colour as a hex string. Defaults to the project's palette accent."),
+    zIndex: z.number().int().optional().describe("Stacking order for the punch layers. Defaults to 60."),
+    sceneId: z.string().optional().describe("Attach the punches to one scene. Omit for timeline-level layers."),
+});
+export const AddCutawayInput = z.object({
+    projectId: zIdField,
+    src: z.string().optional().describe("Direct URL of the clip or image. Prefer assetId for anything already in the library."),
+    assetId: z.string().optional().describe("Asset id or name from list_assets — the preferred way to reference media."),
+    startMs: z.number().int().nonnegative().describe("When the cutaway lands on the timeline, in ms."),
+    durationMs: z.number().int().positive().optional().describe("How long it holds, in ms. Defaults to 1800."),
+    inSeconds: z.number().min(0).optional().describe("In-point into the source clip, in seconds — so a cutaway can use a later moment of a long clip."),
+    fit: z.enum(["cover", "contain"]).optional().describe("cover fills the frame and crops (default); contain letterboxes the whole clip."),
+    muted: z.boolean().optional().describe("Silence the cutaway's own audio so the voice track carries through (default true)."),
+    sceneId: z.string().optional().describe("Attach the cutaway to a scene. Omit to place it by time on the whole timeline."),
+});
+export const AddBeatCardInput = z.object({
+    projectId: zIdField,
+    text: z.string().min(1).describe("The phrase the card carries, set large and centred. It is upper-cased."),
+    kicker: z.string().optional().describe("Small label above the phrase, e.g. \"Part 2\". Defaults to \"A moment\"."),
+    startMs: z.number().int().nonnegative().describe("When the card appears, in ms."),
+    durationMs: z.number().int().positive().optional().describe("How long it holds, in ms. Defaults to 1600."),
+    accent: z.string().optional().describe("Accent colour as a hex string for the card gradient. Defaults to the project's palette accent."),
+    sceneId: z.string().optional().describe("Attach the card to a scene. Omit to place it by time on the whole timeline."),
+});
+export const AddCtaCardInput = z.object({
+    projectId: zIdField,
+    cta: z.string().optional().describe("The call to action, e.g. \"Comment below\". Defaults to \"Comment below\"."),
+    keyword: z.string().optional().describe("The word the viewer is asked to comment, shown in a chip. Defaults to \"YES\"."),
+    brand: z.string().optional().describe("Brand line under the chip. Defaults to the project name."),
+    startMs: z.number().int().nonnegative().optional().describe("When the end card appears, in ms. Defaults to the project's total duration."),
+    totalDurationMs: z.number().int().positive().optional().describe("Used as the start time when startMs is not given."),
+    durationMs: z.number().int().positive().optional().describe("How long the card holds, in ms. Defaults to 3200."),
+});
+export const EditTalkingHeadInput = z.object({
+    projectId: zIdField,
+    videoAssetId: z.string().optional().describe("Asset id or name of the base footage that carries the speech (see list_assets)."),
+    videoSrc: z.string().optional().describe("Direct URL of the base footage, when it is not in the asset library."),
+    videoInSeconds: z.number().min(0).optional().describe("In-point into the base footage, in seconds. Defaults to 0."),
+    transcript: TranscriptField,
+    durationSeconds: z.number().positive().optional().describe("Runtime in seconds. When omitted it is probed from the base footage, then derived from the transcript."),
+    totalDurationMs: z.number().int().positive().optional().describe("Runtime in ms, if you would rather not work in seconds."),
+    cutawayAssetIds: z.array(z.string()).optional().describe("Asset ids or names of b-roll to drop in on a rhythm. Cycled when there are fewer clips than slots."),
+    musicAssetId: z.string().optional().describe("Asset id or name of a music bed to mix under the voice."),
+    musicVolume: z.number().min(0).max(1).optional().describe("Music level, 0..1. Defaults to 0.35 so it sits under the voice."),
+    orientation: SocialOrientationSchema.optional().describe("Frame shape: vertical (1080x1920), portrait (1080x1350, the default), square (1080x1080) or landscape (1920x1080)."),
+    artboardWidth: z.number().int().positive().optional().describe("Explicit artboard width in pixels, overriding orientation."),
+    artboardHeight: z.number().int().positive().optional().describe("Explicit artboard height in pixels, overriding orientation."),
+    wordsPerPage: z.number().int().min(1).max(8).optional().describe("Words per caption page. Defaults to 3."),
+    keywords: z.union([z.number().int().min(0).max(16), z.array(z.string())]).optional().describe("How many emphasis words to punch up, or the exact words to use."),
+    beatCards: z.number().int().min(0).max(8).optional().describe("Colour cards to insert in the longest pauses. Defaults to 3 for a long transcript, 1 for a short one, 0 for none."),
+    keyword: z.string().optional().describe("The word the end card asks the viewer to comment. Defaults to \"YES\"."),
+    cta: z.string().optional().describe("End-card call to action. Defaults to \"Comment below\"."),
+    title: z.string().optional().describe("Project title."),
+    brand: z.string().optional().describe("Brand line shown on the end card."),
+    style: FilmStyleSchema.optional().describe("Art direction. Inferred from the prompt when omitted."),
+    prompt: z.string().optional().describe("Brief used to infer art direction and motion intensity, when you do not want to pass style explicitly."),
+    cutawayEveryMs: z.number().int().positive().optional().describe("How often a cutaway lands, in ms. Defaults to 5600."),
+    cutawayDurationMs: z.number().int().positive().optional().describe("How long each cutaway holds, in ms. Defaults to 1900."),
+    punchMs: z.number().int().positive().optional().describe("How often the framing punches in, in ms. Defaults to 4200."),
+});
 /* ----------------------------- Tuning tools ----------------------------- */
 export const SetEasingInput = z.object({
     projectId: zIdField,
@@ -3301,6 +3419,13 @@ export const TOOL_INPUT_SCHEMAS = {
     add_shape: AddShapeInput,
     compose_graphic: ComposeGraphicInput,
     check_layout: CheckLayoutInput,
+    apply_effect: ApplyEffectInput,
+    add_captions: AddCaptionsInput,
+    add_keyword_pop: AddKeywordPopInput,
+    add_cutaway: AddCutawayInput,
+    add_beat_card: AddBeatCardInput,
+    add_cta_card: AddCtaCardInput,
+    edit_talking_head: EditTalkingHeadInput,
     add_image: AddImageInput,
     add_video: AddVideoInput,
     add_audio: AddAudioInput,
@@ -3850,7 +3975,14 @@ export const TOOL_DESCRIPTIONS = {
     toggle_snap: "Enable or disable snap-to-grid with optional grid size (1-50px). Use when the user says 'turn on snap', 'disable snapping', or 'set grid size to 16'.",
     add_shape: "Add a shape to the canvas - rectangle, circle, text, triangle, star, pentagon, line, or arrow. Optionally set position (x/y) and size (width/height). Use when the user says 'add a rectangle', 'create a star', or 'add an arrow'.",
     compose_graphic: "Draw a designed graphic — a card, chip, ring, framing brackets, connector, progress bar, bar chart, dot field, chevrons, divider, icon tile or area chart — and let the layout engine choose exactly where it goes so it never lands on top of existing content. Pass kind plus a placement intent (an anchor like \"bottom-right\", or \"auto\"); the tool computes the pixel box on the 1920x1080 stage, moves it to a free anchor when the requested spot is taken (avoidOverlap, default true), and returns the resolved position. Prefer this over add_shape for anything decorative: add_shape drops a raw shape at fixed x/y with no collision awareness. Use it for 'add a chart', 'put a progress bar here', 'frame this', 'add an icon tile', or any graphic that has to sit correctly in a composition. Call check_layout afterwards to confirm the composition is still clean.",
-    check_layout: "Audit a project's spatial layout and report every pair of layers that overlap and every layer that falls outside the safe area, with the offending layer names and boxes. Pass sceneId to audit one scene, and pad to demand a minimum clearance between layers. Use it after adding or moving layers, and always after compose_graphic, to confirm the composition is clean before showing it to the user. Returns ok plus a one-line summary you can act on.",
+    check_layout: "Audit a project's spatial layout and report every pair of layers that overlap and every layer that falls outside the safe area, with the offending layer names and boxes. Pass sceneId to audit one scene, and pad to demand a minimum clearance between layers. The audit is time- and background-aware: layers that are never on screen together are not a collision, and full-bleed layers (base video, cutaways, colour cards, scrims) are meant to be covered. Use it after adding or moving layers, and always after compose_graphic, add_captions or edit_talking_head, to confirm the composition is clean before showing it to the user. Returns ok plus a one-line summary you can act on.",
+    apply_effect: "Add a graded, cinematic finish over the whole film — the pass that makes vector motion read as real footage. Name one effect: film_grain (analogue texture), vignette (edge darkening), grade (a colour wash; pick a tone like teal-orange, warm, cool, noir or vibrant), bloom (light bleeds), light_sweep (a highlight sweeping across on a loop), scanlines (CRT lines), letterbox (cinematic bars), chromatic (red/cyan lens fringing), glitch (RGB tearing bursts), light_leak (a warm corner flare) or flash (a quick opening flash). Every effect is full-bleed CSS, so it sits above the content, never collides, and renders identically in the preview, the editor and the export. Use intensity (0..1) to tune it. Use when the user says 'add film grain', 'grade it', 'give it a cinematic look', 'add a light leak', 'make it glow', or wants the motion to feel authentic rather than flat.",
+    add_captions: "Turn a transcript into large animated captions — the centre-frame, phrase-at-a-time captions a talking-head edit is built on. Pass the words as SRT, WebVTT or plain prose: SRT/VTT timings are used as-is, and plain text is paced across the clip. Each page is placed on a caption band with a soft scrim behind it so it stays legible over any footage, and pops in on the beat rather than dissolving. There is no speech-to-text, so the transcript must be supplied. Use when the user says 'add captions', 'subtitle this', 'put the words on screen', or gives you a transcript.",
+    add_keyword_pop: "Punch single words up, large and centred above the caption band, with an overshoot so they land like a strike. Pass `words` to choose them, or omit it to auto-pick the punchiest words from the transcript. A pop that would land while its own caption is on screen is moved just past it, so the two never overlap. Use when the user says 'emphasise these words', 'add keyword pops', or 'make the key words hit'.",
+    add_cutaway: "Cut away to b-roll: a full-bleed clip or image that takes over the frame for a time range, then returns to the base footage. Pass an assetId (see list_assets) plus startMs and durationMs; inSeconds picks the in-point inside a long clip. The cutaway is marked as a background layer, so it never counts as a collision, and its own audio is silenced by default so the voice carries through. Use when the user says 'cut to b-roll', 'show this clip at 5s', or 'cover this part with footage'.",
+    add_beat_card: "Insert a full-frame colour card carrying one short phrase — the punctuation cards a fast-cut social edit uses between sections. The card is a background (captions may sit over it) with an animated kicker and a large centred phrase on top. Use when the user says 'add a title card', 'punctuate this', 'put a colour card at 8s', or wants a section break.",
+    add_cta_card: "Add an end card: a call to action with the keyword the viewer should comment, shown in a chip, plus a brand line. Use at the end of a social edit when the user says 'add a CTA', 'ask them to comment', 'add an end card', or 'comment KEYWORD'.",
+    edit_talking_head: "Compose a complete fast-cut talking-head social edit from one call: pass the base footage (videoAssetId), the transcript, and optionally b-roll asset ids and a music bed. It lays the footage full-bleed with digital punch-ins, renders the transcript as centre-band captions, punches up the key words, cuts to b-roll on a rhythm, inserts colour cards in the longest pauses, and ends on a comment prompt — all on a portrait artboard, deterministically, with every layer marked so the layout audit stays meaningful. This is the whole genre in one call; use it whenever the user hands you a clip and its words and asks for a reel, a TikTok-style edit, a short, or 'that kind of edit'. Call check_layout afterwards to prove it is clean.",
     add_image: "Add an image component to the canvas from a URL, data URI, or assetId from list_assets. Supports object-fit (cover/contain/fill). Use when the user says 'add an image', 'insert a picture', or 'place a photo'.",
     add_video: "Add a video component to the canvas from a URL, data URI, or assetId from list_assets. Supports muted, loop, and autoplay options. Use when the user says 'add a video', 'embed a clip', or 'place a video'.",
     add_audio: "Add an audio component for background music or voiceover from a URL, data URI, or assetId from list_assets. Supports delay, loop, and muted options. Use when the user says 'add background music', 'add a voiceover', or 'play a sound'.",
