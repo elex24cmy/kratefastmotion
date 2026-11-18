@@ -16,6 +16,7 @@ import {
   styleToBox,
 } from "./layout.js";
 import { buildGraphic, type GraphicKind, type GraphicLayer } from "./filmGraphics.js";
+import { filmLookLayers } from "./filmEffects.js";
 import { beat, beatHold, EASE_BACK, EASE_IN, EASE_IN_OUT, EASE_OUT, FONT_STACK, MONO_STACK } from "./filmBase.js";
 
 /**
@@ -122,6 +123,12 @@ export interface FilmPlan {
   style: FilmStyle;
   motion: FilmMotion;
   title: string;
+  /**
+   * Design stage the plan was composed against. Defaults to 1920x1080; a social
+   * edit composes against a portrait artboard, and the preview, editor and
+   * export all read this back so the coordinate space stays consistent.
+   */
+  artboard?: { width: number; height: number };
 }
 
 /** A file from the asset library that a film can feature. */
@@ -262,7 +269,7 @@ const CALM_WORDS = [
  * nudges the result (an "energetic" brief is never calm) but never decides it,
  * so "a calm product film that feels kinetic" still reads as kinetic.
  */
-function detectMotion(prompt: string, style: FilmStyle): FilmMotion {
+export function detectMotion(prompt: string, style: FilmStyle): FilmMotion {
   const p = ` ${prompt.toLowerCase()} `;
   let kinetic = 0;
   let calm = 0;
@@ -276,7 +283,7 @@ function detectMotion(prompt: string, style: FilmStyle): FilmMotion {
 }
 
 /** Multiplier applied to every beat amplitude. Balanced (1) is the default look. */
-function motionScale(m: FilmMotion): number {
+export function motionScale(m: FilmMotion): number {
   return m === "kinetic" ? 3 : m === "calm" ? 0.55 : 1;
 }
 
@@ -483,7 +490,7 @@ function mk(
  * pixels and knows nothing about the director's ordering, so the only thing
  * that happens here is timing offset (scene start) and order allocation.
  */
-function graphics(ctx: Ctx, sceneId: string, sceneStart: number, layers: GraphicLayer[]): ComponentDraft[] {
+function graphics(ctx: Ctx, sceneId: string | null, sceneStart: number, layers: GraphicLayer[]): ComponentDraft[] {
   return layers.map((layer) =>
     mk(ctx, layer.name, sceneId, {
       durationMs: layer.durationMs,
@@ -1334,6 +1341,23 @@ export function buildFilm(brief: FilmBrief, assets: FilmAssets = {}): FilmPlan {
     start += scene.durationMs;
   });
 
+  // The finish: a colour grade, a living grain, and the style's extra passes.
+  // Appended last so the look sits above every content layer.
+  drafts.push(
+    ...graphics(
+      ctx,
+      null,
+      0,
+      filmLookLayers({
+        palette,
+        amp: motionScale(brief.motion),
+        style: brief.style,
+        totalMs: brief.totalDurationMs,
+        motion: brief.motion,
+      }),
+    ),
+  );
+
   return {
     scenes,
     drafts,
@@ -1388,9 +1412,20 @@ export function auditFilm(plan: FilmPlan): FilmAudit {
       continue;
     }
     const group = typeof d.style._group === "string" ? d.style._group : undefined;
+    // Two layers only collide if they share the stage *and* the moment. Passing
+    // each layer's window lets a caption and a keyword pop live at the same
+    // coordinates a second apart without the audit calling it a collision.
+    const background = String(d.style._background ?? "0") === "1";
     const key = d.sceneId ?? "__global__";
     const list = groups.get(key) ?? [];
-    list.push({ name: d.name, group, ...box });
+    list.push({
+      name: d.name,
+      group,
+      background,
+      startMs: d.delayMs,
+      endMs: d.delayMs + d.durationMs,
+      ...box,
+    });
     groups.set(key, list);
   }
 
