@@ -39,7 +39,7 @@ export function draft(
   > = {},
 ): ComponentDraft {
   const draft: ComponentDraft = {
-    sceneId: null,
+    sceneId: opts.sceneId ?? null,
     name,
     selector: null,
     templateId: null,

@@ -106,6 +106,75 @@ export declare const GenerateFilmInput: z.ZodObject<{
     logoAssetId?: string | undefined;
     mediaAssetIds?: string[] | undefined;
 }>;
+/** Mirrors `GRAPHIC_KINDS` in the motion package; kept literal so the shared
+ *  package stays free of motion imports (it is loaded as plain JS at runtime). */
+export declare const GraphicKindSchema: z.ZodEnum<["card", "chip", "ring", "bracket", "connector", "progress", "bars", "dots", "chevrons", "divider", "iconTile", "area"]>;
+export declare const GraphicPlacementSchema: z.ZodEnum<["auto", "top-left", "top-center", "top-right", "middle-left", "center", "middle-right", "bottom-left", "bottom-center", "bottom-right"]>;
+export declare const ComposeGraphicInput: z.ZodObject<{
+    projectId: z.ZodString;
+    kind: z.ZodEnum<["card", "chip", "ring", "bracket", "connector", "progress", "bars", "dots", "chevrons", "divider", "iconTile", "area"]>;
+    placement: z.ZodOptional<z.ZodEnum<["auto", "top-left", "top-center", "top-right", "middle-left", "center", "middle-right", "bottom-left", "bottom-center", "bottom-right"]>>;
+    width: z.ZodOptional<z.ZodNumber>;
+    height: z.ZodOptional<z.ZodNumber>;
+    label: z.ZodOptional<z.ZodString>;
+    value: z.ZodOptional<z.ZodString>;
+    amount: z.ZodOptional<z.ZodNumber>;
+    count: z.ZodOptional<z.ZodNumber>;
+    tone: z.ZodOptional<z.ZodEnum<["accent", "neutral", "muted"]>>;
+    accent: z.ZodOptional<z.ZodString>;
+    sceneId: z.ZodOptional<z.ZodString>;
+    delayMs: z.ZodOptional<z.ZodNumber>;
+    durationMs: z.ZodOptional<z.ZodNumber>;
+    avoidOverlap: z.ZodOptional<z.ZodBoolean>;
+    name: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    projectId: string;
+    kind: "card" | "chip" | "ring" | "bracket" | "connector" | "progress" | "bars" | "dots" | "chevrons" | "divider" | "iconTile" | "area";
+    value?: string | undefined;
+    width?: number | undefined;
+    height?: number | undefined;
+    name?: string | undefined;
+    sceneId?: string | undefined;
+    durationMs?: number | undefined;
+    delayMs?: number | undefined;
+    placement?: "auto" | "top-left" | "top-center" | "top-right" | "middle-left" | "center" | "middle-right" | "bottom-left" | "bottom-center" | "bottom-right" | undefined;
+    label?: string | undefined;
+    amount?: number | undefined;
+    count?: number | undefined;
+    accent?: string | undefined;
+    tone?: "accent" | "neutral" | "muted" | undefined;
+    avoidOverlap?: boolean | undefined;
+}, {
+    projectId: string;
+    kind: "card" | "chip" | "ring" | "bracket" | "connector" | "progress" | "bars" | "dots" | "chevrons" | "divider" | "iconTile" | "area";
+    value?: string | undefined;
+    width?: number | undefined;
+    height?: number | undefined;
+    name?: string | undefined;
+    sceneId?: string | undefined;
+    durationMs?: number | undefined;
+    delayMs?: number | undefined;
+    placement?: "auto" | "top-left" | "top-center" | "top-right" | "middle-left" | "center" | "middle-right" | "bottom-left" | "bottom-center" | "bottom-right" | undefined;
+    label?: string | undefined;
+    amount?: number | undefined;
+    count?: number | undefined;
+    accent?: string | undefined;
+    tone?: "accent" | "neutral" | "muted" | undefined;
+    avoidOverlap?: boolean | undefined;
+}>;
+export declare const CheckLayoutInput: z.ZodObject<{
+    projectId: z.ZodString;
+    sceneId: z.ZodOptional<z.ZodString>;
+    pad: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    projectId: string;
+    sceneId?: string | undefined;
+    pad?: number | undefined;
+}, {
+    projectId: string;
+    sceneId?: string | undefined;
+    pad?: number | undefined;
+}>;
 export declare const SetEasingInput: z.ZodObject<{
     projectId: z.ZodString;
     componentId: z.ZodString;
@@ -538,15 +607,15 @@ export declare const SetPhaseInput: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     projectId: string;
     componentId?: string | undefined;
+    label?: "downbeat" | "offbeat" | "backbeat" | "beat1" | "beat2" | "beat3" | "beat4" | undefined;
     componentIds?: string[] | undefined;
     phaseBeats?: number | undefined;
-    label?: "downbeat" | "offbeat" | "backbeat" | "beat1" | "beat2" | "beat3" | "beat4" | undefined;
 }, {
     projectId: string;
     componentId?: string | undefined;
+    label?: "downbeat" | "offbeat" | "backbeat" | "beat1" | "beat2" | "beat3" | "beat4" | undefined;
     componentIds?: string[] | undefined;
     phaseBeats?: number | undefined;
-    label?: "downbeat" | "offbeat" | "backbeat" | "beat1" | "beat2" | "beat3" | "beat4" | undefined;
 }>;
 /**
  * Align component start times to the beat grid. In "snap" mode each
@@ -748,12 +817,12 @@ export declare const StaggerComponentsInput: z.ZodObject<{
     direction: z.ZodDefault<z.ZodEnum<["forward", "reverse", "center"]>>;
 }, "strip", z.ZodTypeAny, {
     projectId: string;
-    direction: "reverse" | "forward" | "center";
+    direction: "reverse" | "center" | "forward";
     stepMs: number;
     startMs?: number | undefined;
 }, {
     projectId: string;
-    direction?: "reverse" | "forward" | "center" | undefined;
+    direction?: "reverse" | "center" | "forward" | undefined;
     stepMs?: number | undefined;
     startMs?: number | undefined;
 }>;
@@ -1403,11 +1472,11 @@ export declare const AddVideoInput: z.ZodObject<{
     height?: number | undefined;
     name?: string | undefined;
     delayMs?: number | undefined;
+    muted?: boolean | undefined;
     x?: number | undefined;
     y?: number | undefined;
     src?: string | undefined;
     assetId?: string | undefined;
-    muted?: boolean | undefined;
     loop?: boolean | undefined;
     autoplay?: boolean | undefined;
 }, {
@@ -1416,11 +1485,11 @@ export declare const AddVideoInput: z.ZodObject<{
     height?: number | undefined;
     name?: string | undefined;
     delayMs?: number | undefined;
+    muted?: boolean | undefined;
     x?: number | undefined;
     y?: number | undefined;
     src?: string | undefined;
     assetId?: string | undefined;
-    muted?: boolean | undefined;
     loop?: boolean | undefined;
     autoplay?: boolean | undefined;
 }>;
@@ -1436,17 +1505,17 @@ export declare const AddAudioInput: z.ZodObject<{
     projectId: string;
     name?: string | undefined;
     delayMs?: number | undefined;
+    muted?: boolean | undefined;
     src?: string | undefined;
     assetId?: string | undefined;
-    muted?: boolean | undefined;
     loop?: boolean | undefined;
 }, {
     projectId: string;
     name?: string | undefined;
     delayMs?: number | undefined;
+    muted?: boolean | undefined;
     src?: string | undefined;
     assetId?: string | undefined;
-    muted?: boolean | undefined;
     loop?: boolean | undefined;
 }>;
 export declare const ListAssetsInput: z.ZodObject<{
@@ -3547,7 +3616,7 @@ export declare const DataDrivenChartInput: z.ZodObject<{
     durationMs: number;
     animated: boolean;
     dataSourceName: string;
-    chartType: "line" | "scatter" | "bar" | "pie" | "area";
+    chartType: "area" | "line" | "scatter" | "bar" | "pie";
     xColumn: string;
     yColumn: string;
     color?: string | undefined;
@@ -3555,7 +3624,7 @@ export declare const DataDrivenChartInput: z.ZodObject<{
 }, {
     projectId: string;
     dataSourceName: string;
-    chartType: "line" | "scatter" | "bar" | "pie" | "area";
+    chartType: "area" | "line" | "scatter" | "bar" | "pie";
     xColumn: string;
     yColumn: string;
     color?: string | undefined;
@@ -3602,16 +3671,16 @@ export declare const ApplyRadialBlurInput: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     projectId: string;
     componentId: string;
+    amount: number;
     centerX: number;
     centerY: number;
-    amount: number;
     spin: boolean;
 }, {
     projectId: string;
     componentId: string;
+    amount?: number | undefined;
     centerX?: number | undefined;
     centerY?: number | undefined;
-    amount?: number | undefined;
     spin?: boolean | undefined;
 }>;
 export declare const ApplySharpenInput: z.ZodObject<{
@@ -3623,15 +3692,15 @@ export declare const ApplySharpenInput: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     projectId: string;
     componentId: string;
+    amount: number;
     threshold: number;
     radius: number;
-    amount: number;
 }, {
     projectId: string;
     componentId: string;
+    amount?: number | undefined;
     threshold?: number | undefined;
     radius?: number | undefined;
-    amount?: number | undefined;
 }>;
 export declare const ApplyWaveWarpInput: z.ZodObject<{
     projectId: z.ZodString;
@@ -4674,15 +4743,15 @@ export declare const VignetteInput: z.ZodObject<{
     color: string;
     projectId: string;
     componentId: string;
-    size: number;
     amount: number;
+    size: number;
     softness: number;
 }, {
     projectId: string;
     componentId: string;
     color?: string | undefined;
-    size?: number | undefined;
     amount?: number | undefined;
+    size?: number | undefined;
     softness?: number | undefined;
 }>;
 export declare const CameraShakeProceduralInput: z.ZodObject<{
@@ -5503,7 +5572,7 @@ export declare const CcJawsWipeInput: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     shape: "scale" | "line" | "radial" | "jaws" | "grid";
     projectId: string;
-    direction: "all" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
+    direction: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "all";
     transitionDurationMs: number;
     completion: number;
     pointSpacing: number;
@@ -5512,7 +5581,7 @@ export declare const CcJawsWipeInput: z.ZodObject<{
 }, {
     projectId: string;
     shape?: "scale" | "line" | "radial" | "jaws" | "grid" | undefined;
-    direction?: "all" | "top-left" | "top-right" | "bottom-left" | "bottom-right" | undefined;
+    direction?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "all" | undefined;
     componentIds?: string[] | undefined;
     transitionDurationMs?: number | undefined;
     completion?: number | undefined;
@@ -5902,15 +5971,15 @@ export declare const EmbossEffectInput: z.ZodObject<{
     height: number;
     projectId: string;
     componentId: string;
-    angle: number;
     amount: number;
+    angle: number;
     relief: number;
 }, {
     projectId: string;
     componentId: string;
     height?: number | undefined;
-    angle?: number | undefined;
     amount?: number | undefined;
+    angle?: number | undefined;
     relief?: number | undefined;
 }>;
 export declare const MotionTileInput: z.ZodObject<{
@@ -7451,13 +7520,13 @@ export declare const GenerateVariantsInput: z.ZodObject<{
     seed: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     projectId: string;
-    seed?: number | undefined;
     count?: number | undefined;
+    seed?: number | undefined;
     strategies?: ("easing" | "direction" | "choreography" | "intensity" | "timing" | "palette")[] | undefined;
 }, {
     projectId: string;
-    seed?: number | undefined;
     count?: number | undefined;
+    seed?: number | undefined;
     strategies?: ("easing" | "direction" | "choreography" | "intensity" | "timing" | "palette")[] | undefined;
 }>;
 export declare const EvolveMotionInput: z.ZodObject<{
@@ -8930,15 +8999,15 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }, "strip", z.ZodTypeAny, {
         projectId: string;
         componentId?: string | undefined;
+        label?: "downbeat" | "offbeat" | "backbeat" | "beat1" | "beat2" | "beat3" | "beat4" | undefined;
         componentIds?: string[] | undefined;
         phaseBeats?: number | undefined;
-        label?: "downbeat" | "offbeat" | "backbeat" | "beat1" | "beat2" | "beat3" | "beat4" | undefined;
     }, {
         projectId: string;
         componentId?: string | undefined;
+        label?: "downbeat" | "offbeat" | "backbeat" | "beat1" | "beat2" | "beat3" | "beat4" | undefined;
         componentIds?: string[] | undefined;
         phaseBeats?: number | undefined;
-        label?: "downbeat" | "offbeat" | "backbeat" | "beat1" | "beat2" | "beat3" | "beat4" | undefined;
     }>;
     readonly align_to_beat: z.ZodObject<{
         projectId: z.ZodString;
@@ -9133,12 +9202,12 @@ export declare const TOOL_INPUT_SCHEMAS: {
         direction: z.ZodDefault<z.ZodEnum<["forward", "reverse", "center"]>>;
     }, "strip", z.ZodTypeAny, {
         projectId: string;
-        direction: "reverse" | "forward" | "center";
+        direction: "reverse" | "center" | "forward";
         stepMs: number;
         startMs?: number | undefined;
     }, {
         projectId: string;
-        direction?: "reverse" | "forward" | "center" | undefined;
+        direction?: "reverse" | "center" | "forward" | undefined;
         stepMs?: number | undefined;
         startMs?: number | undefined;
     }>;
@@ -9728,6 +9797,71 @@ export declare const TOOL_INPUT_SCHEMAS: {
         x?: number | undefined;
         y?: number | undefined;
     }>;
+    readonly compose_graphic: z.ZodObject<{
+        projectId: z.ZodString;
+        kind: z.ZodEnum<["card", "chip", "ring", "bracket", "connector", "progress", "bars", "dots", "chevrons", "divider", "iconTile", "area"]>;
+        placement: z.ZodOptional<z.ZodEnum<["auto", "top-left", "top-center", "top-right", "middle-left", "center", "middle-right", "bottom-left", "bottom-center", "bottom-right"]>>;
+        width: z.ZodOptional<z.ZodNumber>;
+        height: z.ZodOptional<z.ZodNumber>;
+        label: z.ZodOptional<z.ZodString>;
+        value: z.ZodOptional<z.ZodString>;
+        amount: z.ZodOptional<z.ZodNumber>;
+        count: z.ZodOptional<z.ZodNumber>;
+        tone: z.ZodOptional<z.ZodEnum<["accent", "neutral", "muted"]>>;
+        accent: z.ZodOptional<z.ZodString>;
+        sceneId: z.ZodOptional<z.ZodString>;
+        delayMs: z.ZodOptional<z.ZodNumber>;
+        durationMs: z.ZodOptional<z.ZodNumber>;
+        avoidOverlap: z.ZodOptional<z.ZodBoolean>;
+        name: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        projectId: string;
+        kind: "card" | "chip" | "ring" | "bracket" | "connector" | "progress" | "bars" | "dots" | "chevrons" | "divider" | "iconTile" | "area";
+        value?: string | undefined;
+        width?: number | undefined;
+        height?: number | undefined;
+        name?: string | undefined;
+        sceneId?: string | undefined;
+        durationMs?: number | undefined;
+        delayMs?: number | undefined;
+        placement?: "auto" | "top-left" | "top-center" | "top-right" | "middle-left" | "center" | "middle-right" | "bottom-left" | "bottom-center" | "bottom-right" | undefined;
+        label?: string | undefined;
+        amount?: number | undefined;
+        count?: number | undefined;
+        accent?: string | undefined;
+        tone?: "accent" | "neutral" | "muted" | undefined;
+        avoidOverlap?: boolean | undefined;
+    }, {
+        projectId: string;
+        kind: "card" | "chip" | "ring" | "bracket" | "connector" | "progress" | "bars" | "dots" | "chevrons" | "divider" | "iconTile" | "area";
+        value?: string | undefined;
+        width?: number | undefined;
+        height?: number | undefined;
+        name?: string | undefined;
+        sceneId?: string | undefined;
+        durationMs?: number | undefined;
+        delayMs?: number | undefined;
+        placement?: "auto" | "top-left" | "top-center" | "top-right" | "middle-left" | "center" | "middle-right" | "bottom-left" | "bottom-center" | "bottom-right" | undefined;
+        label?: string | undefined;
+        amount?: number | undefined;
+        count?: number | undefined;
+        accent?: string | undefined;
+        tone?: "accent" | "neutral" | "muted" | undefined;
+        avoidOverlap?: boolean | undefined;
+    }>;
+    readonly check_layout: z.ZodObject<{
+        projectId: z.ZodString;
+        sceneId: z.ZodOptional<z.ZodString>;
+        pad: z.ZodOptional<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        projectId: string;
+        sceneId?: string | undefined;
+        pad?: number | undefined;
+    }, {
+        projectId: string;
+        sceneId?: string | undefined;
+        pad?: number | undefined;
+    }>;
     readonly add_image: z.ZodObject<{
         projectId: z.ZodString;
         src: z.ZodOptional<z.ZodString>;
@@ -9778,11 +9912,11 @@ export declare const TOOL_INPUT_SCHEMAS: {
         height?: number | undefined;
         name?: string | undefined;
         delayMs?: number | undefined;
+        muted?: boolean | undefined;
         x?: number | undefined;
         y?: number | undefined;
         src?: string | undefined;
         assetId?: string | undefined;
-        muted?: boolean | undefined;
         loop?: boolean | undefined;
         autoplay?: boolean | undefined;
     }, {
@@ -9791,11 +9925,11 @@ export declare const TOOL_INPUT_SCHEMAS: {
         height?: number | undefined;
         name?: string | undefined;
         delayMs?: number | undefined;
+        muted?: boolean | undefined;
         x?: number | undefined;
         y?: number | undefined;
         src?: string | undefined;
         assetId?: string | undefined;
-        muted?: boolean | undefined;
         loop?: boolean | undefined;
         autoplay?: boolean | undefined;
     }>;
@@ -9811,17 +9945,17 @@ export declare const TOOL_INPUT_SCHEMAS: {
         projectId: string;
         name?: string | undefined;
         delayMs?: number | undefined;
+        muted?: boolean | undefined;
         src?: string | undefined;
         assetId?: string | undefined;
-        muted?: boolean | undefined;
         loop?: boolean | undefined;
     }, {
         projectId: string;
         name?: string | undefined;
         delayMs?: number | undefined;
+        muted?: boolean | undefined;
         src?: string | undefined;
         assetId?: string | undefined;
-        muted?: boolean | undefined;
         loop?: boolean | undefined;
     }>;
     readonly list_assets: z.ZodObject<{
@@ -11758,7 +11892,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
         durationMs: number;
         animated: boolean;
         dataSourceName: string;
-        chartType: "line" | "scatter" | "bar" | "pie" | "area";
+        chartType: "area" | "line" | "scatter" | "bar" | "pie";
         xColumn: string;
         yColumn: string;
         color?: string | undefined;
@@ -11766,7 +11900,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }, {
         projectId: string;
         dataSourceName: string;
-        chartType: "line" | "scatter" | "bar" | "pie" | "area";
+        chartType: "area" | "line" | "scatter" | "bar" | "pie";
         xColumn: string;
         yColumn: string;
         color?: string | undefined;
@@ -11813,16 +11947,16 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }, "strip", z.ZodTypeAny, {
         projectId: string;
         componentId: string;
+        amount: number;
         centerX: number;
         centerY: number;
-        amount: number;
         spin: boolean;
     }, {
         projectId: string;
         componentId: string;
+        amount?: number | undefined;
         centerX?: number | undefined;
         centerY?: number | undefined;
-        amount?: number | undefined;
         spin?: boolean | undefined;
     }>;
     readonly apply_sharpen: z.ZodObject<{
@@ -11834,15 +11968,15 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }, "strip", z.ZodTypeAny, {
         projectId: string;
         componentId: string;
+        amount: number;
         threshold: number;
         radius: number;
-        amount: number;
     }, {
         projectId: string;
         componentId: string;
+        amount?: number | undefined;
         threshold?: number | undefined;
         radius?: number | undefined;
-        amount?: number | undefined;
     }>;
     readonly apply_wave_warp: z.ZodObject<{
         projectId: z.ZodString;
@@ -12885,15 +13019,15 @@ export declare const TOOL_INPUT_SCHEMAS: {
         color: string;
         projectId: string;
         componentId: string;
-        size: number;
         amount: number;
+        size: number;
         softness: number;
     }, {
         projectId: string;
         componentId: string;
         color?: string | undefined;
-        size?: number | undefined;
         amount?: number | undefined;
+        size?: number | undefined;
         softness?: number | undefined;
     }>;
     readonly camera_shake_procedural: z.ZodObject<{
@@ -13714,7 +13848,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }, "strip", z.ZodTypeAny, {
         shape: "scale" | "line" | "radial" | "jaws" | "grid";
         projectId: string;
-        direction: "all" | "top-left" | "top-right" | "bottom-left" | "bottom-right";
+        direction: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "all";
         transitionDurationMs: number;
         completion: number;
         pointSpacing: number;
@@ -13723,7 +13857,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }, {
         projectId: string;
         shape?: "scale" | "line" | "radial" | "jaws" | "grid" | undefined;
-        direction?: "all" | "top-left" | "top-right" | "bottom-left" | "bottom-right" | undefined;
+        direction?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "all" | undefined;
         componentIds?: string[] | undefined;
         transitionDurationMs?: number | undefined;
         completion?: number | undefined;
@@ -14113,15 +14247,15 @@ export declare const TOOL_INPUT_SCHEMAS: {
         height: number;
         projectId: string;
         componentId: string;
-        angle: number;
         amount: number;
+        angle: number;
         relief: number;
     }, {
         projectId: string;
         componentId: string;
         height?: number | undefined;
-        angle?: number | undefined;
         amount?: number | undefined;
+        angle?: number | undefined;
         relief?: number | undefined;
     }>;
     readonly motion_tile: z.ZodObject<{
@@ -15836,13 +15970,13 @@ export declare const TOOL_INPUT_SCHEMAS: {
         seed: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         projectId: string;
-        seed?: number | undefined;
         count?: number | undefined;
+        seed?: number | undefined;
         strategies?: ("easing" | "direction" | "choreography" | "intensity" | "timing" | "palette")[] | undefined;
     }, {
         projectId: string;
-        seed?: number | undefined;
         count?: number | undefined;
+        seed?: number | undefined;
         strategies?: ("easing" | "direction" | "choreography" | "intensity" | "timing" | "palette")[] | undefined;
     }>;
     readonly evolve_motion: z.ZodObject<{

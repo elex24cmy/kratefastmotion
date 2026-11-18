@@ -1,7 +1,7 @@
 import type { MotionSpec } from "@kratefastmotion/shared";
 import { generateSpecCss } from "./css.js";
 
-const RESERVED_STYLE_KEYS = new Set(["_content", "_tag", "_label", "_src", "_poster", "_loop", "_muted", "_autoplay", "_controls"]);
+const RESERVED_STYLE_KEYS = new Set(["_content", "_tag", "_label", "_src", "_poster", "_loop", "_muted", "_autoplay", "_controls", "_group"]);
 
 /** Style keys that indicate a component has been explicitly placed. */
 const POSITION_KEYS = ["left", "top", "right", "bottom", "inset"] as const;

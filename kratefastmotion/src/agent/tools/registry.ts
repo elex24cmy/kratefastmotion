@@ -19,6 +19,7 @@ import { timelineExecutors } from "./timelineTools.js";
 import { paintKeyingTransitionExecutors } from "./paintKeyingTransitionTools.js";
 import { generatorExecutors } from "./generatorTools.js";
 import { filmExecutors } from "./filmTools.js";
+import { graphicExecutors } from "./graphicTools.js";
 import { assetExecutors } from "./assetTools.js";
 
 export interface ToolContext {
@@ -59,6 +60,7 @@ const EXECUTORS: Partial<Record<ToolName, ToolExecutor>> = {
   ...paintKeyingTransitionExecutors,
   ...generatorExecutors,
   ...filmExecutors,
+  ...graphicExecutors,
   ...assetExecutors,
 };
 
@@ -132,6 +134,9 @@ export function getToolTaxonomySummary() {
     { name: "timeline", count: Object.keys(timelineExecutors).length },
     { name: "paintKeyingTransition", count: Object.keys(paintKeyingTransitionExecutors).length },
     { name: "generator", count: Object.keys(generatorExecutors).length },
+    { name: "film", count: Object.keys(filmExecutors).length },
+    { name: "graphic", count: Object.keys(graphicExecutors).length },
+    { name: "asset", count: Object.keys(assetExecutors).length },
   ];
   const schemaCount = Object.keys(TOOL_INPUT_SCHEMAS).length;
   const executorCount = Object.keys(EXECUTORS).length;

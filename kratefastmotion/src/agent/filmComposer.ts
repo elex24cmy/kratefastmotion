@@ -101,6 +101,11 @@ export function composeFilm(
       __stage: "1",
       __film: "1",
       __filmTitle: plan.title,
+      // Publishing the art direction lets anything added later — a graphic from
+      // `compose_graphic`, a refinement pass — draw from the same palette and
+      // beat amplitude instead of inventing its own colours.
+      __filmStyle: plan.style,
+      __filmMotion: plan.motion,
       // The film is art-directed on a 1920x1080 stage. Publishing the artboard
       // size keeps the editor canvas, the preview and the export in the same
       // coordinate space, so px-sized layers (glows, headline type) scale

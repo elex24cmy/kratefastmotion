@@ -75,6 +75,67 @@ export const GenerateFilmInput = z.object({
     .describe("Asset ids to feature as full-bleed media beats (one per id)."),
 });
 
+/* ------------------------ Graphics and layout tools ------------------------ */
+
+/** Mirrors `GRAPHIC_KINDS` in the motion package; kept literal so the shared
+ *  package stays free of motion imports (it is loaded as plain JS at runtime). */
+export const GraphicKindSchema = z.enum([
+  "card",
+  "chip",
+  "ring",
+  "bracket",
+  "connector",
+  "progress",
+  "bars",
+  "dots",
+  "chevrons",
+  "divider",
+  "iconTile",
+  "area",
+]);
+
+export const GraphicPlacementSchema = z.enum([
+  "auto",
+  "top-left",
+  "top-center",
+  "top-right",
+  "middle-left",
+  "center",
+  "middle-right",
+  "bottom-left",
+  "bottom-center",
+  "bottom-right",
+]);
+
+export const ComposeGraphicInput = z.object({
+  projectId: zIdField,
+  kind: GraphicKindSchema.describe(
+    "Which graphic to draw. card: translucent panel that groups content. chip: small labelled pill with a status dot. ring: outlined circle with a rotating accent arc. bracket: four corner brackets framing a region. connector: a line with a dot travelling along it. progress: a track and a fill that grows to a share of the width. bars: a small bar chart that grows from the baseline. dots: a grid of dots pulsing in a wave. chevrons: three chevrons pulsing in sequence. divider: a hairline with a centre node. iconTile: a rounded gradient tile with a bolt glyph. area: an area chart that wipes upward.",
+  ),
+  placement: GraphicPlacementSchema.optional().describe(
+    "Where the graphic belongs: an anchor (top-left, top-center, top-right, middle-left, center, middle-right, bottom-left, bottom-center, bottom-right), or \"auto\" to let the layout engine pick the first free anchor. Defaults to \"auto\".",
+  ),
+  width: z.number().int().positive().optional().describe("Width in stage pixels (the stage is 1920x1080). A sensible per-kind default is used when omitted."),
+  height: z.number().int().positive().optional().describe("Height in stage pixels. A sensible per-kind default is used when omitted."),
+  label: z.string().optional().describe("Short label for graphics that carry one (chip text, icon-tile caption)."),
+  value: z.string().optional().describe("Figure the graphic displays, e.g. \"82%\" or \"4K\"."),
+  amount: z.number().min(0).max(1).optional().describe("0..1 share for `progress` and `area`."),
+  count: z.number().int().min(1).max(24).optional().describe("Item count for `bars`, `dots` and `chevrons`."),
+  tone: z.enum(["accent", "neutral", "muted"]).optional().describe("Colour treatment. Defaults to accent."),
+  accent: z.string().optional().describe("Accent colour as a hex string, e.g. \"#38bdf8\". Defaults to the project's palette accent."),
+  sceneId: z.string().optional().describe("Attach the graphic to an existing scene so it appears with that beat. Omit for a standalone graphic."),
+  delayMs: z.number().int().nonnegative().optional().describe("Entrance delay in ms relative to its scene (or to 0 for a standalone graphic)."),
+  durationMs: z.number().int().positive().optional().describe("Total lifetime in ms. Defaults to the scene length, or 1400ms standalone."),
+  avoidOverlap: z.boolean().optional().describe("When the requested spot is occupied, move the graphic to a free anchor instead of stacking on top of it (default true)."),
+  name: z.string().optional().describe("Base layer name. Defaults to the graphic kind."),
+});
+
+export const CheckLayoutInput = z.object({
+  projectId: zIdField,
+  sceneId: z.string().optional().describe("Audit only this scene. Omit to audit every scene in the project."),
+  pad: z.number().min(0).optional().describe("Required clearance in pixels between layers. Two layers closer than this are reported as collisions, so pass pad: 16 to demand breathing room rather than merely \\\"not touching\\\". Defaults to 0."),
+});
+
 /* ----------------------------- Tuning tools ----------------------------- */
 export const SetEasingInput = z.object({
   projectId: zIdField,
@@ -3705,6 +3766,8 @@ export const TOOL_INPUT_SCHEMAS = {
   select_components: SelectComponentsInput,
   toggle_snap: ToggleSnapInput,
   add_shape: AddShapeInput,
+  compose_graphic: ComposeGraphicInput,
+  check_layout: CheckLayoutInput,
   add_image: AddImageInput,
   add_video: AddVideoInput,
   add_audio: AddAudioInput,
@@ -4258,7 +4321,11 @@ export const TOOL_DESCRIPTIONS: Record<ToolName, string> = {
   set_playback_range: "Set or clear the playback time range (in/out points in ms). When set, playback loops within the range. Use when the user says 'set playback range', 'trim to 500-2000ms', or 'clear range'.",
   select_components: "Select multiple components by id, optionally clearing existing selection first. Use when the user says 'select all', 'select multiple', or 'select these layers'.",
   toggle_snap: "Enable or disable snap-to-grid with optional grid size (1-50px). Use when the user says 'turn on snap', 'disable snapping', or 'set grid size to 16'.",
-  add_shape: "Add a shape to the canvas — rectangle, circle, text, triangle, star, pentagon, line, or arrow. Optionally set position (x/y) and size (width/height). Use when the user says 'add a rectangle', 'create a star', or 'add an arrow'.",
+  add_shape: "Add a shape to the canvas - rectangle, circle, text, triangle, star, pentagon, line, or arrow. Optionally set position (x/y) and size (width/height). Use when the user says 'add a rectangle', 'create a star', or 'add an arrow'.",
+  compose_graphic:
+    "Draw a designed graphic — a card, chip, ring, framing brackets, connector, progress bar, bar chart, dot field, chevrons, divider, icon tile or area chart — and let the layout engine choose exactly where it goes so it never lands on top of existing content. Pass kind plus a placement intent (an anchor like \"bottom-right\", or \"auto\"); the tool computes the pixel box on the 1920x1080 stage, moves it to a free anchor when the requested spot is taken (avoidOverlap, default true), and returns the resolved position. Prefer this over add_shape for anything decorative: add_shape drops a raw shape at fixed x/y with no collision awareness. Use it for 'add a chart', 'put a progress bar here', 'frame this', 'add an icon tile', or any graphic that has to sit correctly in a composition. Call check_layout afterwards to confirm the composition is still clean.",
+  check_layout:
+    "Audit a project's spatial layout and report every pair of layers that overlap and every layer that falls outside the safe area, with the offending layer names and boxes. Pass sceneId to audit one scene, and pad to demand a minimum clearance between layers. Use it after adding or moving layers, and always after compose_graphic, to confirm the composition is clean before showing it to the user. Returns ok plus a one-line summary you can act on.",
   add_image: "Add an image component to the canvas from a URL, data URI, or assetId from list_assets. Supports object-fit (cover/contain/fill). Use when the user says 'add an image', 'insert a picture', or 'place a photo'.",
   add_video: "Add a video component to the canvas from a URL, data URI, or assetId from list_assets. Supports muted, loop, and autoplay options. Use when the user says 'add a video', 'embed a clip', or 'place a video'.",
   add_audio: "Add an audio component for background music or voiceover from a URL, data URI, or assetId from list_assets. Supports delay, loop, and muted options. Use when the user says 'add background music', 'add a voiceover', or 'play a sound'.",

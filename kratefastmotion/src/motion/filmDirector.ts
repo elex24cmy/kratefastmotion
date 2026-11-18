@@ -1,7 +1,22 @@
 import type { Easing, Keyframe, Scene } from "@kratefastmotion/shared";
-import { easingBezier, easingPreset } from "@kratefastmotion/shared";
+import { easingPreset } from "@kratefastmotion/shared";
 import { createId } from "../utils/id.js";
 import { draft, type ComponentDraft } from "./templates/helper.js";
+import {
+  auditLayout,
+  type Box,
+  boxToStyle,
+  gridTrack,
+  type GroupedBox,
+  groupAllows,
+  type LayoutAudit,
+  safeArea,
+  STAGE_HEIGHT,
+  STAGE_WIDTH,
+  styleToBox,
+} from "./layout.js";
+import { buildGraphic, type GraphicKind, type GraphicLayer } from "./filmGraphics.js";
+import { beat, beatHold, EASE_BACK, EASE_IN, EASE_IN_OUT, EASE_OUT, FONT_STACK, MONO_STACK } from "./filmBase.js";
 
 /**
  * Film Director — turns a natural-language brief into a real, art-directed,
@@ -21,10 +36,14 @@ import { draft, type ComponentDraft } from "./templates/helper.js";
  *  - a type scale with a clear hierarchy (eyebrow / headline / subhead / rule)
  *  - a motion-intensity dimension (`calm | balanced | kinetic`) that scales beat
  *    amplitudes and, when kinetic, adds a continuous-motion layer pack
+ *  - every position comes from the layout engine (safe area + 12-column grid),
+ *    and every scene carries real graphics from the graphic kit — so placement
+ *    is computed and auditable rather than hand-tuned percentages
  */
 
-export const STAGE_WIDTH = 1920;
-export const STAGE_HEIGHT = 1080;
+// The stage size lives in the layout engine; re-exported here because the
+// composer and the tests have always imported it from the director.
+export { STAGE_WIDTH, STAGE_HEIGHT };
 
 export type FilmStyle = "cinematic" | "tech" | "playful" | "calm" | "energetic" | "default";
 
@@ -46,7 +65,12 @@ export interface FilmPalette {
   glow: string;
 }
 
-const PALETTES: Record<FilmStyle, FilmPalette> = {
+/**
+ * Art-direction palettes, one per style. Exported because the graphic kit and
+ * the `compose_graphic` tool draw from the same colours as the film director —
+ * a graphic added by the agent has to sit in the same world as the film.
+ */
+export const PALETTES: Record<FilmStyle, FilmPalette> = {
   cinematic: { bgFrom: "#05070f", bgTo: "#141b33", text: "#f7f8fc", subtext: "#9aa6bd", accent: "#d8b45a", accent2: "#7c8cff", glow: "#d8b45a" },
   tech: { bgFrom: "#04070d", bgTo: "#0b1626", text: "#eef4ff", subtext: "#8fa3bf", accent: "#38bdf8", accent2: "#a78bfa", glow: "#38bdf8" },
   playful: { bgFrom: "#1a0f33", bgTo: "#3a1b52", text: "#fff7fb", subtext: "#d7b7e8", accent: "#f472b6", accent2: "#fbbf24", glow: "#f472b6" },
@@ -63,15 +87,6 @@ const STYLE_LABELS: Record<FilmStyle, string> = {
   energetic: "Made to move you",
   default: "Motion, composed",
 };
-
-/** Fast-out entrance, accelerated exit, and a neutral hold. */
-const EASE_OUT: Easing = easingBezier([0.16, 1], [0.3, 1]);
-const EASE_IN: Easing = easingBezier([0.7, 0], [0.84, 0]);
-const EASE_IN_OUT: Easing = easingBezier([0.65, 0], [0.35, 1]);
-const EASE_BACK: Easing = easingBezier([0.34, 1.56], [0.64, 1]);
-
-const FONT_STACK = "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-const MONO_STACK = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
 export interface FilmStat {
   value: string;
@@ -358,9 +373,26 @@ function fullBleed(extra: Record<string, string | number> = {}): Record<string, 
   return { left: "0px", top: "0px", width: "100%", height: "100%", ...extra };
 }
 
-/** Full-width, horizontally centred text block anchored at a vertical percent. */
-function centeredText(top: string, extra: Record<string, string | number> = {}): Record<string, string | number> {
-  return { left: "0px", width: "100%", textAlign: "center", top, ...extra };
+/**
+ * A text block placed from an explicit pixel box. The director used to position
+ * type with `top: 52%` and `width: 100%`, which renders fine but is impossible
+ * to reason about: nothing can be measured, so nothing can be checked for
+ * overlap. Giving every text block a real box is what lets the layout engine
+ * find safe homes for graphics around it.
+ */
+function textBlock(box: Box, extra: Record<string, string | number> = {}): Record<string, string | number> {
+  return boxToStyle(box, {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+    ...extra,
+  });
+}
+
+/** A box of `w` centred horizontally on the stage, at `top` with height `h`. */
+function centreBox(w: number, top: number, h: number): Box {
+  return { x: (STAGE_WIDTH - w) / 2, y: top, w, h };
 }
 
 function circle(size: number, topPct: number, extra: Record<string, string | number> = {}): Record<string, string | number> {
@@ -374,43 +406,6 @@ function circle(size: number, topPct: number, extra: Record<string, string | num
     borderRadius: "50%",
     ...extra,
   };
-}
-
-/** Entrance → hold → exit, with fast-out in and accelerated out. `drift` is
- *  merged into the hold so a layer keeps creeping after it lands — the
- *  reference films never let type sit completely still. */
-function beat(
-  from: Record<string, string | number>,
-  hold: Record<string, string | number>,
-  exit: Record<string, string | number> = {},
-  drift: Record<string, string | number> = {},
-): Keyframe[] {
-  const drifted = { ...hold, ...drift };
-  return [
-    { offset: 0, properties: { opacity: 0, ...from } as Keyframe["properties"], easing: EASE_OUT },
-    { offset: 0.18, properties: { opacity: 1, ...hold } as Keyframe["properties"], easing: EASE_IN_OUT },
-    { offset: 0.82, properties: { opacity: 1, ...drifted } as Keyframe["properties"], easing: EASE_IN },
-    { offset: 1, properties: { opacity: 0, ...drifted, ...exit } as Keyframe["properties"] },
-  ];
-}
-
-/**
- * Entrance → hold, ending visible. Used by the closing scene so the film — and
- * the editor canvas at rest, which keeps each layer's final `fill-mode: both`
- * state — ends on a composed end card instead of a blank stage after every
- * layer has faded out.
- */
-function beatHold(
-  from: Record<string, string | number>,
-  hold: Record<string, string | number>,
-  drift: Record<string, string | number> = {},
-): Keyframe[] {
-  const drifted = { ...hold, ...drift };
-  return [
-    { offset: 0, properties: { opacity: 0, ...from } as Keyframe["properties"], easing: EASE_OUT },
-    { offset: 0.22, properties: { opacity: 1, ...hold } as Keyframe["properties"], easing: EASE_IN_OUT },
-    { offset: 1, properties: { opacity: 1, ...drifted } as Keyframe["properties"] },
-  ];
 }
 
 /**
@@ -459,6 +454,7 @@ function mk(
     keyframes?: Keyframe[];
     style: Record<string, string | number>;
     iterationCount?: number | "infinite";
+    direction?: "normal" | "reverse" | "alternate" | "alternate-reverse";
   },
 ): ComponentDraft {
   // Every film layer is pinned to the 1920x1080 stage. Without an explicit
@@ -475,10 +471,30 @@ function mk(
     keyframes: opts.keyframes ?? [],
     style,
     iterationCount: opts.iterationCount ?? 1,
+    direction: opts.direction ?? "normal",
     fillMode: "both",
   });
   d.orderIndex = ctx.idx++;
   return d;
+}
+
+/**
+ * Turn a graphic kit result into drafts on the stage. The kit works in stage
+ * pixels and knows nothing about the director's ordering, so the only thing
+ * that happens here is timing offset (scene start) and order allocation.
+ */
+function graphics(ctx: Ctx, sceneId: string, sceneStart: number, layers: GraphicLayer[]): ComponentDraft[] {
+  return layers.map((layer) =>
+    mk(ctx, layer.name, sceneId, {
+      durationMs: layer.durationMs,
+      delayMs: sceneStart + layer.delayMs,
+      easing: layer.easing,
+      keyframes: layer.keyframes,
+      style: { ...layer.style, ...(layer.group ? { _group: layer.group } : {}) },
+      iterationCount: layer.iterationCount,
+      direction: layer.direction,
+    }),
+  );
 }
 
 function backgroundLayer(ctx: Ctx, totalMs: number): ComponentDraft {
@@ -557,6 +573,9 @@ function logoLayer(
   const { brief } = ctx;
   const a = motionScale(brief.motion);
   const w = opts.width;
+  // A pixel box (rather than `left: 50%`) so the mark is part of the measurable
+  // composition — the layout engine can then place graphics around it.
+  const box: Box = { x: (STAGE_WIDTH - w) / 2, y: (opts.topPct / 100) * STAGE_HEIGHT, w, h: opts.height };
   const entrance = opts.hold
     ? beatHold({ scale: 1 - 0.28 * a, opacity: 0 }, { scale: 1, opacity: 1 })
     : beat({ scale: 1 - 0.28 * a, opacity: 0 }, { scale: 1, opacity: 1 });
@@ -565,12 +584,7 @@ function logoLayer(
     delayMs: start + (opts.delayMs ?? 160),
     easing: EASE_BACK,
     keyframes: entrance,
-    style: {
-      left: "50%",
-      top: `${opts.topPct}%`,
-      width: `${w}px`,
-      height: `${opts.height}px`,
-      marginLeft: `${-w / 2}px`,
+    style: boxToStyle(box, {
       objectFit: "contain",
       filter: `drop-shadow(0 18px 46px ${ctx.palette.accent}44)`,
       _tag: asset.kind === "video" ? "video" : "img",
@@ -578,7 +592,7 @@ function logoLayer(
       ...(asset.kind === "video" ? { _muted: 1, _loop: 1, _autoplay: 1 } : {}),
       _content: "",
       zIndex: "11",
-    },
+    }),
   });
 }
 
@@ -666,7 +680,22 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
   const a = motionScale(brief.motion);
   const base = scene.durationMs;
   const out: ComponentDraft[] = [];
+  const area = safeArea();
   out.push(glowLayer(ctx, scene.id, start, base, 46, 1500));
+
+  // Graphics: corner brackets frame the composition, so the opening beat reads
+  // as a designed card instead of centred type floating on a gradient.
+  out.push(
+    ...graphics(ctx, scene.id, start, buildGraphic({
+      kind: "bracket",
+      box: { x: area.x, y: area.y, w: area.w, h: area.h },
+      palette,
+      amp: a,
+      sceneDurationMs: base,
+      delayMs: 140,
+      zIndex: 4,
+    })),
+  );
 
   // Brand mark from the library, if the brief carried one — the film opens on
   // the user's own logo instead of a generic monogram.
@@ -680,29 +709,39 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
   const stacked = lines.length > 1;
   const headlineSize = stacked ? (lines.length === 2 ? 118 : 96) : 132;
   const lineHeight = stacked ? 1.06 : 1.02;
-  const lineHeightPx = headlineSize * lineHeight;
+  const lineHeightPx = Math.round(headlineSize * lineHeight);
   const blockHeight = lines.length * lineHeightPx;
 
-  // Lay the text stack out as one block so it stays centred whether the title
-  // is one line or three, and whether or not a logo occupies the top third.
-  const EYEBROW_H = 28;
-  const RULE_H = 5;
-  const SUBHEAD_H = 36;
+  // The type stack is measured first and then centred as one block, so it stays
+  // balanced whether the title is one line or three and whether a logo takes the
+  // top third. Every block gets a real pixel box (see `textBlock`), which is what
+  // makes the composition auditable instead of merely plausible.
+  const EYEBROW_H = 30;
+  const RULE_H = 6;
+  const SUBHEAD_H = 40;
   const GAP_EYEBROW = 30;
   const GAP_RULE = 58;
-  const GAP_SUBHEAD = 46;
+  const GAP_SUBHEAD = 44;
   const stackHeight = EYEBROW_H + GAP_EYEBROW + blockHeight + GAP_RULE + RULE_H + GAP_SUBHEAD + SUBHEAD_H;
-  const stackTop = ((assets.logo ? 55 : 52) / 100) * STAGE_HEIGHT - stackHeight / 2;
-  const eyebrowTop = stackTop;
-  const blockTop = eyebrowTop + EYEBROW_H + GAP_EYEBROW;
-  const ruleTop = blockTop + blockHeight + GAP_RULE;
-  const subheadTop = ruleTop + RULE_H + GAP_SUBHEAD;
+  const stackCentre = ((assets.logo ? 55 : 52) / 100) * STAGE_HEIGHT;
+  let cursor = stackCentre - stackHeight / 2;
+  const eyebrowBox = centreBox(1200, cursor, EYEBROW_H);
+  cursor += EYEBROW_H + GAP_EYEBROW;
+  const headlineBoxes = lines.map(() => {
+    const box = centreBox(1500, cursor, lineHeightPx);
+    cursor += lineHeightPx;
+    return box;
+  });
+  cursor += GAP_RULE;
+  const ruleBox = centreBox(220, cursor, RULE_H);
+  cursor += RULE_H + GAP_SUBHEAD;
+  const subheadBox = centreBox(1400, cursor, SUBHEAD_H);
 
   out.push(mk(ctx, "Eyebrow", scene.id, {
     durationMs: base - 200,
     delayMs: start + 200,
     keyframes: beat({ translateY: 18 * a }, { translateY: 0 }, {}, { translateY: -5 * a }),
-    style: centeredText(`${eyebrowTop.toFixed(1)}px`, {
+    style: textBlock(eyebrowBox, {
       color: palette.accent,
       fontFamily: MONO_STACK,
       fontSize: "22px",
@@ -720,7 +759,7 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
       durationMs: base - 500 - i * 120,
       delayMs: start + 420 + i * 150,
       keyframes: headlineBeat(a),
-      style: centeredText(`${(blockTop + i * lineHeightPx).toFixed(1)}px`, {
+      style: textBlock(headlineBoxes[i], {
         color: palette.text,
         fontFamily: FONT_STACK,
         fontSize: `${headlineSize}px`,
@@ -745,11 +784,7 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
       { offset: 1, properties: { scaleX: 1, opacity: 0 } as Keyframe["properties"] },
     ],
     style: {
-      left: "50%",
-      top: `${ruleTop.toFixed(1)}px`,
-      width: "220px",
-      height: "5px",
-      marginLeft: "-110px",
+      ...boxToStyle(ruleBox),
       borderRadius: "3px",
       background: `linear-gradient(90deg, ${palette.accent}, ${palette.accent2})`,
       transformOrigin: "center center",
@@ -761,7 +796,7 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
     durationMs: base - 900,
     delayMs: start + 900,
     keyframes: beat({ translateY: 20 * a }, { translateY: 0 }, {}, { translateY: -6 * a }),
-    style: centeredText(`${subheadTop.toFixed(1)}px`, {
+    style: textBlock(subheadBox, {
       color: palette.subtext,
       fontFamily: FONT_STACK,
       fontSize: "30px",
@@ -780,15 +815,100 @@ function featuresScene(ctx: Ctx, scene: FilmScene, start: number, variant: numbe
   const a = motionScale(brief.motion);
   const base = scene.durationMs;
   const out: ComponentDraft[] = [];
+  const area = safeArea();
   out.push(glowLayer(ctx, scene.id, start, base, 50, 1300));
+
+  // Two columns on the 12-column grid: the copy owns the left seven, and the
+  // right five hold a graphic panel. Putting both on the grid is what guarantees
+  // the chart and the text can never collide, whatever the copy is.
+  const left = gridTrack(0, 7, { area });
+  const right = gridTrack(7, 5, { area });
+
+  const labelBox: Box = { x: left.x, y: area.y + 96, w: left.w, h: 30 };
+  const rowH = 96;
+  const rowGap = 60;
+  const rowStart = labelBox.y + labelBox.h + 92;
 
   const eyebrow = variant % 2 === 0 ? "What's inside" : "More to explore";
   out.push(mk(ctx, "Section Label", scene.id, {
     durationMs: base - 200,
     delayMs: start + 180,
     keyframes: beat({ translateY: 16 * a }, { translateY: 0 }, {}, { translateY: -4 * a }),
-    style: { left: "14%", top: "26%", width: "72%", color: palette.accent, fontFamily: MONO_STACK, fontSize: "20px", fontWeight: "600", letterSpacing: "0.36em", textTransform: "uppercase", margin: "0px", _content: eyebrow, zIndex: "10" },
+    style: textBlock(labelBox, {
+      justifyContent: "flex-start",
+      textAlign: "left",
+      color: palette.accent,
+      fontFamily: MONO_STACK,
+      fontSize: "20px",
+      fontWeight: "600",
+      letterSpacing: "0.36em",
+      textTransform: "uppercase",
+      margin: "0px",
+      _content: eyebrow,
+      zIndex: "10",
+    }),
   }));
+
+  // A card panel groups the graphics on the right so they read as one object
+  // rather than three floating shapes. Every layer shares the "panel" group, so
+  // the layout audit treats the chart drawn on the card as composition, not as
+  // a collision.
+  const card: Box = { x: right.x, y: area.y + 96, w: right.w, h: 700 };
+  const panel = "panel";
+  out.push(
+    ...graphics(ctx, scene.id, start, buildGraphic({
+      kind: "card",
+      box: card,
+      palette,
+      amp: a,
+      sceneDurationMs: base,
+      delayMs: 260,
+      zIndex: 5,
+      group: panel,
+    })),
+  );
+
+  const tileSize = 148;
+  const tile: Box = { x: card.x + 64, y: card.y + 64, w: tileSize, h: tileSize };
+  out.push(
+    ...graphics(ctx, scene.id, start, buildGraphic({
+      kind: "iconTile",
+      box: tile,
+      palette,
+      amp: a,
+      sceneDurationMs: base,
+      delayMs: 460,
+      zIndex: 7,
+      label: variant % 2 === 0 ? "Capability" : "Workflow",
+      group: panel,
+    })),
+  );
+  out.push(
+    ...graphics(ctx, scene.id, start, buildGraphic({
+      kind: "bars",
+      box: { x: card.x + 64, y: card.y + 330, w: card.w - 128, h: 210 },
+      palette,
+      amp: a,
+      sceneDurationMs: base,
+      delayMs: 560,
+      zIndex: 7,
+      count: 6,
+      group: panel,
+    })),
+  );
+  out.push(
+    ...graphics(ctx, scene.id, start, buildGraphic({
+      kind: "progress",
+      box: { x: card.x + 64, y: card.y + 620, w: card.w - 128, h: 14 },
+      palette,
+      amp: a,
+      sceneDurationMs: base,
+      delayMs: 720,
+      zIndex: 7,
+      amount: variant % 2 === 0 ? 0.82 : 0.64,
+      group: panel,
+    })),
+  );
 
   // Successive feature scenes show successive thirds of the brief's features,
   // so a film with two feature scenes never repeats the same three lines.
@@ -797,31 +917,26 @@ function featuresScene(ctx: Ctx, scene: FilmScene, start: number, variant: numbe
     ? brief.features.slice(chunk, chunk + 3)
     : brief.features.slice(0, 3);
   rows.forEach((label, i) => {
-    const top = 40 + i * 13;
+    const y = rowStart + i * (rowH + rowGap);
     out.push(mk(ctx, `Feature Bullet ${i + 1}`, scene.id, {
       durationMs: base - 500 - i * 120,
       delayMs: start + 420 + i * 180,
       keyframes: beat({ translateX: -26 * a }, { translateX: 0 }, {}, { translateX: 8 * a }),
-      style: {
-        left: "14%",
-        top: `${top}%`,
-        width: "14px",
-        height: "14px",
-        borderRadius: "4px",
+      style: boxToStyle({ x: left.x, y: y + 38, w: 18, h: 18 }, {
+        borderRadius: "5px",
         background: i % 2 === 0 ? palette.accent : palette.accent2,
         boxShadow: `0 0 22px ${(i % 2 === 0 ? palette.accent : palette.accent2)}99`,
         _content: "",
         zIndex: "10",
-      },
+      }),
     }));
     out.push(mk(ctx, `Feature ${i + 1}`, scene.id, {
       durationMs: base - 500 - i * 120,
       delayMs: start + 470 + i * 180,
       keyframes: beat({ translateX: 24 * a }, { translateX: 0 }, {}, { translateX: 8 * a }),
-      style: {
-        left: "17.5%",
-        top: `${top - 1.2}%`,
-        width: "68%",
+      style: textBlock({ x: left.x + 48, y, w: left.w - 48, h: rowH }, {
+        justifyContent: "flex-start",
+        textAlign: "left",
         color: palette.text,
         fontFamily: FONT_STACK,
         fontSize: "44px",
@@ -830,7 +945,7 @@ function featuresScene(ctx: Ctx, scene: FilmScene, start: number, variant: numbe
         margin: "0px",
         _content: label,
         zIndex: "10",
-      },
+      }),
     }));
   });
   return out;
@@ -841,6 +956,7 @@ function statementScene(ctx: Ctx, scene: FilmScene, start: number, variant: numb
   const a = motionScale(brief.motion);
   const base = scene.durationMs;
   const out: ComponentDraft[] = [];
+  const area = safeArea();
   // Media b-roll sits under everything so the figure and label read on top.
   if (media) out.push(...mediaBackdrop(ctx, scene, start, media));
   out.push(glowLayer(ctx, scene.id, start, base, 48, 1700));
@@ -850,11 +966,55 @@ function statementScene(ctx: Ctx, scene: FilmScene, start: number, variant: numb
   const line = stat ? stat.value : "—";
   const label = stat ? stat.label : "";
 
+  // Graphics bracket the figure: a dot field in the top-right corner, a divider
+  // under the label, and a rail that fills to a share of the width. Each sits in
+  // its own band, so none of them can touch the type.
+  const figureBox = centreBox(1500, 356, 210);
+  const labelBox = centreBox(1400, 626, 34);
+  const dividerBox = centreBox(640, 760, 26);
+  const railBox = centreBox(640, 872, 14);
+
+  out.push(
+    ...graphics(ctx, scene.id, start, buildGraphic({
+      kind: "dots",
+      box: { x: area.x + area.w - 300, y: area.y + 40, w: 280, h: 170 },
+      palette,
+      amp: a,
+      sceneDurationMs: base,
+      delayMs: 320,
+      zIndex: 5,
+      count: 6,
+    })),
+  );
+  out.push(
+    ...graphics(ctx, scene.id, start, buildGraphic({
+      kind: "divider",
+      box: dividerBox,
+      palette,
+      amp: a,
+      sceneDurationMs: base,
+      delayMs: 780,
+      zIndex: 8,
+    })),
+  );
+  out.push(
+    ...graphics(ctx, scene.id, start, buildGraphic({
+      kind: "progress",
+      box: railBox,
+      palette,
+      amp: a,
+      sceneDurationMs: base,
+      delayMs: 900,
+      zIndex: 8,
+      amount: [0.88, 0.64, 0.42][variant % 3],
+    })),
+  );
+
   out.push(mk(ctx, "Statement Figure", scene.id, {
     durationMs: base - 500,
     delayMs: start + 360,
     keyframes: beat({ scale: 1 - 0.08 * a, translateY: 30 * a }, { scale: 1, translateY: 0 }, {}, { scale: 1 + 0.035 * a }),
-    style: centeredText("36%", {
+    style: textBlock(figureBox, {
       color: palette.text,
       fontFamily: FONT_STACK,
       fontSize: "200px",
@@ -874,7 +1034,7 @@ function statementScene(ctx: Ctx, scene: FilmScene, start: number, variant: numb
     durationMs: base - 700,
     delayMs: start + 640,
     keyframes: beat({ translateY: 18 * a }, { translateY: 0 }, {}, { translateY: -5 * a }),
-    style: centeredText("64%", {
+    style: textBlock(labelBox, {
       color: palette.subtext,
       fontFamily: MONO_STACK,
       fontSize: "24px",
@@ -894,24 +1054,38 @@ function outroScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
   const a = motionScale(brief.motion);
   const base = scene.durationMs;
   const out: ComponentDraft[] = [];
+  const area = safeArea();
   out.push(glowLayer(ctx, scene.id, start, base, 46, 1200));
+
+  // Mirror the opening frame so the film closes on the same composition.
+  out.push(
+    ...graphics(ctx, scene.id, start, buildGraphic({
+      kind: "bracket",
+      box: { x: area.x, y: area.y, w: area.w, h: area.h },
+      palette,
+      amp: a,
+      sceneDurationMs: base,
+      delayMs: 220,
+      zIndex: 4,
+    })),
+  );
+
+  const markBox = centreBox(112, 336, 112);
+  const wordmarkBox = centreBox(1500, 512, 86);
+  const taglineBox = centreBox(1400, 630, 32);
+  const outroRuleBox = centreBox(420, 716, 26);
 
   // The end card carries the user's own mark when the brief supplied one; the
   // composed monogram is the fallback so the card is never empty.
   if (assets.logo) {
-    out.push(logoLayer(ctx, scene, start, assets.logo, { topPct: 29, width: 400, height: 118, delayMs: 300, hold: true }));
+    out.push(logoLayer(ctx, scene, start, assets.logo, { topPct: 30, width: 400, height: 118, delayMs: 300, hold: true }));
   } else {
     out.push(mk(ctx, "Logo Mark", scene.id, {
       durationMs: base - 500,
       delayMs: start + 300,
       easing: EASE_BACK,
       keyframes: beatHold({ scale: 1 - 0.6 * a, rotate: -12 * a }, { scale: 1, rotate: 0 }),
-      style: {
-        left: "50%",
-        top: "36%",
-        width: "112px",
-        height: "112px",
-        marginLeft: "-56px",
+      style: boxToStyle(markBox, {
         borderRadius: "28px",
         background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent2})`,
         color: "#0b0e14",
@@ -925,14 +1099,14 @@ function outroScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
         _content: brief.mark,
         _tag: "div",
         zIndex: "10",
-      },
+      }),
     }));
   }
   out.push(mk(ctx, "Wordmark", scene.id, {
     durationMs: base - 600,
     delayMs: start + 500,
     keyframes: beatHold({ translateY: 24 * a }, { translateY: 0 }, { translateY: -6 * a }),
-    style: centeredText("52%", {
+    style: textBlock(wordmarkBox, {
       color: palette.text,
       fontFamily: FONT_STACK,
       fontSize: "72px",
@@ -947,7 +1121,7 @@ function outroScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
     durationMs: base - 800,
     delayMs: start + 700,
     keyframes: beatHold({ translateY: 18 * a }, { translateY: 0 }, { translateY: -5 * a }),
-    style: centeredText("63%", {
+    style: textBlock(taglineBox, {
       color: palette.subtext,
       fontFamily: MONO_STACK,
       fontSize: "22px",
@@ -959,28 +1133,19 @@ function outroScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
       zIndex: "10",
     }),
   }));
-  out.push(mk(ctx, "Outro Rule", scene.id, {
-    durationMs: base - 900,
-    delayMs: start + 860,
-    easing: EASE_IN_OUT,
-    keyframes: [
-      { offset: 0, properties: { scaleX: 0, opacity: 0 } as Keyframe["properties"], easing: EASE_OUT },
-      { offset: 0.25, properties: { scaleX: 1, opacity: 1 } as Keyframe["properties"], easing: EASE_IN_OUT },
-      { offset: 1, properties: { scaleX: 1, opacity: 1 } as Keyframe["properties"] },
-    ],
-    style: {
-      left: "50%",
-      top: "70%",
-      width: "160px",
-      height: "4px",
-      marginLeft: "-80px",
-      borderRadius: "3px",
-      background: palette.accent,
-      transformOrigin: "center center",
-      _content: "",
-      zIndex: "10",
-    },
-  }));
+  // The closing rule is the divider graphic — a hairline with a turning node —
+  // which holds its final state so the film ends on a composed card.
+  out.push(
+    ...graphics(ctx, scene.id, start, buildGraphic({
+      kind: "divider",
+      box: outroRuleBox,
+      palette,
+      amp: a,
+      sceneDurationMs: base,
+      delayMs: 860,
+      zIndex: 9,
+    })),
+  );
   return out;
 }
 
@@ -1183,4 +1348,65 @@ export function buildFilm(brief: FilmBrief, assets: FilmAssets = {}): FilmPlan {
 /** Convenience: brief → plan in one call. */
 export function directFilm(prompt: string, fallbackName = "KrateFastMotion"): FilmPlan {
   return buildFilm(analyzeBrief(prompt, fallbackName));
+}
+
+// ---------------------------------------------------------------------------
+// Layout audit
+// ---------------------------------------------------------------------------
+
+export interface SceneAudit {
+  sceneId: string | null;
+  name: string;
+  audit: LayoutAudit;
+}
+
+export interface FilmAudit {
+  ok: boolean;
+  scenes: SceneAudit[];
+  /** Layers with no measurable pixel box — full-bleed atmosphere by design. */
+  unmeasured: string[];
+  summary: string;
+}
+
+/**
+ * Check a finished plan's geometry. The director now computes every content
+ * layer's box, so this is a real verdict rather than a guess: it reports which
+ * layers collide and which fall outside the safe area.
+ *
+ * The comparison is per scene. Two scenes share the stage but never share a
+ * frame, so auditing the whole film at once would report every scene boundary
+ * as a collision.
+ */
+export function auditFilm(plan: FilmPlan): FilmAudit {
+  const groups = new Map<string, GroupedBox[]>();
+  const unmeasured: string[] = [];
+
+  for (const d of plan.drafts) {
+    const box = styleToBox(d.style);
+    if (!box || box.w <= 0 || box.h <= 0) {
+      unmeasured.push(d.name);
+      continue;
+    }
+    const group = typeof d.style._group === "string" ? d.style._group : undefined;
+    const key = d.sceneId ?? "__global__";
+    const list = groups.get(key) ?? [];
+    list.push({ name: d.name, group, ...box });
+    groups.set(key, list);
+  }
+
+  const scenes: SceneAudit[] = plan.scenes
+    .map((scene, i) => {
+      const boxes = groups.get(scene.id) ?? [];
+      return {
+        sceneId: scene.id,
+        name: `${i + 1}. ${scene.name}`,
+        audit: auditLayout(boxes, { allow: groupAllows }),
+      };
+    })
+    .filter((s) => s.audit.boxes > 0);
+
+  const ok = scenes.every((s) => s.audit.ok);
+  const summary = scenes.map((s) => `${s.name} — ${s.audit.summary}`).join(" | ") || "no measurable layers";
+
+  return { ok, scenes, unmeasured, summary };
 }

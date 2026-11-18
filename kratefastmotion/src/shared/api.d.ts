@@ -949,8 +949,8 @@ export declare const ChatEventSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObje
     }, "strip", z.ZodTypeAny, {
         prompt: string;
         title: string;
-        tool: string;
         kind: "sequence" | "export" | "refine" | "extend" | "diversify" | "interact" | "polish" | "collaborate" | "inspect";
+        tool: string;
         reason: string;
     }, {
         prompt: string;
@@ -964,8 +964,8 @@ export declare const ChatEventSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObje
     suggestions: {
         prompt: string;
         title: string;
-        tool: string;
         kind: "sequence" | "export" | "refine" | "extend" | "diversify" | "interact" | "polish" | "collaborate" | "inspect";
+        tool: string;
         reason: string;
     }[];
 }, {
@@ -1367,11 +1367,11 @@ export declare const ExportHtmlResponseSchema: z.ZodObject<{
     html: z.ZodString;
     url: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    html: string;
     url: string;
+    html: string;
 }, {
-    html: string;
     url: string;
+    html: string;
 }>;
 export declare const ExportVideoInputSchema: z.ZodObject<{
     format: z.ZodDefault<z.ZodEnum<["mp4", "gif", "webm"]>>;
@@ -1423,8 +1423,8 @@ export declare const ExportJobStatusSchema: z.ZodObject<{
     id: string;
     projectId: string;
     createdAt: string;
-    format: string;
     progress: number;
+    format: string;
     stage: "done" | "failed" | "queued" | "capturing" | "encoding";
     framesDone: number;
     framesTotal: number;

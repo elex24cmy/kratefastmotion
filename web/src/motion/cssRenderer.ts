@@ -3,6 +3,9 @@ import { easingToCss, isTransformProperty } from "@kratefastmotion/shared";
 
 const RESERVED_STYLE_KEYS = new Set([
   "_content", "_tag", "_label", "_src", "_poster", "_loop", "_muted", "_autoplay", "_controls",
+  // Composed-graphic id: layers sharing it are one graphic (a card and the chart
+  // on it), so a layout audit may let them overlap. Never emitted as CSS.
+  "_group",
   // Effect metadata tokens — stored on style for renderer/tool
   // coordination but never emitted as CSS properties themselves.
   "_motionBlur", "_motionBlurIntensity", "_motionBlurShutter",
