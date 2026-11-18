@@ -6,6 +6,10 @@ const RESERVED_STYLE_KEYS = new Set([
   // Composed-graphic id: layers sharing it are one graphic (a card and the chart
   // on it), so a layout audit may let them overlap. Never emitted as CSS.
   "_group",
+  // Timeline-synced media: `_start` marks a clip the timeline drives (rather
+  // than a free-running one), and `_background` marks a layer that exists to be
+  // covered. Neither is a CSS property.
+  "_start", "_rate", "_volume", "_background",
   // Effect metadata tokens — stored on style for renderer/tool
   // coordination but never emitted as CSS properties themselves.
   "_motionBlur", "_motionBlurIntensity", "_motionBlurShutter",
@@ -84,6 +88,19 @@ function isPrivateToken(key: string): boolean {
   return RESERVED_STYLE_KEYS.has(key) || key.startsWith("_expr") || key.startsWith("_");
 }
 
+/**
+ * Read a boolean out of a style token. Style values are `string | number`, so a
+ * flag arrives as `1`, `"1"`, `"true"`, `0`, `"0"` or `"false"`. `Boolean("0")`
+ * is `true`, which is the trap this closes.
+ */
+function styleFlag(value: string | number | boolean | undefined | null): boolean {
+  if (value == null) return false;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  const v = value.trim().toLowerCase();
+  return v !== "" && v !== "0" && v !== "false" && v !== "off" && v !== "no";
+}
+
 /** Style keys that pin a layer to the artboard rather than leaving it in flow. */
 const POSITION_KEYS = ["left", "top", "right", "bottom", "inset"] as const;
 
@@ -99,6 +116,10 @@ interface SplitStyle {
   muted: boolean;
   autoplay: boolean;
   controls: boolean;
+  /** Source in-point (seconds) for a timeline-synced clip, else null. */
+  start: number | null;
+  rate: number;
+  volume: number | null;
 }
 
 function splitStyle(style: Record<string, string | number>): SplitStyle {
@@ -112,19 +133,32 @@ function splitStyle(style: Record<string, string | number>): SplitStyle {
   let muted = false;
   let autoplay = true;
   let controls = false;
+  let start: number | null = null;
+  let rate = 1;
+  let volume: number | null = null;
   for (const [k, v] of Object.entries(style)) {
     if (k === "_content") { content = String(v); hasContent = true; }
     else if (k === "_tag") tag = String(v);
     else if (k === "_src") src = String(v);
     else if (k === "_poster") poster = String(v);
-    else if (k === "_loop") loop = Boolean(v);
-    else if (k === "_muted") muted = Boolean(v);
-    else if (k === "_autoplay") autoplay = Boolean(v);
-    else if (k === "_controls") controls = Boolean(v);
+    else if (k === "_loop") loop = styleFlag(v);
+    else if (k === "_muted") muted = styleFlag(v);
+    else if (k === "_autoplay") autoplay = styleFlag(v);
+    else if (k === "_controls") controls = styleFlag(v);
+    else if (k === "_start") {
+      const n = Number(v);
+      if (Number.isFinite(n)) start = n;
+    } else if (k === "_rate") {
+      const n = Number(v);
+      if (Number.isFinite(n) && n > 0) rate = n;
+    } else if (k === "_volume") {
+      const n = Number(v);
+      if (Number.isFinite(n)) volume = Math.max(0, Math.min(1, n));
+    }
     else if (isPrivateToken(k)) continue;
     else css[k] = v;
   }
-  return { css, content, hasContent, tag, src, poster, loop, muted, autoplay, controls };
+  return { css, content, hasContent, tag, src, poster, loop, muted, autoplay, controls, start, rate, volume };
 }
 
 function camelToKebab(s: string): string {
@@ -233,6 +267,11 @@ export interface RenderedNode {
   muted: boolean;
   autoplay: boolean;
   controls: boolean;
+  /** Source in-point (seconds) for a timeline-synced clip, else null. A clip
+   *  with a `start` is driven by the timeline rather than free-running. */
+  start: number | null;
+  rate: number;
+  volume: number | null;
   /** When present, the layer is driven by a JS runtime loop instead of (or in
    *  addition to) CSS keyframes. The frontend mounts a `<RuntimeLayer>` that
    *  reads this config and runs the appropriate animation driver. */
@@ -287,7 +326,7 @@ export function renderSpec(components: MotionComponent[], speed = 1): RenderedSp
     }
     const animationName = `om-anim-${component.id.replace(/[^a-zA-Z0-9_-]/g, "")}`;
     const className = `om-c-${component.id}`;
-    const { css: cssStyle, content, hasContent, tag, src, poster, loop, muted, autoplay, controls } = splitStyle(rawStyle);
+    const { css: cssStyle, content, hasContent, tag, src, poster, loop, muted, autoplay, controls, start, rate, volume } = splitStyle(rawStyle);
 
     // Stage-mode safety net: a layer that carries an explicit offset but no
     // `position` would be laid out in normal flow and pushed below the
@@ -556,6 +595,9 @@ export function renderSpec(components: MotionComponent[], speed = 1): RenderedSp
       muted,
       autoplay,
       controls,
+      start,
+      rate,
+      volume,
       runtime,
     });
   }

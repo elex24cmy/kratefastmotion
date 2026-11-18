@@ -12,6 +12,7 @@ import { publicBaseUrl } from "../config.js";
 import { now } from "../utils/id.js";
 import { logger } from "../utils/logger.js";
 import { hasPuppeteer, hasFfmpeg, getFfmpegPath } from "../utils/env.js";
+import { styleFlag } from "../motion/units.js";
 import { recordFrames, framePattern, expectedFrameCount } from "./recorder.js";
 
 export type VideoFormat = "mp4" | "gif" | "webm";
@@ -32,7 +33,13 @@ export interface VideoExportHandle {
 interface AudioSource {
   url: string;
   delayMs: number;
+  /** In-point into the source, in milliseconds. */
+  startMs: number;
+  /** How much of the source to take, in milliseconds. 0 means "to the end". */
+  durationMs: number;
   loop: boolean;
+  /** Linear gain, 0..1. */
+  volume: number;
 }
 
 function computeTotalDuration(spec: MotionSpec): number {
@@ -46,7 +53,14 @@ function computeTotalDuration(spec: MotionSpec): number {
   return Math.max(max, declared, 500);
 }
 
-/** Extract audio sources from components with _tag audio or video. */
+/**
+ * Extract audio sources from components with _tag audio or video.
+ *
+ * A muted layer contributes no audio — that is what `_muted` means to a viewer,
+ * and a decorative b-roll clip should not bleed over the voice track. A layer
+ * that declares `_start` is trimmed to its in-point and window, so a clip that
+ * plays 4s into an edit takes 4s into the file rather than restarting it.
+ */
 function extractAudioSources(spec: MotionSpec): AudioSource[] {
   const sources: AudioSource[] = [];
   for (const c of spec.components) {
@@ -54,13 +68,21 @@ function extractAudioSources(spec: MotionSpec): AudioSource[] {
     const tag = String(style._tag ?? "div");
     const src = style._src ? String(style._src) : null;
     if (!src) continue;
-    if (tag === "audio" || tag === "video") {
-      sources.push({
-        url: src,
-        delayMs: c.delayMs,
-        loop: style._loop === 1 || c.iterationCount === "infinite",
-      });
-    }
+    if (tag !== "audio" && tag !== "video") continue;
+    const muted = styleFlag(style._muted);
+    if (muted) continue;
+    const startSeconds = Number(style._start);
+    const startMs = Number.isFinite(startSeconds) && startSeconds > 0 ? startSeconds * 1000 : 0;
+    const volumeRaw = Number(style._volume);
+    const volume = Number.isFinite(volumeRaw) ? Math.max(0, Math.min(1, volumeRaw)) : 1;
+    sources.push({
+      url: src,
+      delayMs: c.delayMs,
+      startMs,
+      durationMs: Math.max(0, c.durationMs),
+      loop: styleFlag(style._loop) || c.iterationCount === "infinite",
+      volume,
+    });
   }
   return sources;
 }
@@ -91,11 +113,20 @@ function ffmpegArgs(
       const inputIdx = i + 1; // offset by 1 because 0 is the video
       const delay = Math.round(src.delayMs);
       const label = `a${i}`;
-      if (src.loop) {
-        filterParts.push(`[${inputIdx}:a]aloop=loop=-1:size=2e9,adelay=${delay}|${delay}[${label}]`);
-      } else {
-        filterParts.push(`[${inputIdx}:a]adelay=${delay}|${delay}[${label}]`);
+      const chain: string[] = [];
+      if (src.loop) chain.push("aloop=loop=-1:size=2e9");
+      const trimmed = src.startMs > 0 || src.durationMs > 0;
+      if (trimmed) {
+        const parts = [`start=${(src.startMs / 1000).toFixed(3)}`];
+        if (src.durationMs > 0) parts.push(`duration=${(src.durationMs / 1000).toFixed(3)}`);
+        chain.push(`atrim=${parts.join(":")}`);
+        // A trimmed stream keeps its original timestamps unless we reset them,
+        // which would push the clip late by its in-point.
+        chain.push("asetpts=PTS-STARTPTS");
       }
+      if (src.volume < 1) chain.push(`volume=${src.volume.toFixed(3)}`);
+      chain.push(delay > 0 ? `adelay=${delay}|${delay}` : "anull");
+      filterParts.push(`[${inputIdx}:a]${chain.join(",")}[${label}]`);
       mixInputs.push(`[${label}]`);
     });
     const mixLabel = mixInputs.length > 1

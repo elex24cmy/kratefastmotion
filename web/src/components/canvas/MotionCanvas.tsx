@@ -752,10 +752,38 @@ export function MotionCanvas() {
                 poster: node.poster ?? undefined,
                 loop: node.loop || undefined,
                 muted: node.muted || undefined,
-                autoPlay: node.autoplay || undefined,
+                // A timeline-synced clip (one with a source in-point) must not
+                // free-run: the canvas shows it paused on its in-point, which is
+                // the frame the export starts from.
+                autoPlay: (node.autoplay && node.start == null) || undefined,
                 controls: node.controls || undefined,
                 playsInline: true,
+                preload: "auto" as const,
               } : {};
+              // Register the element with the flip registry, and for a synced
+              // clip park it on its in-point so the canvas is deterministic.
+              const registerRef = (el: HTMLElement | null) => {
+                canvasFlipRegistry.register(node.componentId, el);
+                if (!el || !isMediaTag || node.start == null) return;
+                const media = el as HTMLMediaElement;
+                const at = node.start;
+                try {
+                  media.pause();
+                  if (media.readyState >= 1) {
+                    media.currentTime = at;
+                  } else {
+                    media.addEventListener(
+                      "loadedmetadata",
+                      () => {
+                        try { media.currentTime = at; } catch { /* not seekable */ }
+                      },
+                      { once: true },
+                    );
+                  }
+                } catch {
+                  /* not seekable */
+                }
+              };
               const eventHandlers = {
                 onClick: (e: React.MouseEvent) => {
                   e.stopPropagation();
@@ -826,7 +854,7 @@ export function MotionCanvas() {
                 return (
                   <Tag
                     key={node.componentId}
-                    ref={(el: HTMLElement | null) => { canvasFlipRegistry.register(node.componentId, el); }}
+                    ref={registerRef}
                     className={`${node.className} ${isLocked ? "cursor-not-allowed" : "cursor-pointer"} ${outlineClass}`}
                     data-om-name={node.name}
                     data-om-component-id={node.componentId}
@@ -839,7 +867,7 @@ export function MotionCanvas() {
               return (
                 <Tag
                   key={node.componentId}
-                  ref={(el: HTMLElement | null) => { canvasFlipRegistry.register(node.componentId, el); }}
+                  ref={registerRef}
                   className={`${node.className} ${isLocked ? "cursor-not-allowed" : "cursor-pointer"} ${outlineClass}`}
                   data-om-name={node.name}
                   data-om-component-id={node.componentId}

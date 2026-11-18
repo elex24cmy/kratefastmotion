@@ -84,6 +84,7 @@ export async function recordFrames(opts: RecordOptions): Promise<string[]> {
       "--disable-gpu",
       "--hide-scrollbars",
       "--mute-audio",
+      "--autoplay-policy=no-user-gesture-required",
       "--disable-background-timer-throttling",
       "--disable-renderer-backgrounding",
       "--disable-backgrounding-occluded-windows",
@@ -97,7 +98,11 @@ export async function recordFrames(opts: RecordOptions): Promise<string[]> {
       height: opts.height,
       deviceScaleFactor: 1,
     });
-    await page.goto(opts.previewUrl, { waitUntil: "networkidle0", timeout: 20000 });
+    // `networkidle0` never settles while a `preload="auto"` clip streams: the
+    // video keeps a connection open for its whole length, so a media export
+    // timed out before the first frame. Wait for the document, then for fonts,
+    // images and decoded media explicitly below.
+    await page.goto(opts.previewUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
 
     // Wait for webfonts and images so later frames do not shift.
     await page
@@ -120,7 +125,28 @@ export async function recordFrames(opts: RecordOptions): Promise<string[]> {
         /* assets optional */
       });
 
+    // Timeline-synced media must be decodable before the first seek, otherwise
+    // frame 0 captures a poster or a black element.
+    await page
+      .evaluate(() => {
+        const kfm = (window as unknown as { __kfm?: { ready?: () => Promise<void> } }).__kfm;
+        return kfm && typeof kfm.ready === "function" ? kfm.ready() : undefined;
+      })
+      .catch(() => {
+        /* no media, or the page predates the seek protocol */
+      });
+
     const animationCount = await page.evaluate(() => {
+      // A synced clip that slipped through with `autoplay` would keep playing
+      // under the seek loop; pause everything first.
+      document.querySelectorAll("[data-om-media]").forEach((el) => {
+        const media = el as HTMLMediaElement;
+        try {
+          media.pause();
+        } catch {
+          /* not seekable */
+        }
+      });
       const animations = document.getAnimations();
       for (const animation of animations) {
         animation.pause();
@@ -132,7 +158,7 @@ export async function recordFrames(opts: RecordOptions): Promise<string[]> {
     const frames: string[] = [];
     for (let index = 0; index < expectedFrames; index += 1) {
       const timeMs = (index / fps) * 1000;
-      await page.evaluate((time) => {
+      await page.evaluate(async (time) => {
         for (const animation of document.getAnimations()) {
           animation.pause();
           try {
@@ -140,6 +166,14 @@ export async function recordFrames(opts: RecordOptions): Promise<string[]> {
           } catch {
             /* animation detached mid-render */
           }
+        }
+        // Seek `<video>`/`<audio>` and wait for the decoder to land on the
+        // requested frame before the screenshot is taken.
+        const kfm = (
+          window as unknown as { __kfm?: { seekMedia?: (ms: number) => Promise<void> } }
+        ).__kfm;
+        if (kfm && typeof kfm.seekMedia === "function") {
+          await kfm.seekMedia(time);
         }
       }, timeMs);
 
