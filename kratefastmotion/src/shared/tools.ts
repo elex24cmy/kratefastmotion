@@ -290,6 +290,7 @@ export const ListIllustrationsInput = z.object({
 /** Mirrors `EFFECT_KINDS` in the motion package; kept literal so the shared
  *  package stays free of motion imports. */
 export const EffectKindSchema = z.enum([
+  // look and lens
   "film_grain",
   "vignette",
   "grade",
@@ -301,6 +302,38 @@ export const EffectKindSchema = z.enum([
   "glitch",
   "light_leak",
   "flash",
+  // light
+  "lens_flare",
+  "light_rays",
+  "light_burst",
+  "beam",
+  "god_rays",
+  "neon",
+  // pattern
+  "grid",
+  "checkerboard",
+  "cell_pattern",
+  "fractal_noise",
+  "gradient_ramp",
+  "halftone",
+  "duotone",
+  "bleach_bypass",
+  // atmosphere
+  "rain",
+  "snow",
+  "bubbles",
+  "particles",
+  "starfield",
+  "dust",
+  "bokeh",
+  "confetti",
+  // motion and time
+  "speed_lines",
+  "motion_trail",
+  "zoom_blur",
+  "strobe",
+  "vhs",
+  "film_burn",
 ]);
 
 export const GradeToneSchema = z.enum(["teal-orange", "warm", "cool", "noir", "vibrant"]);
@@ -308,15 +341,79 @@ export const GradeToneSchema = z.enum(["teal-orange", "warm", "cool", "noir", "v
 export const ApplyEffectInput = z.object({
   projectId: zIdField,
   effect: EffectKindSchema.describe(
-    "Which effect to apply as a full-bleed finish over the whole film. film_grain: animated grain, an analogue texture. vignette: soft edge darkening that focuses the centre. grade: a colour-grade wash (pick a tone) so flat colour reads as lit. bloom: a glow that makes light bleed. light_sweep: a highlight sweeping across the frame on a loop. scanlines: fine CRT lines. letterbox: cinematic bars top and bottom. chromatic: red/cyan lens fringing at the edges. glitch: short bursts of RGB tearing. light_leak: a warm corner flare that breathes. flash: a quick white-to-accent flash.",
+    [
+      "Which effect to apply as a full-bleed finish over the whole film. Call list_effects for the full catalogue with a description of each.",
+      "Look: film_grain (analogue texture), vignette (edge darkening), grade (colour wash, pick a tone), bloom (light bleed), light_sweep (looping highlight), scanlines (CRT lines), letterbox (cinematic bars), chromatic (lens fringing), glitch (RGB tearing), light_leak (warm corner flare), flash (one-shot flash).",
+      "Light: lens_flare (anamorphic streak + orbs), light_rays (rotating shafts), light_burst (radial spokes), beam (volumetric beam), god_rays (shafts from above), neon (coloured glow).",
+      "Pattern: grid (tech grid), checkerboard, cell_pattern (organic cells), fractal_noise (living cloud), gradient_ramp (drifting colour wash), halftone (dot screen), duotone (two-colour map), bleach_bypass (gritty desaturated wash).",
+      "Atmosphere: rain, snow, bubbles, particles (rising embers), starfield (twinkling stars), dust (floating motes), bokeh (out-of-focus discs), confetti (falling chips).",
+      "Motion: speed_lines (radial streaks), motion_trail (echo bands), zoom_blur (radial smear), strobe (flashing bars), vhs (tracking + chroma), film_burn (edge burn).",
+    ].join(" "),
   ),
   intensity: z.number().min(0).max(1).optional().describe("Strength 0..1. Each effect has a sensible default; raise it for a heavier look, lower it for a subtle one."),
   tone: GradeToneSchema.optional().describe("Grade tone, only read by `grade`: teal-orange (cinematic), warm, cool, noir or vibrant. Defaults to teal-orange."),
-  durationMs: z.number().int().positive().optional().describe("How long a static look spans. Defaults to the whole film runtime. Looping effects (grain, bloom, sweep, glitch, leak) and the one-shot flash keep their own length."),
+  durationMs: z.number().int().positive().optional().describe("How long a static look spans. Defaults to the whole film runtime. Looping effects (grain, bloom, sweep, glitch, leak, all the atmosphere passes) and the one-shot flash keep their own length."),
   delayMs: z.number().int().nonnegative().optional().describe("Delay before the effect appears, in ms. Use to land a flash on a cut."),
   zIndex: z.number().int().optional().describe("Stacking order. Defaults per effect (30..50, above content)."),
   accent: z.string().optional().describe("Accent colour as a hex string, used by grade/flash. Defaults to the project's palette accent."),
   name: z.string().optional().describe("Optional name prefix for the layer(s)."),
+});
+
+export const ListEffectsInput = z.object({
+  category: z
+    .enum(["all", "look", "light", "pattern", "atmosphere", "motion"])
+    .optional()
+    .describe("Restrict the listing to one family. Defaults to all."),
+  query: z.string().optional().describe('Free-text filter, e.g. "rain", "flare", "retro". Omit to list everything.'),
+});
+
+/* ------------------------ Transition tools ------------------------ */
+
+/** Mirrors `TRANSITION_KINDS` in the motion package; kept literal so the shared
+ *  package stays free of motion imports. */
+export const TransitionKindSchema = z.enum([
+  "linear_wipe",
+  "gradient_wipe",
+  "radial_wipe",
+  "iris_wipe",
+  "block_dissolve",
+  "grid_wipe",
+  "venetian",
+  "shutter",
+  "glass_wipe",
+  "light_wipe",
+  "line_sweep",
+  "serrated",
+  "twist",
+  "scale_wipe",
+  "blob_wipe",
+  "card_wipe",
+  "whip_pan",
+  "glitch_cut",
+  "flash_cut",
+  "zoom_punch",
+]);
+
+export const TransitionDirectionSchema = z.enum(["left", "right", "up", "down"]);
+
+export const ApplyTransitionInput = z.object({
+  projectId: zIdField,
+  transition: TransitionKindSchema.optional().describe(
+    [
+      "Which transition to place on the scene boundaries. Omit and the film's style picks one (kinetic films get whip_pan/glitch_cut, cinematic gets gradient_wipe, playful gets iris_wipe, and so on).",
+      "Wipes: linear_wipe (solid panel sweeps), gradient_wipe (soft band), radial_wipe (conic sweep), iris_wipe (circle opens and closes), serrated (jagged edge), twist (swirling panel), scale_wipe (grows from a corner), blob_wipe (organic blobs), glass_wipe (translucent blurred panel), light_wipe (glowing band).",
+      "Structural: block_dissolve (tile grid pops), grid_wipe (sliding bands), venetian (horizontal blinds), shutter (vertical blades), line_sweep (single bright line), card_wipe (3D flip).",
+      "Punctuation: whip_pan (motion smear), glitch_cut (RGB tearing), flash_cut (white flash), zoom_punch (radial streak punch).",
+    ].join(" "),
+  ),
+  durationMs: z.number().int().positive().optional().describe("Total length of the transition in ms, centred on the cut. Defaults to 540 (kinetic 440, calm 660)."),
+  direction: TransitionDirectionSchema.optional().describe("Travel direction for the directional wipes and sweeps. Defaults to alternating right/left per cut."),
+  intensity: z.number().min(0).max(1).optional().describe("Strength 0..1 for the flash/punch-style cuts. Defaults to 0.75."),
+  accent: z.string().optional().describe("Panel colour as a hex string. Defaults to the project's palette accent."),
+  every: z.number().int().min(1).max(12).optional().describe("Place the transition on every Nth boundary — 1 is every cut (default), 2 is every other cut."),
+  sceneId: z.string().optional().describe("Place the transition only on the boundary that starts this scene. Omit to transition every boundary."),
+  replace: z.boolean().optional().describe("Replace transitions already sitting on those boundaries (default true). Pass false to layer another transition on top."),
+  name: z.string().optional().describe("Optional name prefix for the transition layer(s)."),
 });
 
 /* ------------------------ Social edit tools ------------------------ */
@@ -4059,6 +4156,8 @@ export const TOOL_INPUT_SCHEMAS = {
   compose_illustration: ComposeIllustrationInput,
   list_illustrations: ListIllustrationsInput,
   apply_effect: ApplyEffectInput,
+  list_effects: ListEffectsInput,
+  apply_transition: ApplyTransitionInput,
   add_captions: AddCaptionsInput,
   add_keyword_pop: AddKeywordPopInput,
   add_cutaway: AddCutawayInput,
@@ -4634,7 +4733,11 @@ export const TOOL_DESCRIPTIONS: Record<ToolName, string> = {
   check_layout:
     "Audit a project's spatial layout and report every pair of layers that overlap and every layer that falls outside the safe area, with the offending layer names and boxes. Pass sceneId to audit one scene, and pad to demand a minimum clearance between layers. The audit is time- and background-aware: layers that are never on screen together are not a collision, and full-bleed layers (base video, cutaways, colour cards, scrims) are meant to be covered. Use it after adding or moving layers, and always after compose_graphic, add_captions or edit_talking_head, to confirm the composition is clean before showing it to the user. Returns ok plus a one-line summary you can act on.",
   apply_effect:
-    "Add a graded, cinematic finish over the whole film — the pass that makes vector motion read as real footage. Name one effect: film_grain (analogue texture), vignette (edge darkening), grade (a colour wash; pick a tone like teal-orange, warm, cool, noir or vibrant), bloom (light bleeds), light_sweep (a highlight sweeping across on a loop), scanlines (CRT lines), letterbox (cinematic bars), chromatic (red/cyan lens fringing), glitch (RGB tearing bursts), light_leak (a warm corner flare) or flash (a quick opening flash). Every effect is full-bleed CSS, so it sits above the content, never collides, and renders identically in the preview, the editor and the export. Use intensity (0..1) to tune it. Use when the user says 'add film grain', 'grade it', 'give it a cinematic look', 'add a light leak', 'make it glow', or wants the motion to feel authentic rather than flat.",
+    "Add a graded, cinematic finish over the whole film — the pass that makes vector motion read as real footage. Pick from 39 effects in six families. Look: film_grain (analogue texture), vignette (edge darkening), grade (a colour wash; pick a tone like teal-orange, warm, cool, noir or vibrant), bloom (light bleeds), light_sweep (a highlight sweeping across on a loop), scanlines (CRT lines), letterbox (cinematic bars), chromatic (red/cyan lens fringing), glitch (RGB tearing bursts), light_leak (a warm corner flare), flash (a quick opening flash). Light: lens_flare, light_rays, light_burst, beam, god_rays, neon. Pattern: grid, checkerboard, cell_pattern, fractal_noise, gradient_ramp, halftone, duotone, bleach_bypass. Atmosphere: rain, snow, bubbles, particles, starfield, dust, bokeh, confetti. Motion: speed_lines, motion_trail, zoom_blur, strobe, vhs, film_burn. Every effect is full-bleed CSS, so it sits above the content, never collides, and renders identically in the preview, the editor and the export. Use intensity (0..1) to tune it, and stack several for a rich look. Call list_effects for the full catalogue. Use when the user says 'add film grain', 'grade it', 'give it a cinematic look', 'add a light leak', 'make it rain', 'add some particles', 'make it glow', or wants the motion to feel authentic rather than flat.",
+  list_effects:
+    "List every effect apply_effect can add, grouped by family (look, light, pattern, atmosphere, motion) with a one-line description of each and its default strength. Optionally filter by category or a free-text query. Call it when you are not sure which effect fits the brief, or to turn a user's words ('make it feel retro', 'something dreamy') into a concrete effect name.",
+  apply_transition:
+    "Place real transitions on the scene boundaries so the film cuts between beats instead of dissolving into one long slide. Pick one of 20 transitions: wipes (linear_wipe, gradient_wipe, radial_wipe, iris_wipe, serrated, twist, scale_wipe, blob_wipe, glass_wipe, light_wipe), structural cuts (block_dissolve, grid_wipe, venetian, shutter, line_sweep, card_wipe), and punctuation (whip_pan, glitch_cut, flash_cut, zoom_punch). Each transition is anchored on the cut — it covers the frame on the boundary and clears either side, revealing the incoming scene as the panel leaves. Omit `transition` and the film's style picks an appropriate rotation. Use `every` to transition only every Nth cut, or `sceneId` to target one boundary. Use when the user says 'cut between the scenes', 'add transitions', 'make the cuts punchier', or the film feels like one static shot.",
   add_captions:
     "Turn a transcript into large animated captions — the centre-frame, phrase-at-a-time captions a talking-head edit is built on. Pass the words as SRT, WebVTT or plain prose: SRT/VTT timings are used as-is, and plain text is paced across the clip. Each page is placed on a caption band with a soft scrim behind it so it stays legible over any footage, and pops in on the beat rather than dissolving. There is no speech-to-text, so the transcript must be supplied. Use when the user says 'add captions', 'subtitle this', 'put the words on screen', or gives you a transcript.",
   add_keyword_pop:

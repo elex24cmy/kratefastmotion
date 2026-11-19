@@ -473,11 +473,11 @@ export declare const ListIllustrationsInput: z.ZodObject<{
 }>;
 /** Mirrors `EFFECT_KINDS` in the motion package; kept literal so the shared
  *  package stays free of motion imports. */
-export declare const EffectKindSchema: z.ZodEnum<["film_grain", "vignette", "grade", "bloom", "light_sweep", "scanlines", "letterbox", "chromatic", "glitch", "light_leak", "flash"]>;
+export declare const EffectKindSchema: z.ZodEnum<["film_grain", "vignette", "grade", "bloom", "light_sweep", "scanlines", "letterbox", "chromatic", "glitch", "light_leak", "flash", "lens_flare", "light_rays", "light_burst", "beam", "god_rays", "neon", "grid", "checkerboard", "cell_pattern", "fractal_noise", "gradient_ramp", "halftone", "duotone", "bleach_bypass", "rain", "snow", "bubbles", "particles", "starfield", "dust", "bokeh", "confetti", "speed_lines", "motion_trail", "zoom_blur", "strobe", "vhs", "film_burn"]>;
 export declare const GradeToneSchema: z.ZodEnum<["teal-orange", "warm", "cool", "noir", "vibrant"]>;
 export declare const ApplyEffectInput: z.ZodObject<{
     projectId: z.ZodString;
-    effect: z.ZodEnum<["film_grain", "vignette", "grade", "bloom", "light_sweep", "scanlines", "letterbox", "chromatic", "glitch", "light_leak", "flash"]>;
+    effect: z.ZodEnum<["film_grain", "vignette", "grade", "bloom", "light_sweep", "scanlines", "letterbox", "chromatic", "glitch", "light_leak", "flash", "lens_flare", "light_rays", "light_burst", "beam", "god_rays", "neon", "grid", "checkerboard", "cell_pattern", "fractal_noise", "gradient_ramp", "halftone", "duotone", "bleach_bypass", "rain", "snow", "bubbles", "particles", "starfield", "dust", "bokeh", "confetti", "speed_lines", "motion_trail", "zoom_blur", "strobe", "vhs", "film_burn"]>;
     intensity: z.ZodOptional<z.ZodNumber>;
     tone: z.ZodOptional<z.ZodEnum<["teal-orange", "warm", "cool", "noir", "vibrant"]>>;
     durationMs: z.ZodOptional<z.ZodNumber>;
@@ -487,7 +487,7 @@ export declare const ApplyEffectInput: z.ZodObject<{
     name: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     projectId: string;
-    effect: "film_grain" | "vignette" | "grade" | "bloom" | "light_sweep" | "scanlines" | "letterbox" | "chromatic" | "glitch" | "light_leak" | "flash";
+    effect: "film_grain" | "vignette" | "grade" | "bloom" | "light_sweep" | "scanlines" | "letterbox" | "chromatic" | "glitch" | "light_leak" | "flash" | "lens_flare" | "light_rays" | "light_burst" | "beam" | "god_rays" | "neon" | "grid" | "checkerboard" | "cell_pattern" | "fractal_noise" | "gradient_ramp" | "halftone" | "duotone" | "bleach_bypass" | "rain" | "snow" | "bubbles" | "particles" | "starfield" | "dust" | "bokeh" | "confetti" | "speed_lines" | "motion_trail" | "zoom_blur" | "strobe" | "vhs" | "film_burn";
     name?: string | undefined;
     durationMs?: number | undefined;
     delayMs?: number | undefined;
@@ -497,7 +497,7 @@ export declare const ApplyEffectInput: z.ZodObject<{
     intensity?: number | undefined;
 }, {
     projectId: string;
-    effect: "film_grain" | "vignette" | "grade" | "bloom" | "light_sweep" | "scanlines" | "letterbox" | "chromatic" | "glitch" | "light_leak" | "flash";
+    effect: "film_grain" | "vignette" | "grade" | "bloom" | "light_sweep" | "scanlines" | "letterbox" | "chromatic" | "glitch" | "light_leak" | "flash" | "lens_flare" | "light_rays" | "light_burst" | "beam" | "god_rays" | "neon" | "grid" | "checkerboard" | "cell_pattern" | "fractal_noise" | "gradient_ramp" | "halftone" | "duotone" | "bleach_bypass" | "rain" | "snow" | "bubbles" | "particles" | "starfield" | "dust" | "bokeh" | "confetti" | "speed_lines" | "motion_trail" | "zoom_blur" | "strobe" | "vhs" | "film_burn";
     name?: string | undefined;
     durationMs?: number | undefined;
     delayMs?: number | undefined;
@@ -505,6 +505,54 @@ export declare const ApplyEffectInput: z.ZodObject<{
     tone?: "teal-orange" | "warm" | "cool" | "noir" | "vibrant" | undefined;
     zIndex?: number | undefined;
     intensity?: number | undefined;
+}>;
+export declare const ListEffectsInput: z.ZodObject<{
+    category: z.ZodOptional<z.ZodEnum<["all", "look", "light", "pattern", "atmosphere", "motion"]>>;
+    query: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    category?: "all" | "look" | "light" | "pattern" | "atmosphere" | "motion" | undefined;
+    query?: string | undefined;
+}, {
+    category?: "all" | "look" | "light" | "pattern" | "atmosphere" | "motion" | undefined;
+    query?: string | undefined;
+}>;
+/** Mirrors `TRANSITION_KINDS` in the motion package; kept literal so the shared
+ *  package stays free of motion imports. */
+export declare const TransitionKindSchema: z.ZodEnum<["linear_wipe", "gradient_wipe", "radial_wipe", "iris_wipe", "block_dissolve", "grid_wipe", "venetian", "shutter", "glass_wipe", "light_wipe", "line_sweep", "serrated", "twist", "scale_wipe", "blob_wipe", "card_wipe", "whip_pan", "glitch_cut", "flash_cut", "zoom_punch"]>;
+export declare const TransitionDirectionSchema: z.ZodEnum<["left", "right", "up", "down"]>;
+export declare const ApplyTransitionInput: z.ZodObject<{
+    projectId: z.ZodString;
+    transition: z.ZodOptional<z.ZodEnum<["linear_wipe", "gradient_wipe", "radial_wipe", "iris_wipe", "block_dissolve", "grid_wipe", "venetian", "shutter", "glass_wipe", "light_wipe", "line_sweep", "serrated", "twist", "scale_wipe", "blob_wipe", "card_wipe", "whip_pan", "glitch_cut", "flash_cut", "zoom_punch"]>>;
+    durationMs: z.ZodOptional<z.ZodNumber>;
+    direction: z.ZodOptional<z.ZodEnum<["left", "right", "up", "down"]>>;
+    intensity: z.ZodOptional<z.ZodNumber>;
+    accent: z.ZodOptional<z.ZodString>;
+    every: z.ZodOptional<z.ZodNumber>;
+    sceneId: z.ZodOptional<z.ZodString>;
+    replace: z.ZodOptional<z.ZodBoolean>;
+    name: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    projectId: string;
+    every?: number | undefined;
+    name?: string | undefined;
+    sceneId?: string | undefined;
+    durationMs?: number | undefined;
+    direction?: "left" | "right" | "up" | "down" | undefined;
+    replace?: boolean | undefined;
+    accent?: string | undefined;
+    intensity?: number | undefined;
+    transition?: "linear_wipe" | "gradient_wipe" | "radial_wipe" | "iris_wipe" | "block_dissolve" | "grid_wipe" | "venetian" | "shutter" | "glass_wipe" | "light_wipe" | "line_sweep" | "serrated" | "twist" | "scale_wipe" | "blob_wipe" | "card_wipe" | "whip_pan" | "glitch_cut" | "flash_cut" | "zoom_punch" | undefined;
+}, {
+    projectId: string;
+    every?: number | undefined;
+    name?: string | undefined;
+    sceneId?: string | undefined;
+    durationMs?: number | undefined;
+    direction?: "left" | "right" | "up" | "down" | undefined;
+    replace?: boolean | undefined;
+    accent?: string | undefined;
+    intensity?: number | undefined;
+    transition?: "linear_wipe" | "gradient_wipe" | "radial_wipe" | "iris_wipe" | "block_dissolve" | "grid_wipe" | "venetian" | "shutter" | "glass_wipe" | "light_wipe" | "line_sweep" | "serrated" | "twist" | "scale_wipe" | "blob_wipe" | "card_wipe" | "whip_pan" | "glitch_cut" | "flash_cut" | "zoom_punch" | undefined;
 }>;
 /** Mirrors the art-direction styles in the motion package; kept literal so the
  *  shared package stays free of motion imports. */
@@ -1679,8 +1727,8 @@ export declare const ChoreographInput: z.ZodObject<{
     durationMs: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     projectId: string;
-    stepMs: number;
     pattern: "cascade" | "wave" | "canon" | "ripple" | "converge" | "spiral" | "explosion" | "assembly" | "breathing" | "domino" | "scatter";
+    stepMs: number;
     durationMs?: number | undefined;
 }, {
     projectId: string;
@@ -6136,7 +6184,7 @@ export declare const CcJawsWipeInput: z.ZodObject<{
     pointSpacing: z.ZodDefault<z.ZodNumber>;
     shapeLayer: z.ZodDefault<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
-    shape: "scale" | "line" | "radial" | "jaws" | "grid";
+    shape: "scale" | "line" | "grid" | "radial" | "jaws";
     projectId: string;
     direction: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "all";
     transitionDurationMs: number;
@@ -6146,7 +6194,7 @@ export declare const CcJawsWipeInput: z.ZodObject<{
     componentIds?: string[] | undefined;
 }, {
     projectId: string;
-    shape?: "scale" | "line" | "radial" | "jaws" | "grid" | undefined;
+    shape?: "scale" | "line" | "grid" | "radial" | "jaws" | undefined;
     direction?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "all" | undefined;
     componentIds?: string[] | undefined;
     transitionDurationMs?: number | undefined;
@@ -6315,7 +6363,7 @@ export declare const CellPatternInput: z.ZodObject<{
     projectId: string;
     size: number;
     speed: number;
-    patternType: "organic" | "bubbles" | "crystals" | "static-plates" | "tubular" | "spotted" | "cracked" | "steel" | "stone-rock" | "dried-up" | "shatter" | "scales" | "turbulent" | "load-bubbles";
+    patternType: "bubbles" | "organic" | "crystals" | "static-plates" | "tubular" | "spotted" | "cracked" | "steel" | "stone-rock" | "dried-up" | "shatter" | "scales" | "turbulent" | "load-bubbles";
     contrast: number;
     dispersal: number;
     tiling: boolean;
@@ -6325,7 +6373,7 @@ export declare const CellPatternInput: z.ZodObject<{
     offset?: [number, number] | undefined;
     size?: number | undefined;
     speed?: number | undefined;
-    patternType?: "organic" | "bubbles" | "crystals" | "static-plates" | "tubular" | "spotted" | "cracked" | "steel" | "stone-rock" | "dried-up" | "shatter" | "scales" | "turbulent" | "load-bubbles" | undefined;
+    patternType?: "bubbles" | "organic" | "crystals" | "static-plates" | "tubular" | "spotted" | "cracked" | "steel" | "stone-rock" | "dried-up" | "shatter" | "scales" | "turbulent" | "load-bubbles" | undefined;
     contrast?: number | undefined;
     dispersal?: number | undefined;
     tiling?: boolean | undefined;
@@ -6624,18 +6672,18 @@ export declare const ThresholdEffectInput: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     projectId: string;
     componentId: string;
+    halftone: boolean;
     channel: "alpha" | "red" | "green" | "blue" | "luminance";
     invert: boolean;
     level: number;
-    halftone: boolean;
     halftoneSize: number;
 }, {
     projectId: string;
     componentId: string;
+    halftone?: boolean | undefined;
     channel?: "alpha" | "red" | "green" | "blue" | "luminance" | undefined;
     invert?: boolean | undefined;
     level?: number | undefined;
-    halftone?: boolean | undefined;
     halftoneSize?: number | undefined;
 }>;
 export declare const AnalyzeRestraintInput: z.ZodObject<{
@@ -7070,16 +7118,16 @@ export declare const CreateBeatInput: z.ZodObject<{
     sceneId?: string | undefined;
     durationMs?: number | undefined;
     description?: string | undefined;
-    componentIds?: string[] | undefined;
     transition?: "zoom" | "dissolve" | "cut" | "wipe" | "fade" | "slide" | undefined;
+    componentIds?: string[] | undefined;
 }, {
     projectId: string;
     title: string;
     sceneId?: string | undefined;
     durationMs?: number | undefined;
     description?: string | undefined;
-    componentIds?: string[] | undefined;
     transition?: "zoom" | "dissolve" | "cut" | "wipe" | "fade" | "slide" | undefined;
+    componentIds?: string[] | undefined;
 }>;
 export declare const ListBeatsInput: z.ZodObject<{
     projectId: z.ZodString;
@@ -7104,8 +7152,8 @@ export declare const UpdateBeatInput: z.ZodObject<{
     durationMs?: number | undefined;
     description?: string | undefined;
     title?: string | undefined;
-    componentIds?: string[] | undefined;
     transition?: "zoom" | "dissolve" | "cut" | "wipe" | "fade" | "slide" | undefined;
+    componentIds?: string[] | undefined;
 }, {
     projectId: string;
     beatId: string;
@@ -7113,8 +7161,8 @@ export declare const UpdateBeatInput: z.ZodObject<{
     durationMs?: number | undefined;
     description?: string | undefined;
     title?: string | undefined;
-    componentIds?: string[] | undefined;
     transition?: "zoom" | "dissolve" | "cut" | "wipe" | "fade" | "slide" | undefined;
+    componentIds?: string[] | undefined;
 }>;
 export declare const ReorderBeatsInput: z.ZodObject<{
     projectId: z.ZodString;
@@ -7784,10 +7832,10 @@ export declare const EditorSetPanelInput: z.ZodObject<{
     category: z.ZodEnum<["design", "motion", "intel", "assets", "output"]>;
     tab: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    category: "output" | "design" | "motion" | "intel" | "assets";
+    category: "motion" | "output" | "design" | "intel" | "assets";
     tab?: string | undefined;
 }, {
-    category: "output" | "design" | "motion" | "intel" | "assets";
+    category: "motion" | "output" | "design" | "intel" | "assets";
     tab?: string | undefined;
 }>;
 export declare const EditorTogglePanelInput: z.ZodObject<{
@@ -7998,13 +8046,13 @@ export declare const ResolveMediaInput: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     description: string;
     modality: "image" | "video" | "audio" | "icon" | "font" | "voice" | "logo" | "lut";
-    purpose: "overlay" | "transition" | "background-music" | "sound-effect" | "voiceover" | "background-image" | "foreground-image" | "color-grade" | "caption" | "watermark";
+    purpose: "transition" | "overlay" | "background-music" | "sound-effect" | "voiceover" | "background-image" | "foreground-image" | "color-grade" | "caption" | "watermark";
     durationSec?: number | undefined;
     allowGeneration?: boolean | undefined;
 }, {
     description: string;
     modality: "image" | "video" | "audio" | "icon" | "font" | "voice" | "logo" | "lut";
-    purpose: "overlay" | "transition" | "background-music" | "sound-effect" | "voiceover" | "background-image" | "foreground-image" | "color-grade" | "caption" | "watermark";
+    purpose: "transition" | "overlay" | "background-music" | "sound-effect" | "voiceover" | "background-image" | "foreground-image" | "color-grade" | "caption" | "watermark";
     durationSec?: number | undefined;
     allowGeneration?: boolean | undefined;
 }>;
@@ -10064,8 +10112,8 @@ export declare const TOOL_INPUT_SCHEMAS: {
         durationMs: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         projectId: string;
-        stepMs: number;
         pattern: "cascade" | "wave" | "canon" | "ripple" | "converge" | "spiral" | "explosion" | "assembly" | "breathing" | "domino" | "scatter";
+        stepMs: number;
         durationMs?: number | undefined;
     }, {
         projectId: string;
@@ -10723,7 +10771,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }>;
     readonly apply_effect: z.ZodObject<{
         projectId: z.ZodString;
-        effect: z.ZodEnum<["film_grain", "vignette", "grade", "bloom", "light_sweep", "scanlines", "letterbox", "chromatic", "glitch", "light_leak", "flash"]>;
+        effect: z.ZodEnum<["film_grain", "vignette", "grade", "bloom", "light_sweep", "scanlines", "letterbox", "chromatic", "glitch", "light_leak", "flash", "lens_flare", "light_rays", "light_burst", "beam", "god_rays", "neon", "grid", "checkerboard", "cell_pattern", "fractal_noise", "gradient_ramp", "halftone", "duotone", "bleach_bypass", "rain", "snow", "bubbles", "particles", "starfield", "dust", "bokeh", "confetti", "speed_lines", "motion_trail", "zoom_blur", "strobe", "vhs", "film_burn"]>;
         intensity: z.ZodOptional<z.ZodNumber>;
         tone: z.ZodOptional<z.ZodEnum<["teal-orange", "warm", "cool", "noir", "vibrant"]>>;
         durationMs: z.ZodOptional<z.ZodNumber>;
@@ -10733,7 +10781,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
         name: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         projectId: string;
-        effect: "film_grain" | "vignette" | "grade" | "bloom" | "light_sweep" | "scanlines" | "letterbox" | "chromatic" | "glitch" | "light_leak" | "flash";
+        effect: "film_grain" | "vignette" | "grade" | "bloom" | "light_sweep" | "scanlines" | "letterbox" | "chromatic" | "glitch" | "light_leak" | "flash" | "lens_flare" | "light_rays" | "light_burst" | "beam" | "god_rays" | "neon" | "grid" | "checkerboard" | "cell_pattern" | "fractal_noise" | "gradient_ramp" | "halftone" | "duotone" | "bleach_bypass" | "rain" | "snow" | "bubbles" | "particles" | "starfield" | "dust" | "bokeh" | "confetti" | "speed_lines" | "motion_trail" | "zoom_blur" | "strobe" | "vhs" | "film_burn";
         name?: string | undefined;
         durationMs?: number | undefined;
         delayMs?: number | undefined;
@@ -10743,7 +10791,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
         intensity?: number | undefined;
     }, {
         projectId: string;
-        effect: "film_grain" | "vignette" | "grade" | "bloom" | "light_sweep" | "scanlines" | "letterbox" | "chromatic" | "glitch" | "light_leak" | "flash";
+        effect: "film_grain" | "vignette" | "grade" | "bloom" | "light_sweep" | "scanlines" | "letterbox" | "chromatic" | "glitch" | "light_leak" | "flash" | "lens_flare" | "light_rays" | "light_burst" | "beam" | "god_rays" | "neon" | "grid" | "checkerboard" | "cell_pattern" | "fractal_noise" | "gradient_ramp" | "halftone" | "duotone" | "bleach_bypass" | "rain" | "snow" | "bubbles" | "particles" | "starfield" | "dust" | "bokeh" | "confetti" | "speed_lines" | "motion_trail" | "zoom_blur" | "strobe" | "vhs" | "film_burn";
         name?: string | undefined;
         durationMs?: number | undefined;
         delayMs?: number | undefined;
@@ -10751,6 +10799,50 @@ export declare const TOOL_INPUT_SCHEMAS: {
         tone?: "teal-orange" | "warm" | "cool" | "noir" | "vibrant" | undefined;
         zIndex?: number | undefined;
         intensity?: number | undefined;
+    }>;
+    readonly list_effects: z.ZodObject<{
+        category: z.ZodOptional<z.ZodEnum<["all", "look", "light", "pattern", "atmosphere", "motion"]>>;
+        query: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        category?: "all" | "look" | "light" | "pattern" | "atmosphere" | "motion" | undefined;
+        query?: string | undefined;
+    }, {
+        category?: "all" | "look" | "light" | "pattern" | "atmosphere" | "motion" | undefined;
+        query?: string | undefined;
+    }>;
+    readonly apply_transition: z.ZodObject<{
+        projectId: z.ZodString;
+        transition: z.ZodOptional<z.ZodEnum<["linear_wipe", "gradient_wipe", "radial_wipe", "iris_wipe", "block_dissolve", "grid_wipe", "venetian", "shutter", "glass_wipe", "light_wipe", "line_sweep", "serrated", "twist", "scale_wipe", "blob_wipe", "card_wipe", "whip_pan", "glitch_cut", "flash_cut", "zoom_punch"]>>;
+        durationMs: z.ZodOptional<z.ZodNumber>;
+        direction: z.ZodOptional<z.ZodEnum<["left", "right", "up", "down"]>>;
+        intensity: z.ZodOptional<z.ZodNumber>;
+        accent: z.ZodOptional<z.ZodString>;
+        every: z.ZodOptional<z.ZodNumber>;
+        sceneId: z.ZodOptional<z.ZodString>;
+        replace: z.ZodOptional<z.ZodBoolean>;
+        name: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        projectId: string;
+        every?: number | undefined;
+        name?: string | undefined;
+        sceneId?: string | undefined;
+        durationMs?: number | undefined;
+        direction?: "left" | "right" | "up" | "down" | undefined;
+        replace?: boolean | undefined;
+        accent?: string | undefined;
+        intensity?: number | undefined;
+        transition?: "linear_wipe" | "gradient_wipe" | "radial_wipe" | "iris_wipe" | "block_dissolve" | "grid_wipe" | "venetian" | "shutter" | "glass_wipe" | "light_wipe" | "line_sweep" | "serrated" | "twist" | "scale_wipe" | "blob_wipe" | "card_wipe" | "whip_pan" | "glitch_cut" | "flash_cut" | "zoom_punch" | undefined;
+    }, {
+        projectId: string;
+        every?: number | undefined;
+        name?: string | undefined;
+        sceneId?: string | undefined;
+        durationMs?: number | undefined;
+        direction?: "left" | "right" | "up" | "down" | undefined;
+        replace?: boolean | undefined;
+        accent?: string | undefined;
+        intensity?: number | undefined;
+        transition?: "linear_wipe" | "gradient_wipe" | "radial_wipe" | "iris_wipe" | "block_dissolve" | "grid_wipe" | "venetian" | "shutter" | "glass_wipe" | "light_wipe" | "line_sweep" | "serrated" | "twist" | "scale_wipe" | "blob_wipe" | "card_wipe" | "whip_pan" | "glitch_cut" | "flash_cut" | "zoom_punch" | undefined;
     }>;
     readonly add_captions: z.ZodObject<{
         projectId: z.ZodString;
@@ -14967,7 +15059,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
         pointSpacing: z.ZodDefault<z.ZodNumber>;
         shapeLayer: z.ZodDefault<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
-        shape: "scale" | "line" | "radial" | "jaws" | "grid";
+        shape: "scale" | "line" | "grid" | "radial" | "jaws";
         projectId: string;
         direction: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "all";
         transitionDurationMs: number;
@@ -14977,7 +15069,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
         componentIds?: string[] | undefined;
     }, {
         projectId: string;
-        shape?: "scale" | "line" | "radial" | "jaws" | "grid" | undefined;
+        shape?: "scale" | "line" | "grid" | "radial" | "jaws" | undefined;
         direction?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "all" | undefined;
         componentIds?: string[] | undefined;
         transitionDurationMs?: number | undefined;
@@ -15146,7 +15238,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
         projectId: string;
         size: number;
         speed: number;
-        patternType: "organic" | "bubbles" | "crystals" | "static-plates" | "tubular" | "spotted" | "cracked" | "steel" | "stone-rock" | "dried-up" | "shatter" | "scales" | "turbulent" | "load-bubbles";
+        patternType: "bubbles" | "organic" | "crystals" | "static-plates" | "tubular" | "spotted" | "cracked" | "steel" | "stone-rock" | "dried-up" | "shatter" | "scales" | "turbulent" | "load-bubbles";
         contrast: number;
         dispersal: number;
         tiling: boolean;
@@ -15156,7 +15248,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
         offset?: [number, number] | undefined;
         size?: number | undefined;
         speed?: number | undefined;
-        patternType?: "organic" | "bubbles" | "crystals" | "static-plates" | "tubular" | "spotted" | "cracked" | "steel" | "stone-rock" | "dried-up" | "shatter" | "scales" | "turbulent" | "load-bubbles" | undefined;
+        patternType?: "bubbles" | "organic" | "crystals" | "static-plates" | "tubular" | "spotted" | "cracked" | "steel" | "stone-rock" | "dried-up" | "shatter" | "scales" | "turbulent" | "load-bubbles" | undefined;
         contrast?: number | undefined;
         dispersal?: number | undefined;
         tiling?: boolean | undefined;
@@ -15455,18 +15547,18 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }, "strip", z.ZodTypeAny, {
         projectId: string;
         componentId: string;
+        halftone: boolean;
         channel: "alpha" | "red" | "green" | "blue" | "luminance";
         invert: boolean;
         level: number;
-        halftone: boolean;
         halftoneSize: number;
     }, {
         projectId: string;
         componentId: string;
+        halftone?: boolean | undefined;
         channel?: "alpha" | "red" | "green" | "blue" | "luminance" | undefined;
         invert?: boolean | undefined;
         level?: number | undefined;
-        halftone?: boolean | undefined;
         halftoneSize?: number | undefined;
     }>;
     readonly analyze_restraint: z.ZodObject<{
@@ -15901,16 +15993,16 @@ export declare const TOOL_INPUT_SCHEMAS: {
         sceneId?: string | undefined;
         durationMs?: number | undefined;
         description?: string | undefined;
-        componentIds?: string[] | undefined;
         transition?: "zoom" | "dissolve" | "cut" | "wipe" | "fade" | "slide" | undefined;
+        componentIds?: string[] | undefined;
     }, {
         projectId: string;
         title: string;
         sceneId?: string | undefined;
         durationMs?: number | undefined;
         description?: string | undefined;
-        componentIds?: string[] | undefined;
         transition?: "zoom" | "dissolve" | "cut" | "wipe" | "fade" | "slide" | undefined;
+        componentIds?: string[] | undefined;
     }>;
     readonly list_beats: z.ZodObject<{
         projectId: z.ZodString;
@@ -15935,8 +16027,8 @@ export declare const TOOL_INPUT_SCHEMAS: {
         durationMs?: number | undefined;
         description?: string | undefined;
         title?: string | undefined;
-        componentIds?: string[] | undefined;
         transition?: "zoom" | "dissolve" | "cut" | "wipe" | "fade" | "slide" | undefined;
+        componentIds?: string[] | undefined;
     }, {
         projectId: string;
         beatId: string;
@@ -15944,8 +16036,8 @@ export declare const TOOL_INPUT_SCHEMAS: {
         durationMs?: number | undefined;
         description?: string | undefined;
         title?: string | undefined;
-        componentIds?: string[] | undefined;
         transition?: "zoom" | "dissolve" | "cut" | "wipe" | "fade" | "slide" | undefined;
+        componentIds?: string[] | undefined;
     }>;
     readonly reorder_beats: z.ZodObject<{
         projectId: z.ZodString;
@@ -16789,10 +16881,10 @@ export declare const TOOL_INPUT_SCHEMAS: {
         category: z.ZodEnum<["design", "motion", "intel", "assets", "output"]>;
         tab: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
-        category: "output" | "design" | "motion" | "intel" | "assets";
+        category: "motion" | "output" | "design" | "intel" | "assets";
         tab?: string | undefined;
     }, {
-        category: "output" | "design" | "motion" | "intel" | "assets";
+        category: "motion" | "output" | "design" | "intel" | "assets";
         tab?: string | undefined;
     }>;
     readonly editor_toggle_panel: z.ZodObject<{
@@ -17003,13 +17095,13 @@ export declare const TOOL_INPUT_SCHEMAS: {
     }, "strip", z.ZodTypeAny, {
         description: string;
         modality: "image" | "video" | "audio" | "icon" | "font" | "voice" | "logo" | "lut";
-        purpose: "overlay" | "transition" | "background-music" | "sound-effect" | "voiceover" | "background-image" | "foreground-image" | "color-grade" | "caption" | "watermark";
+        purpose: "transition" | "overlay" | "background-music" | "sound-effect" | "voiceover" | "background-image" | "foreground-image" | "color-grade" | "caption" | "watermark";
         durationSec?: number | undefined;
         allowGeneration?: boolean | undefined;
     }, {
         description: string;
         modality: "image" | "video" | "audio" | "icon" | "font" | "voice" | "logo" | "lut";
-        purpose: "overlay" | "transition" | "background-music" | "sound-effect" | "voiceover" | "background-image" | "foreground-image" | "color-grade" | "caption" | "watermark";
+        purpose: "transition" | "overlay" | "background-music" | "sound-effect" | "voiceover" | "background-image" | "foreground-image" | "color-grade" | "caption" | "watermark";
         durationSec?: number | undefined;
         allowGeneration?: boolean | undefined;
     }>;

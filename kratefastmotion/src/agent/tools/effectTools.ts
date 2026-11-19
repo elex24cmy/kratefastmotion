@@ -11,11 +11,15 @@
 
 import type { ToolName } from "@kratefastmotion/shared";
 import {
+  DEFAULT_EFFECT_INTENSITY,
+  EFFECT_CATEGORIES,
+  EFFECT_CATEGORY,
   EFFECT_KINDS,
   EFFECT_PURPOSE,
   GRADE_TONES,
   buildEffect,
   describeEffect,
+  type EffectCategory,
   type EffectKind,
   type GradeTone,
 } from "../../motion/filmEffects.js";
@@ -101,6 +105,41 @@ export const effectExecutors: Partial<Record<ToolName, Executor>> = {
         componentIds: ids,
         layerNames: layers.map((l) => l.name),
       },
+    );
+  },
+
+  list_effects: (args) => {
+    const rawCategory = typeof args.category === "string" ? args.category : "all";
+    const query = typeof args.query === "string" ? args.query.trim().toLowerCase() : "";
+
+    const entries = EFFECT_KINDS.filter((k) => {
+      if (rawCategory !== "all" && EFFECT_CATEGORY[k] !== rawCategory) return false;
+      if (!query) return true;
+      return k.includes(query) || EFFECT_PURPOSE[k].toLowerCase().includes(query) || EFFECT_CATEGORY[k].includes(query);
+    }).map((k) => ({
+      effect: k,
+      category: EFFECT_CATEGORY[k],
+      purpose: EFFECT_PURPOSE[k],
+      defaultIntensity: DEFAULT_EFFECT_INTENSITY[k],
+    }));
+
+    if (!entries.length) {
+      return fail(
+        `no effects match category "${rawCategory}"${query ? ` and query "${query}"` : ""}. Categories: ${EFFECT_CATEGORIES.join(", ")}. There are ${EFFECT_KINDS.length} effects in total.`,
+      );
+    }
+
+    const byCategory = EFFECT_CATEGORIES.filter((c) => rawCategory === "all" || c === rawCategory)
+      .map((c) => {
+        const list = entries.filter((e) => e.category === c);
+        return `${c} (${list.length}): ${list.map((e) => e.effect).join(", ")}`;
+      })
+      .join("\n");
+
+    return ok(
+      `${entries.length} effect(s)${rawCategory === "all" ? "" : ` in ${rawCategory}`}${query ? ` matching "${query}"` : ""}:\n${byCategory}`,
+      false,
+      { total: EFFECT_KINDS.length, categories: EFFECT_CATEGORIES, effects: entries },
     );
   },
 };

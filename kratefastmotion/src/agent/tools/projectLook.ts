@@ -13,6 +13,10 @@ export interface ProjectLook {
   palette: GraphicPalette;
   /** Beat amplitude multiplier: calm 0.55 / balanced 1 / kinetic 3. */
   amp: number;
+  /** The art-direction style the film was composed with. */
+  style: FilmStyle;
+  /** The motion intensity the film was composed with. */
+  motion: FilmMotion;
 }
 
 /** Palette + beat amplitude for the project, inherited from its art direction. */
@@ -22,5 +26,5 @@ export function projectLook(projectId: string, accent?: string): ProjectLook {
   const motion = String(tokens.__filmMotion ?? "balanced") as FilmMotion;
   const palette = PALETTES[style] ?? PALETTES.default;
   const amp = motion === "kinetic" ? 3 : motion === "calm" ? 0.55 : 1;
-  return { palette: accent ? { ...palette, accent } : palette, amp };
+  return { palette: accent ? { ...palette, accent } : palette, amp, style, motion };
 }

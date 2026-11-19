@@ -17,6 +17,7 @@ import {
 } from "./layout.js";
 import { buildGraphic, type GraphicKind, type GraphicLayer } from "./filmGraphics.js";
 import { filmLookLayers } from "./filmEffects.js";
+import { buildTransition, transitionSequence, type TransitionDirection } from "./filmTransitions.js";
 import { beat, beatHold, EASE_BACK, EASE_IN, EASE_IN_OUT, EASE_OUT, FONT_STACK, MONO_STACK } from "./filmBase.js";
 
 /**
@@ -657,29 +658,37 @@ function mediaBackdrop(ctx: Ctx, scene: FilmScene, start: number, asset: FilmAss
 }
 
 /**
- * A short accent flash at a scene boundary. Real ads cut between beats; without
- * a visible seam our scenes cross-fade into each other and read as one long
- * slide. A 420ms flash on the accent colour makes each scene land as a cut.
+ * A transition at a scene boundary. Real ads cut between beats with a wipe, a
+ * dissolve or a whip pan; without a seam our scenes cross-fade into each other
+ * and read as one long slide. The transition covers the frame on the cut and
+ * clears either side, so the incoming scene is revealed as the panel leaves.
  */
-function cutFlash(ctx: Ctx, scene: FilmScene, start: number): ComponentDraft {
-  const { palette, brief } = ctx;
-  const peak = brief.motion === "kinetic" ? 0.16 : brief.motion === "calm" ? 0.05 : 0.1;
-  return mk(ctx, "Scene Cut", scene.id, {
-    durationMs: 420,
-    delayMs: start,
-    easing: EASE_IN_OUT,
-    keyframes: [
-      { offset: 0, properties: { opacity: 0 } as Keyframe["properties"], easing: EASE_OUT },
-      { offset: 0.28, properties: { opacity: peak } as Keyframe["properties"], easing: EASE_IN_OUT },
-      { offset: 1, properties: { opacity: 0 } as Keyframe["properties"] },
-    ],
-    style: fullBleed({
-      background: `linear-gradient(90deg, ${palette.accent}00, ${palette.accent}, ${palette.accent2}00)`,
-      pointerEvents: "none",
-      _content: "",
-      zIndex: "12",
-    }),
+function sceneTransition(
+  ctx: Ctx,
+  sceneId: string | null,
+  kind: Parameters<typeof buildTransition>[0]["kind"],
+  cutMs: number,
+  durationMs: number,
+  direction: TransitionDirection,
+  group: string,
+  cutIndex: number,
+): ComponentDraft[] {
+  const layers = buildTransition({
+    kind,
+    palette: ctx.palette,
+    amp: motionScale(ctx.brief.motion),
+    cutMs,
+    durationMs,
+    direction,
+    group,
   });
+  // Mark the director's own seams exactly like the `apply_transition` tool does,
+  // so re-cutting a boundary with `replace` genuinely replaces it.
+  for (const l of layers) {
+    l.style._transition = kind;
+    l.style._cut = String(cutIndex);
+  }
+  return graphics(ctx, sceneId, 0, layers);
 }
 
 function titleScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAssets): ComponentDraft[] {
@@ -1327,6 +1336,8 @@ export function buildFilm(brief: FilmBrief, assets: FilmAssets = {}): FilmPlan {
   let statementVariant = 0;
   let mediaCursor = 0;
   const media = assets.media ?? [];
+  const cutKinds = transitionSequence(brief.style, brief.motion, Math.max(0, scenes.length - 1));
+  const cutDurationMs = brief.motion === "kinetic" ? 440 : brief.motion === "calm" ? 660 : 540;
   scenes.forEach((scene, i) => {
     if (scene.kind === "title") drafts.push(...titleScene(ctx, scene, start, assets));
     else if (scene.kind === "features") drafts.push(...featuresScene(ctx, scene, start, featureVariant++));
@@ -1336,8 +1347,11 @@ export function buildFilm(brief: FilmBrief, assets: FilmAssets = {}): FilmPlan {
       const asset = media.length ? media[mediaCursor++ % media.length] : undefined;
       drafts.push(...statementScene(ctx, scene, start, statementVariant++, asset));
     } else drafts.push(...outroScene(ctx, scene, start, assets));
-    // Every boundary after the opening reads as a cut, not a cross-fade.
-    if (i > 0) drafts.push(cutFlash(ctx, scene, start));
+    // Every boundary after the opening reads as a real cut, not a cross-fade.
+    if (i > 0) {
+      const kind = cutKinds[i - 1] ?? "linear_wipe";
+      drafts.push(...sceneTransition(ctx, null, kind, start, cutDurationMs, i % 2 === 0 ? "right" : "left", `cut_${i}`, i));
+    }
     start += scene.durationMs;
   });
 
