@@ -367,6 +367,16 @@ export const ListEffectsInput = z.object({
   query: z.string().optional().describe('Free-text filter, e.g. "rain", "flare", "retro". Omit to list everything.'),
 });
 
+/* ------------------------ Motion (grammar) tools ------------------------ */
+
+/** The four beat roles the measured motion grammar is stated over. */
+export const MotionBeatSchema = z.enum(["hook", "turn", "proof", "cta"]);
+
+export const ListMotionsInput = z.object({
+  role: MotionBeatSchema.optional().describe("Restrict the rules to one beat role. Defaults to all."),
+  query: z.string().optional().describe('Free-text filter, e.g. "stagger", "overshoot", "exit", "blur". Omit to list everything.'),
+});
+
 /* ------------------------ Transition tools ------------------------ */
 
 /** Mirrors `TRANSITION_KINDS` in the motion package; kept literal so the shared
@@ -4157,6 +4167,7 @@ export const TOOL_INPUT_SCHEMAS = {
   list_illustrations: ListIllustrationsInput,
   apply_effect: ApplyEffectInput,
   list_effects: ListEffectsInput,
+  list_motions: ListMotionsInput,
   apply_transition: ApplyTransitionInput,
   add_captions: AddCaptionsInput,
   add_keyword_pop: AddKeywordPopInput,
@@ -4736,6 +4747,8 @@ export const TOOL_DESCRIPTIONS: Record<ToolName, string> = {
     "Add a graded, cinematic finish over the whole film — the pass that makes vector motion read as real footage. Pick from 39 effects in six families. Look: film_grain (analogue texture), vignette (edge darkening), grade (a colour wash; pick a tone like teal-orange, warm, cool, noir or vibrant), bloom (light bleeds), light_sweep (a highlight sweeping across on a loop), scanlines (CRT lines), letterbox (cinematic bars), chromatic (red/cyan lens fringing), glitch (RGB tearing bursts), light_leak (a warm corner flare), flash (a quick opening flash). Light: lens_flare, light_rays, light_burst, beam, god_rays, neon. Pattern: grid, checkerboard, cell_pattern, fractal_noise, gradient_ramp, halftone, duotone, bleach_bypass. Atmosphere: rain, snow, bubbles, particles, starfield, dust, bokeh, confetti. Motion: speed_lines, motion_trail, zoom_blur, strobe, vhs, film_burn. Every effect is full-bleed CSS, so it sits above the content, never collides, and renders identically in the preview, the editor and the export. Use intensity (0..1) to tune it, and stack several for a rich look. Call list_effects for the full catalogue. Use when the user says 'add film grain', 'grade it', 'give it a cinematic look', 'add a light leak', 'make it rain', 'add some particles', 'make it glow', or wants the motion to feel authentic rather than flat.",
   list_effects:
     "List every effect apply_effect can add, grouped by family (look, light, pattern, atmosphere, motion) with a one-line description of each and its default strength. Optionally filter by category or a free-text query. Call it when you are not sure which effect fits the brief, or to turn a user's words ('make it feel retro', 'something dreamy') into a concrete effect name.",
+  list_motions:
+    "Return the measured motion grammar — how to make motion the way a motion designer does, taken from a frame-by-frame measurement of 4,288 moves across 53 professional motion moments. Gives the duration in frames for each property (a translate entrance is 12 frames at 30 fps, opacity is a 6-frame helper, an exit accelerates over 13), the entry/exit/stagger timing per beat role (hook, turn, proof, cta), the 12 measured easing curves by name (softLand, glide, snapSettle, whip, accelExit, crashOut, popOver, crashIn, bounceHard, cruise, softInOut, gentleIn) with what each is for, and the WHEN → DO → BECAUSE rules (stagger siblings 1-3 frames, overshoot rarely and late, never leave a held frame dead, arrive from oversize, end mid-motion). Use the returned easing names as `easing: { type: 'preset', name: 'softLand' }` on any keyframe. Call it before hand-authoring motion so the timing reads as designed rather than eased-by-default.",
   apply_transition:
     "Place real transitions on the scene boundaries so the film cuts between beats instead of dissolving into one long slide. Pick one of 20 transitions: wipes (linear_wipe, gradient_wipe, radial_wipe, iris_wipe, serrated, twist, scale_wipe, blob_wipe, glass_wipe, light_wipe), structural cuts (block_dissolve, grid_wipe, venetian, shutter, line_sweep, card_wipe), and punctuation (whip_pan, glitch_cut, flash_cut, zoom_punch). Each transition is anchored on the cut — it covers the frame on the boundary and clears either side, revealing the incoming scene as the panel leaves. Omit `transition` and the film's style picks an appropriate rotation. Use `every` to transition only every Nth cut, or `sceneId` to target one boundary. Use when the user says 'cut between the scenes', 'add transitions', 'make the cuts punchier', or the film feels like one static shot.",
   add_captions:

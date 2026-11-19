@@ -516,6 +516,18 @@ export declare const ListEffectsInput: z.ZodObject<{
     category?: "all" | "look" | "light" | "pattern" | "atmosphere" | "motion" | undefined;
     query?: string | undefined;
 }>;
+/** The four beat roles the measured motion grammar is stated over. */
+export declare const MotionBeatSchema: z.ZodEnum<["hook", "turn", "proof", "cta"]>;
+export declare const ListMotionsInput: z.ZodObject<{
+    role: z.ZodOptional<z.ZodEnum<["hook", "turn", "proof", "cta"]>>;
+    query: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    query?: string | undefined;
+    role?: "hook" | "turn" | "proof" | "cta" | undefined;
+}, {
+    query?: string | undefined;
+    role?: "hook" | "turn" | "proof" | "cta" | undefined;
+}>;
 /** Mirrors `TRANSITION_KINDS` in the motion package; kept literal so the shared
  *  package stays free of motion imports. */
 export declare const TransitionKindSchema: z.ZodEnum<["linear_wipe", "gradient_wipe", "radial_wipe", "iris_wipe", "block_dissolve", "grid_wipe", "venetian", "shutter", "glass_wipe", "light_wipe", "line_sweep", "serrated", "twist", "scale_wipe", "blob_wipe", "card_wipe", "whip_pan", "glitch_cut", "flash_cut", "zoom_punch"]>;
@@ -697,16 +709,16 @@ export declare const AddCtaCardInput: z.ZodObject<{
     projectId: string;
     durationMs?: number | undefined;
     totalDurationMs?: number | undefined;
-    startMs?: number | undefined;
     cta?: string | undefined;
+    startMs?: number | undefined;
     keyword?: string | undefined;
     brand?: string | undefined;
 }, {
     projectId: string;
     durationMs?: number | undefined;
     totalDurationMs?: number | undefined;
-    startMs?: number | undefined;
     cta?: string | undefined;
+    startMs?: number | undefined;
     keyword?: string | undefined;
     brand?: string | undefined;
 }>;
@@ -743,8 +755,8 @@ export declare const EditTalkingHeadInput: z.ZodObject<{
     totalDurationMs?: number | undefined;
     prompt?: string | undefined;
     title?: string | undefined;
-    wordsPerPage?: number | undefined;
     cta?: string | undefined;
+    wordsPerPage?: number | undefined;
     keyword?: string | undefined;
     brand?: string | undefined;
     videoAssetId?: string | undefined;
@@ -769,8 +781,8 @@ export declare const EditTalkingHeadInput: z.ZodObject<{
     totalDurationMs?: number | undefined;
     prompt?: string | undefined;
     title?: string | undefined;
-    wordsPerPage?: number | undefined;
     cta?: string | undefined;
+    wordsPerPage?: number | undefined;
     keyword?: string | undefined;
     brand?: string | undefined;
     videoAssetId?: string | undefined;
@@ -794,13 +806,13 @@ export declare const SetEasingInput: z.ZodObject<{
     componentId: z.ZodString;
     easing: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
         type: z.ZodLiteral<"preset">;
-        name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+        name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft", "cruise", "glide", "softInOut", "softLand", "gentleIn", "snapSettle", "whip", "accelExit", "crashOut", "popOver", "crashIn", "bounceHard"]>;
     }, "strip", z.ZodTypeAny, {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     }, {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     }>, z.ZodObject<{
         type: z.ZodLiteral<"bezier">;
         p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -841,7 +853,7 @@ export declare const SetEasingInput: z.ZodObject<{
         mass: number;
     } | {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     };
     projectId: string;
     componentId: string;
@@ -857,7 +869,7 @@ export declare const SetEasingInput: z.ZodObject<{
         mass?: number | undefined;
     } | {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     };
     projectId: string;
     componentId: string;
@@ -916,13 +928,13 @@ export declare const SetTransformInput: z.ZodObject<{
         value: z.ZodUnion<[z.ZodNumber, z.ZodString]>;
         easing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             type: z.ZodLiteral<"preset">;
-            name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+            name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft", "cruise", "glide", "softInOut", "softLand", "gentleIn", "snapSettle", "whip", "accelExit", "crashOut", "popOver", "crashIn", "bounceHard"]>;
         }, "strip", z.ZodTypeAny, {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         }, {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         }>, z.ZodObject<{
             type: z.ZodLiteral<"bezier">;
             p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -965,7 +977,7 @@ export declare const SetTransformInput: z.ZodObject<{
             mass: number;
         } | {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         } | undefined;
     }, {
         value: string | number;
@@ -981,7 +993,7 @@ export declare const SetTransformInput: z.ZodObject<{
             mass?: number | undefined;
         } | {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         } | undefined;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
@@ -1000,7 +1012,7 @@ export declare const SetTransformInput: z.ZodObject<{
             mass: number;
         } | {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         } | undefined;
     }[];
     componentId: string;
@@ -1021,7 +1033,7 @@ export declare const SetTransformInput: z.ZodObject<{
             mass?: number | undefined;
         } | {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         } | undefined;
     }[];
     componentId: string;
@@ -1035,13 +1047,13 @@ export declare const SetKeyframeInput: z.ZodObject<{
     value: z.ZodUnion<[z.ZodNumber, z.ZodString]>;
     easing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
         type: z.ZodLiteral<"preset">;
-        name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+        name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft", "cruise", "glide", "softInOut", "softLand", "gentleIn", "snapSettle", "whip", "accelExit", "crashOut", "popOver", "crashIn", "bounceHard"]>;
     }, "strip", z.ZodTypeAny, {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     }, {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     }>, z.ZodObject<{
         type: z.ZodLiteral<"bezier">;
         p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -1087,7 +1099,7 @@ export declare const SetKeyframeInput: z.ZodObject<{
         mass: number;
     } | {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     } | undefined;
 }, {
     value: string | number;
@@ -1106,7 +1118,7 @@ export declare const SetKeyframeInput: z.ZodObject<{
         mass?: number | undefined;
     } | {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     } | undefined;
 }>;
 export declare const SetLoopInput: z.ZodObject<{
@@ -1265,13 +1277,13 @@ export declare const BatchUpdateInput: z.ZodObject<{
     componentIds: z.ZodArray<z.ZodString, "many">;
     easing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
         type: z.ZodLiteral<"preset">;
-        name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+        name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft", "cruise", "glide", "softInOut", "softLand", "gentleIn", "snapSettle", "whip", "accelExit", "crashOut", "popOver", "crashIn", "bounceHard"]>;
     }, "strip", z.ZodTypeAny, {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     }, {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     }>, z.ZodObject<{
         type: z.ZodLiteral<"bezier">;
         p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -1319,7 +1331,7 @@ export declare const BatchUpdateInput: z.ZodObject<{
         mass: number;
     } | {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     } | undefined;
     durationMs?: number | undefined;
     delayMs?: number | undefined;
@@ -1340,7 +1352,7 @@ export declare const BatchUpdateInput: z.ZodObject<{
         mass?: number | undefined;
     } | {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     } | undefined;
     durationMs?: number | undefined;
     delayMs?: number | undefined;
@@ -1490,13 +1502,13 @@ export declare const CreateVariantInput: z.ZodObject<{
     componentId: z.ZodString;
     easing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
         type: z.ZodLiteral<"preset">;
-        name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+        name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft", "cruise", "glide", "softInOut", "softLand", "gentleIn", "snapSettle", "whip", "accelExit", "crashOut", "popOver", "crashIn", "bounceHard"]>;
     }, "strip", z.ZodTypeAny, {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     }, {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     }>, z.ZodObject<{
         type: z.ZodLiteral<"bezier">;
         p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -1542,7 +1554,7 @@ export declare const CreateVariantInput: z.ZodObject<{
         mass: number;
     } | {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     } | undefined;
     durationMs?: number | undefined;
 }, {
@@ -1560,7 +1572,7 @@ export declare const CreateVariantInput: z.ZodObject<{
         mass?: number | undefined;
     } | {
         type: "preset";
-        name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+        name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
     } | undefined;
     durationMs?: number | undefined;
 }>;
@@ -9198,13 +9210,13 @@ export declare const TOOL_INPUT_SCHEMAS: {
         componentId: z.ZodString;
         easing: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             type: z.ZodLiteral<"preset">;
-            name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+            name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft", "cruise", "glide", "softInOut", "softLand", "gentleIn", "snapSettle", "whip", "accelExit", "crashOut", "popOver", "crashIn", "bounceHard"]>;
         }, "strip", z.ZodTypeAny, {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         }, {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         }>, z.ZodObject<{
             type: z.ZodLiteral<"bezier">;
             p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -9245,7 +9257,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
             mass: number;
         } | {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         };
         projectId: string;
         componentId: string;
@@ -9261,7 +9273,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
             mass?: number | undefined;
         } | {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         };
         projectId: string;
         componentId: string;
@@ -9320,13 +9332,13 @@ export declare const TOOL_INPUT_SCHEMAS: {
             value: z.ZodUnion<[z.ZodNumber, z.ZodString]>;
             easing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 type: z.ZodLiteral<"preset">;
-                name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+                name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft", "cruise", "glide", "softInOut", "softLand", "gentleIn", "snapSettle", "whip", "accelExit", "crashOut", "popOver", "crashIn", "bounceHard"]>;
             }, "strip", z.ZodTypeAny, {
                 type: "preset";
-                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
             }, {
                 type: "preset";
-                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
             }>, z.ZodObject<{
                 type: z.ZodLiteral<"bezier">;
                 p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -9369,7 +9381,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
                 mass: number;
             } | {
                 type: "preset";
-                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
             } | undefined;
         }, {
             value: string | number;
@@ -9385,7 +9397,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
                 mass?: number | undefined;
             } | {
                 type: "preset";
-                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
             } | undefined;
         }>, "many">;
     }, "strip", z.ZodTypeAny, {
@@ -9404,7 +9416,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
                 mass: number;
             } | {
                 type: "preset";
-                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
             } | undefined;
         }[];
         componentId: string;
@@ -9425,7 +9437,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
                 mass?: number | undefined;
             } | {
                 type: "preset";
-                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
             } | undefined;
         }[];
         componentId: string;
@@ -9439,13 +9451,13 @@ export declare const TOOL_INPUT_SCHEMAS: {
         value: z.ZodUnion<[z.ZodNumber, z.ZodString]>;
         easing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             type: z.ZodLiteral<"preset">;
-            name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+            name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft", "cruise", "glide", "softInOut", "softLand", "gentleIn", "snapSettle", "whip", "accelExit", "crashOut", "popOver", "crashIn", "bounceHard"]>;
         }, "strip", z.ZodTypeAny, {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         }, {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         }>, z.ZodObject<{
             type: z.ZodLiteral<"bezier">;
             p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -9491,7 +9503,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
             mass: number;
         } | {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         } | undefined;
     }, {
         value: string | number;
@@ -9510,7 +9522,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
             mass?: number | undefined;
         } | {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         } | undefined;
     }>;
     readonly set_loop: z.ZodObject<{
@@ -9650,13 +9662,13 @@ export declare const TOOL_INPUT_SCHEMAS: {
         componentIds: z.ZodArray<z.ZodString, "many">;
         easing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             type: z.ZodLiteral<"preset">;
-            name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+            name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft", "cruise", "glide", "softInOut", "softLand", "gentleIn", "snapSettle", "whip", "accelExit", "crashOut", "popOver", "crashIn", "bounceHard"]>;
         }, "strip", z.ZodTypeAny, {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         }, {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         }>, z.ZodObject<{
             type: z.ZodLiteral<"bezier">;
             p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -9704,7 +9716,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
             mass: number;
         } | {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         } | undefined;
         durationMs?: number | undefined;
         delayMs?: number | undefined;
@@ -9725,7 +9737,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
             mass?: number | undefined;
         } | {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         } | undefined;
         durationMs?: number | undefined;
         delayMs?: number | undefined;
@@ -9875,13 +9887,13 @@ export declare const TOOL_INPUT_SCHEMAS: {
         componentId: z.ZodString;
         easing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
             type: z.ZodLiteral<"preset">;
-            name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+            name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft", "cruise", "glide", "softInOut", "softLand", "gentleIn", "snapSettle", "whip", "accelExit", "crashOut", "popOver", "crashIn", "bounceHard"]>;
         }, "strip", z.ZodTypeAny, {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         }, {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         }>, z.ZodObject<{
             type: z.ZodLiteral<"bezier">;
             p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -9927,7 +9939,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
             mass: number;
         } | {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         } | undefined;
         durationMs?: number | undefined;
     }, {
@@ -9945,7 +9957,7 @@ export declare const TOOL_INPUT_SCHEMAS: {
             mass?: number | undefined;
         } | {
             type: "preset";
-            name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+            name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
         } | undefined;
         durationMs?: number | undefined;
     }>;
@@ -10810,6 +10822,16 @@ export declare const TOOL_INPUT_SCHEMAS: {
         category?: "all" | "look" | "light" | "pattern" | "atmosphere" | "motion" | undefined;
         query?: string | undefined;
     }>;
+    readonly list_motions: z.ZodObject<{
+        role: z.ZodOptional<z.ZodEnum<["hook", "turn", "proof", "cta"]>>;
+        query: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        query?: string | undefined;
+        role?: "hook" | "turn" | "proof" | "cta" | undefined;
+    }, {
+        query?: string | undefined;
+        role?: "hook" | "turn" | "proof" | "cta" | undefined;
+    }>;
     readonly apply_transition: z.ZodObject<{
         projectId: z.ZodString;
         transition: z.ZodOptional<z.ZodEnum<["linear_wipe", "gradient_wipe", "radial_wipe", "iris_wipe", "block_dissolve", "grid_wipe", "venetian", "shutter", "glass_wipe", "light_wipe", "line_sweep", "serrated", "twist", "scale_wipe", "blob_wipe", "card_wipe", "whip_pan", "glitch_cut", "flash_cut", "zoom_punch"]>>;
@@ -10983,16 +11005,16 @@ export declare const TOOL_INPUT_SCHEMAS: {
         projectId: string;
         durationMs?: number | undefined;
         totalDurationMs?: number | undefined;
-        startMs?: number | undefined;
         cta?: string | undefined;
+        startMs?: number | undefined;
         keyword?: string | undefined;
         brand?: string | undefined;
     }, {
         projectId: string;
         durationMs?: number | undefined;
         totalDurationMs?: number | undefined;
-        startMs?: number | undefined;
         cta?: string | undefined;
+        startMs?: number | undefined;
         keyword?: string | undefined;
         brand?: string | undefined;
     }>;
@@ -11029,8 +11051,8 @@ export declare const TOOL_INPUT_SCHEMAS: {
         totalDurationMs?: number | undefined;
         prompt?: string | undefined;
         title?: string | undefined;
-        wordsPerPage?: number | undefined;
         cta?: string | undefined;
+        wordsPerPage?: number | undefined;
         keyword?: string | undefined;
         brand?: string | undefined;
         videoAssetId?: string | undefined;
@@ -11055,8 +11077,8 @@ export declare const TOOL_INPUT_SCHEMAS: {
         totalDurationMs?: number | undefined;
         prompt?: string | undefined;
         title?: string | undefined;
-        wordsPerPage?: number | undefined;
         cta?: string | undefined;
+        wordsPerPage?: number | undefined;
         keyword?: string | undefined;
         brand?: string | undefined;
         videoAssetId?: string | undefined;

@@ -1,5 +1,6 @@
 import { z } from "zod";
-export const EASING_PRESETS = [
+import { isMeasuredEase, MEASURED_BEZIER, MEASURED_EASES } from "./measuredEase.js";
+const BASE_EASING_PRESETS = [
     "linear",
     "ease",
     "ease-in",
@@ -18,6 +19,13 @@ export const EASING_PRESETS = [
     "smooth",
     "soft",
 ];
+/**
+ * The hand-tuned presets, then the 12 measured curves ported from
+ * motionmaxxing. The measured names are first-class presets: the agent can pass
+ * `easing: { type: "preset", name: "softLand" }` to any tool, and the editor's
+ * easing picker lists them alongside the classic ones.
+ */
+export const EASING_PRESETS = [...BASE_EASING_PRESETS, ...MEASURED_EASES];
 /** CSS cubic-bezier approximation for presets that aren't native CSS keywords. */
 export const PRESET_BEZIER = {
     "ease-in-quad": [0.11, 0, 0.5, 0],
@@ -32,6 +40,7 @@ export const PRESET_BEZIER = {
     snappy: [0.2, 0.8, 0.2, 1],
     smooth: [0.45, 0, 0.15, 1],
     soft: [0.4, 0, 0.6, 1],
+    ...MEASURED_BEZIER,
 };
 export const EasingPresetSchema = z.enum(EASING_PRESETS);
 export const BezierEasingSchema = z.object({
@@ -61,6 +70,12 @@ export const easingBezier = (p1, p2) => ({
     p2,
 });
 export const easingSpring = (stiffness, damping, mass = 1) => ({ type: "spring", stiffness, damping, mass });
+/** A measured curve from the motionmaxxing corpus, addressed by name. */
+export const easingMeasured = (name) => ({ type: "preset", name });
+/** Whether a measured curve leans past its mark (the sample's overshoots). */
+export function isMeasuredOvershoot(name) {
+    return name === "popOver" || name === "crashIn" || name === "bounceHard";
+}
 /** Convert an easing to a CSS animation-timing-function string. */
 export function easingToCss(easing) {
     switch (easing.type) {
@@ -95,7 +110,8 @@ export function easingToCss(easing) {
 /** Whether this easing reads as "bouncy" — used by the mock agent for intent mapping. */
 export function isBouncyEasing(easing) {
     if (easing.type === "preset")
-        return ["bounce", "back", "elastic"].includes(easing.name);
+        return (["bounce", "back", "elastic"].includes(easing.name) ||
+            (isMeasuredEase(easing.name) && isMeasuredOvershoot(easing.name)));
     if (easing.type === "bezier")
         return easing.p2[1] > 1 || easing.p1[1] < 0;
     if (easing.type === "spring") {

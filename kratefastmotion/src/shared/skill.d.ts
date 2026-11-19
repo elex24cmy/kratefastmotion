@@ -69,13 +69,13 @@ export declare const SkillSchema: z.ZodObject<{
                 totalDurationMs: z.ZodOptional<z.ZodNumber>;
                 defaultEasing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     type: z.ZodLiteral<"preset">;
-                    name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+                    name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft", "cruise", "glide", "softInOut", "softLand", "gentleIn", "snapSettle", "whip", "accelExit", "crashOut", "popOver", "crashIn", "bounceHard"]>;
                 }, "strip", z.ZodTypeAny, {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 }, {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 }>, z.ZodObject<{
                     type: z.ZodLiteral<"bezier">;
                     p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -118,7 +118,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass: number;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
                 bpm?: number | undefined;
             }, {
@@ -134,7 +134,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass?: number | undefined;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
                 bpm?: number | undefined;
             }>>;
@@ -168,7 +168,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass: number;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
                 bpm?: number | undefined;
             };
@@ -199,7 +199,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass?: number | undefined;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
                 bpm?: number | undefined;
             } | undefined;
@@ -221,13 +221,13 @@ export declare const SkillSchema: z.ZodObject<{
             trigger: z.ZodDefault<z.ZodEnum<["onLoad", "onClick", "onHover", "onScroll", "afterDelay"]>>;
             easing: z.ZodDefault<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                 type: z.ZodLiteral<"preset">;
-                name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+                name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft", "cruise", "glide", "softInOut", "softLand", "gentleIn", "snapSettle", "whip", "accelExit", "crashOut", "popOver", "crashIn", "bounceHard"]>;
             }, "strip", z.ZodTypeAny, {
                 type: "preset";
-                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
             }, {
                 type: "preset";
-                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
             }>, z.ZodObject<{
                 type: z.ZodLiteral<"bezier">;
                 p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -261,13 +261,13 @@ export declare const SkillSchema: z.ZodObject<{
                 properties: z.ZodDefault<z.ZodRecord<z.ZodEnum<["translateX", "translateY", "translateZ", "scale", "scaleX", "scaleY", "rotate", "rotateX", "rotateY", "rotateZ", "skewX", "skewY", "opacity", "blur", "color", "backgroundColor", "width", "height", "borderRadius", "fontSize", "letterSpacing", "boxShadow", "clipPath"]>, z.ZodUnion<[z.ZodNumber, z.ZodString]>>>;
                 easing: z.ZodOptional<z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
                     type: z.ZodLiteral<"preset">;
-                    name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft"]>;
+                    name: z.ZodEnum<["linear", "ease", "ease-in", "ease-out", "ease-in-out", "ease-in-quad", "ease-out-quad", "ease-in-out-quad", "ease-in-cubic", "ease-out-cubic", "ease-in-out-cubic", "bounce", "back", "elastic", "snappy", "smooth", "soft", "cruise", "glide", "softInOut", "softLand", "gentleIn", "snapSettle", "whip", "accelExit", "crashOut", "popOver", "crashIn", "bounceHard"]>;
                 }, "strip", z.ZodTypeAny, {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 }, {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 }>, z.ZodObject<{
                     type: z.ZodLiteral<"bezier">;
                     p1: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -310,7 +310,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass: number;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
             }, {
                 offset: number;
@@ -326,7 +326,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass?: number | undefined;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
             }>, "many">>;
             style: z.ZodDefault<z.ZodDefault<z.ZodRecord<z.ZodString, z.ZodUnion<[z.ZodString, z.ZodNumber]>>>>;
@@ -347,7 +347,7 @@ export declare const SkillSchema: z.ZodObject<{
                 mass: number;
             } | {
                 type: "preset";
-                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
             };
             id: string;
             projectId: string;
@@ -375,7 +375,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass: number;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
             }[];
             style: Record<string, string | number>;
@@ -400,7 +400,7 @@ export declare const SkillSchema: z.ZodObject<{
                 mass?: number | undefined;
             } | {
                 type: "preset";
-                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
             } | undefined;
             sceneId?: string | null | undefined;
             selector?: string | null | undefined;
@@ -426,7 +426,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass?: number | undefined;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
             }[] | undefined;
             style?: Record<string, string | number> | undefined;
@@ -460,7 +460,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass: number;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
                 bpm?: number | undefined;
             };
@@ -479,7 +479,7 @@ export declare const SkillSchema: z.ZodObject<{
                 mass: number;
             } | {
                 type: "preset";
-                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
             };
             id: string;
             projectId: string;
@@ -507,7 +507,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass: number;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
             }[];
             style: Record<string, string | number>;
@@ -543,7 +543,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass?: number | undefined;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
                 bpm?: number | undefined;
             } | undefined;
@@ -566,7 +566,7 @@ export declare const SkillSchema: z.ZodObject<{
                 mass?: number | undefined;
             } | {
                 type: "preset";
-                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
             } | undefined;
             sceneId?: string | null | undefined;
             selector?: string | null | undefined;
@@ -592,7 +592,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass?: number | undefined;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
             }[] | undefined;
             style?: Record<string, string | number> | undefined;
@@ -648,7 +648,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass: number;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
                 bpm?: number | undefined;
             };
@@ -667,7 +667,7 @@ export declare const SkillSchema: z.ZodObject<{
                 mass: number;
             } | {
                 type: "preset";
-                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
             };
             id: string;
             projectId: string;
@@ -695,7 +695,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass: number;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
             }[];
             style: Record<string, string | number>;
@@ -746,7 +746,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass?: number | undefined;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
                 bpm?: number | undefined;
             } | undefined;
@@ -769,7 +769,7 @@ export declare const SkillSchema: z.ZodObject<{
                 mass?: number | undefined;
             } | {
                 type: "preset";
-                name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
             } | undefined;
             sceneId?: string | null | undefined;
             selector?: string | null | undefined;
@@ -795,7 +795,7 @@ export declare const SkillSchema: z.ZodObject<{
                     mass?: number | undefined;
                 } | {
                     type: "preset";
-                    name: "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
+                    name: "cruise" | "glide" | "softInOut" | "softLand" | "gentleIn" | "snapSettle" | "whip" | "accelExit" | "crashOut" | "popOver" | "crashIn" | "bounceHard" | "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out" | "ease-in-quad" | "ease-out-quad" | "ease-in-out-quad" | "ease-in-cubic" | "ease-out-cubic" | "ease-in-out-cubic" | "bounce" | "back" | "elastic" | "snappy" | "smooth" | "soft";
                 } | undefined;
             }[] | undefined;
             style?: Record<string, string | number> | undefined;

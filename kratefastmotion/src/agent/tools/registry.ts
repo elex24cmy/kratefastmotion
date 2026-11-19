@@ -22,6 +22,7 @@ import { filmExecutors } from "./filmTools.js";
 import { graphicExecutors } from "./graphicTools.js";
 import { vectorExecutors } from "./vectorTools.js";
 import { effectExecutors } from "./effectTools.js";
+import { motionGrammarExecutors } from "./motionGrammarTools.js";
 import { transitionExecutors } from "./transitionTools.js";
 import { captionExecutors } from "./captionTools.js";
 import { editExecutors } from "./editTools.js";
@@ -68,6 +69,7 @@ const EXECUTORS: Partial<Record<ToolName, ToolExecutor>> = {
   ...graphicExecutors,
   ...vectorExecutors,
   ...effectExecutors,
+  ...motionGrammarExecutors,
   ...transitionExecutors,
   ...captionExecutors,
   ...editExecutors,
@@ -149,6 +151,7 @@ export function getToolTaxonomySummary() {
     { name: "caption", count: Object.keys(captionExecutors).length },
     { name: "edit", count: Object.keys(editExecutors).length },
     { name: "asset", count: Object.keys(assetExecutors).length },
+    { name: "motionGrammar", count: Object.keys(motionGrammarExecutors).length },
   ];
   const schemaCount = Object.keys(TOOL_INPUT_SCHEMAS).length;
   const executorCount = Object.keys(EXECUTORS).length;

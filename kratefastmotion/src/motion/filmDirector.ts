@@ -18,7 +18,18 @@ import {
 import { buildGraphic, type GraphicKind, type GraphicLayer } from "./filmGraphics.js";
 import { filmLookLayers } from "./filmEffects.js";
 import { buildTransition, transitionSequence, type TransitionDirection } from "./filmTransitions.js";
-import { beat, beatHold, EASE_BACK, EASE_IN, EASE_IN_OUT, EASE_OUT, FONT_STACK, MONO_STACK } from "./filmBase.js";
+import {
+  EASE_ACCEL_EXIT,
+  EASE_CRUISE,
+  EASE_SNAP_SETTLE,
+  EASE_SOFT_IN_OUT,
+  EASE_SOFT_LAND,
+  FONT_STACK,
+  measuredBeat,
+  measuredHold,
+  MONO_STACK,
+} from "./filmBase.js";
+import { framesToMs, roleEntry, roleExit, roleStagger, type FilmBeat } from "./motionGrammar.js";
 
 /**
  * Film Director — turns a natural-language brief into a real, art-directed,
@@ -430,20 +441,91 @@ function headlineLines(title: string): string[] {
 }
 
 /**
+ * A measured beat for a scene content layer.
+ *
+ * The entrance and exit are absolute frame counts for the beat role (12 f in,
+ * 13 f out at the medians) rather than a fraction of the layer's own length, so
+ * a 6 s scene still enters as crisply as a 2 s one — which is the whole point of
+ * a measured grammar. `dur` is the layer's animation length; the keyframe
+ * offsets are derived from it, so the layer still spans exactly `dur`.
+ */
+function mb(
+  role: FilmBeat,
+  from: Record<string, string | number>,
+  hold: Record<string, string | number>,
+  dur: number,
+  opts: {
+    exit?: Record<string, string | number>;
+    drift?: Record<string, string | number>;
+    enterFrames?: number;
+    exitFrames?: number;
+    enterEase?: Easing;
+    exitEase?: Easing;
+    enterOpacity?: number;
+  } = {},
+): Keyframe[] {
+  return measuredBeat(from, hold, opts.exit ?? {}, {
+    durationMs: dur,
+    enterFrames: opts.enterFrames ?? roleEntry(role),
+    exitFrames: opts.exitFrames ?? roleExit(role),
+    enterEase: opts.enterEase,
+    exitEase: opts.exitEase,
+    enterOpacity: opts.enterOpacity,
+    drift: opts.drift,
+  });
+}
+
+/** The measured entrance → hold, ending visible. Used by the closing scene. */
+function mbHold(
+  role: FilmBeat,
+  from: Record<string, string | number>,
+  hold: Record<string, string | number>,
+  dur: number,
+  opts: {
+    drift?: Record<string, string | number>;
+    enterFrames?: number;
+    enterEase?: Easing;
+    enterOpacity?: number;
+  } = {},
+): Keyframe[] {
+  return measuredHold(from, hold, {
+    durationMs: dur,
+    enterFrames: opts.enterFrames ?? roleEntry(role),
+    enterEase: opts.enterEase,
+    enterOpacity: opts.enterOpacity,
+    drift: opts.drift,
+  });
+}
+
+/** Sibling onset gap in ms for a beat role — 1-3 f for a hook, 8 f for a CTA. */
+function staggerMs(role: FilmBeat): number {
+  return framesToMs(roleStagger(role));
+}
+
+/**
  * Headline beat: rises into place behind a vertical clip wipe (the glyphs are
  * revealed from the baseline upward), keeps drifting a touch while held so the
  * type is never completely still, then lifts out. `clipPath` is a first-class
  * animatable property, so the preview, the editor canvas, the code export and
  * the video export all render this identically.
+ *
+ * Measured: 14 frames in on a snapSettle (a hero arrival), a linear creep while
+ * held, and an accelerating 13-frame lift-out.
  */
-function headlineBeat(a: number): Keyframe[] {
+function headlineBeat(a: number, dur: number): Keyframe[] {
   const open = "inset(0% 0 0 0)";
-  return [
-    { offset: 0, properties: { opacity: 0, translateY: 56 * a, scale: 0.97, clipPath: "inset(100% 0 0 0)" } as Keyframe["properties"], easing: EASE_OUT },
-    { offset: 0.17, properties: { opacity: 1, translateY: 0, scale: 1, clipPath: open } as Keyframe["properties"], easing: EASE_IN_OUT },
-    { offset: 0.82, properties: { opacity: 1, translateY: -6 * a, scale: 1 + 0.015 * a, clipPath: open } as Keyframe["properties"], easing: EASE_IN },
-    { offset: 1, properties: { opacity: 0, translateY: -26 * a, scale: 1 + 0.03 * a, clipPath: open } as Keyframe["properties"] },
-  ];
+  return mb(
+    "hook",
+    { translateY: 56 * a, scale: 0.97, clipPath: "inset(100% 0 0 0)" },
+    { translateY: 0, scale: 1, clipPath: open },
+    dur,
+    {
+      drift: { translateY: -6 * a, scale: 1 + 0.015 * a },
+      exit: { translateY: -26 * a, scale: 1 + 0.03 * a },
+      enterFrames: 14,
+      enterEase: EASE_SNAP_SETTLE,
+    },
+  );
 }
 
 interface Ctx {
@@ -475,7 +557,7 @@ function mk(
     sceneId,
     durationMs: opts.durationMs,
     delayMs: opts.delayMs,
-    easing: opts.easing ?? EASE_OUT,
+    easing: opts.easing ?? EASE_SOFT_LAND,
     keyframes: opts.keyframes ?? [],
     style,
     iterationCount: opts.iterationCount ?? 1,
@@ -511,9 +593,10 @@ function backgroundLayer(ctx: Ctx, totalMs: number): ComponentDraft {
   return mk(ctx, "Backdrop", null, {
     durationMs: totalMs,
     delayMs: 0,
-    easing: EASE_IN_OUT,
+    easing: EASE_CRUISE,
     keyframes: [
-      { offset: 0, properties: { scale: 1 } as Keyframe["properties"], easing: EASE_IN_OUT },
+      // A slow push across the whole film. Measured: drift is linear, never eased.
+      { offset: 0, properties: { scale: 1 } as Keyframe["properties"], easing: EASE_CRUISE },
       { offset: 1, properties: { scale: 1 + 0.06 * a } as Keyframe["properties"] },
     ],
     style: fullBleed({
@@ -529,7 +612,7 @@ function vignetteLayer(ctx: Ctx, totalMs: number): ComponentDraft {
   return mk(ctx, "Vignette", null, {
     durationMs: totalMs,
     delayMs: 0,
-    easing: EASE_IN_OUT,
+    easing: EASE_CRUISE,
     keyframes: [
       { offset: 0, properties: { opacity: 0.75 } as Keyframe["properties"] },
       { offset: 1, properties: { opacity: 0.75 } as Keyframe["properties"] },
@@ -549,11 +632,11 @@ function glowLayer(ctx: Ctx, sceneId: string, sceneStart: number, sceneDuration:
   return mk(ctx, "Accent Glow", sceneId, {
     durationMs: sceneDuration,
     delayMs: sceneStart,
-    easing: EASE_IN_OUT,
+    easing: EASE_SOFT_IN_OUT,
     keyframes: [
-      { offset: 0, properties: { opacity: 0, scale: 1 - 0.15 * a } as Keyframe["properties"], easing: EASE_OUT },
-      { offset: 0.3, properties: { opacity: 0.5, scale: 1 } as Keyframe["properties"], easing: EASE_IN_OUT },
-      { offset: 0.8, properties: { opacity: 0.42, scale: 1 + 0.04 * a } as Keyframe["properties"], easing: EASE_IN },
+      { offset: 0, properties: { opacity: 0, scale: 1 - 0.15 * a } as Keyframe["properties"], easing: EASE_SOFT_LAND },
+      { offset: 0.3, properties: { opacity: 0.5, scale: 1 } as Keyframe["properties"], easing: EASE_SOFT_IN_OUT },
+      { offset: 0.8, properties: { opacity: 0.42, scale: 1 + 0.04 * a } as Keyframe["properties"], easing: EASE_ACCEL_EXIT },
       { offset: 1, properties: { opacity: 0, scale: 1 + 0.08 * a } as Keyframe["properties"] },
     ],
     style: circle(size, topPct, {
@@ -584,13 +667,26 @@ function logoLayer(
   // A pixel box (rather than `left: 50%`) so the mark is part of the measurable
   // composition — the layout engine can then place graphics around it.
   const box: Box = { x: (STAGE_WIDTH - w) / 2, y: (opts.topPct / 100) * STAGE_HEIGHT, w, h: opts.height };
+  const dur = scene.durationMs - 400;
+  // R3.6: an object with identity arrives from oversize and scales down to rest
+  // on a snapSettle — it never grows from zero and never fades up.
   const entrance = opts.hold
-    ? beatHold({ scale: 1 - 0.28 * a, opacity: 0 }, { scale: 1, opacity: 1 })
-    : beat({ scale: 1 - 0.28 * a, opacity: 0 }, { scale: 1, opacity: 1 });
+    ? mbHold("cta", { scale: 1 + 0.5 * a }, { scale: 1 }, dur, {
+        enterFrames: 18,
+        enterEase: EASE_SNAP_SETTLE,
+        enterOpacity: 1,
+        drift: { scale: 1 + 0.01 * a },
+      })
+    : mb("hook", { scale: 1 + 0.5 * a }, { scale: 1 }, dur, {
+        enterFrames: 18,
+        enterEase: EASE_SNAP_SETTLE,
+        enterOpacity: 1,
+        drift: { scale: 1 + 0.01 * a },
+      });
   return mk(ctx, "Brand Logo", scene.id, {
-    durationMs: scene.durationMs - 400,
+    durationMs: dur,
     delayMs: start + (opts.delayMs ?? 160),
-    easing: EASE_BACK,
+    easing: EASE_SNAP_SETTLE,
     keyframes: entrance,
     style: boxToStyle(box, {
       objectFit: "contain",
@@ -618,11 +714,11 @@ function mediaBackdrop(ctx: Ctx, scene: FilmScene, start: number, asset: FilmAss
     mk(ctx, "Media Backdrop", scene.id, {
       durationMs: scene.durationMs,
       delayMs: start,
-      easing: EASE_IN_OUT,
+      easing: EASE_SOFT_IN_OUT,
       keyframes: [
-        { offset: 0, properties: { opacity: 0, scale: 1 } as Keyframe["properties"], easing: EASE_OUT },
-        { offset: 0.22, properties: { opacity: 0.92, scale: 1 + 0.02 * a } as Keyframe["properties"], easing: EASE_IN_OUT },
-        { offset: 0.8, properties: { opacity: 0.92, scale: 1 + 0.05 * a } as Keyframe["properties"], easing: EASE_IN },
+        { offset: 0, properties: { opacity: 0, scale: 1 } as Keyframe["properties"], easing: EASE_SOFT_LAND },
+        { offset: 0.22, properties: { opacity: 0.92, scale: 1 + 0.02 * a } as Keyframe["properties"], easing: EASE_CRUISE },
+        { offset: 0.8, properties: { opacity: 0.92, scale: 1 + 0.05 * a } as Keyframe["properties"], easing: EASE_ACCEL_EXIT },
         { offset: 1, properties: { opacity: 0, scale: 1 + 0.07 * a } as Keyframe["properties"] },
       ],
       style: fullBleed({
@@ -639,11 +735,11 @@ function mediaBackdrop(ctx: Ctx, scene: FilmScene, start: number, asset: FilmAss
     mk(ctx, "Media Scrim", scene.id, {
       durationMs: scene.durationMs,
       delayMs: start,
-      easing: EASE_IN_OUT,
+      easing: EASE_SOFT_IN_OUT,
       keyframes: [
-        { offset: 0, properties: { opacity: 0 } as Keyframe["properties"], easing: EASE_OUT },
-        { offset: 0.22, properties: { opacity: 1 } as Keyframe["properties"], easing: EASE_IN_OUT },
-        { offset: 0.8, properties: { opacity: 1 } as Keyframe["properties"], easing: EASE_IN },
+        { offset: 0, properties: { opacity: 0 } as Keyframe["properties"], easing: EASE_SOFT_LAND },
+        { offset: 0.22, properties: { opacity: 1 } as Keyframe["properties"], easing: EASE_CRUISE },
+        { offset: 0.8, properties: { opacity: 1 } as Keyframe["properties"], easing: EASE_ACCEL_EXIT },
         { offset: 1, properties: { opacity: 0 } as Keyframe["properties"] },
       ],
       style: fullBleed({
@@ -756,7 +852,7 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
   out.push(mk(ctx, "Eyebrow", scene.id, {
     durationMs: base - 200,
     delayMs: start + 200,
-    keyframes: beat({ translateY: 18 * a }, { translateY: 0 }, {}, { translateY: -5 * a }),
+    keyframes: mb("hook", { translateY: 18 * a }, { translateY: 0 }, base - 200, { drift: { translateY: -5 * a } }),
     style: textBlock(eyebrowBox, {
       color: palette.accent,
       fontFamily: MONO_STACK,
@@ -773,8 +869,8 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
   lines.forEach((line, i) => {
     out.push(mk(ctx, stacked ? `Headline ${i + 1}` : "Headline", scene.id, {
       durationMs: base - 500 - i * 120,
-      delayMs: start + 420 + i * 150,
-      keyframes: headlineBeat(a),
+      delayMs: start + 420 + i * staggerMs("hook"),
+      keyframes: headlineBeat(a, base - 500 - i * 120),
       style: textBlock(headlineBoxes[i], {
         color: palette.text,
         fontFamily: FONT_STACK,
@@ -792,13 +888,7 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
   out.push(mk(ctx, "Rule", scene.id, {
     durationMs: base - 700,
     delayMs: start + 720,
-    easing: EASE_IN_OUT,
-    keyframes: [
-      { offset: 0, properties: { scaleX: 0, opacity: 0 } as Keyframe["properties"], easing: EASE_OUT },
-      { offset: 0.25, properties: { scaleX: 1, opacity: 1 } as Keyframe["properties"], easing: EASE_IN_OUT },
-      { offset: 0.82, properties: { scaleX: 1, opacity: 1 } as Keyframe["properties"], easing: EASE_IN },
-      { offset: 1, properties: { scaleX: 1, opacity: 0 } as Keyframe["properties"] },
-    ],
+    keyframes: mb("hook", { scaleX: 0 }, { scaleX: 1 }, base - 700, { enterFrames: 10, exitFrames: 12 }),
     style: {
       ...boxToStyle(ruleBox),
       borderRadius: "3px",
@@ -811,7 +901,7 @@ function titleScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
   out.push(mk(ctx, "Subhead", scene.id, {
     durationMs: base - 900,
     delayMs: start + 900,
-    keyframes: beat({ translateY: 20 * a }, { translateY: 0 }, {}, { translateY: -6 * a }),
+    keyframes: mb("hook", { translateY: 20 * a }, { translateY: 0 }, base - 900, { drift: { translateY: -6 * a } }),
     style: textBlock(subheadBox, {
       color: palette.subtext,
       fontFamily: FONT_STACK,
@@ -849,7 +939,7 @@ function featuresScene(ctx: Ctx, scene: FilmScene, start: number, variant: numbe
   out.push(mk(ctx, "Section Label", scene.id, {
     durationMs: base - 200,
     delayMs: start + 180,
-    keyframes: beat({ translateY: 16 * a }, { translateY: 0 }, {}, { translateY: -4 * a }),
+    keyframes: mb("proof", { translateY: 16 * a }, { translateY: 0 }, base - 200, { drift: { translateY: -4 * a } }),
     style: textBlock(labelBox, {
       justifyContent: "flex-start",
       textAlign: "left",
@@ -936,8 +1026,8 @@ function featuresScene(ctx: Ctx, scene: FilmScene, start: number, variant: numbe
     const y = rowStart + i * (rowH + rowGap);
     out.push(mk(ctx, `Feature Bullet ${i + 1}`, scene.id, {
       durationMs: base - 500 - i * 120,
-      delayMs: start + 420 + i * 180,
-      keyframes: beat({ translateX: -26 * a }, { translateX: 0 }, {}, { translateX: 8 * a }),
+      delayMs: start + 420 + i * staggerMs("proof"),
+      keyframes: mb("proof", { translateX: -26 * a }, { translateX: 0 }, base - 500 - i * 120, { drift: { translateX: 8 * a } }),
       style: boxToStyle({ x: left.x, y: y + 38, w: 18, h: 18 }, {
         borderRadius: "5px",
         background: i % 2 === 0 ? palette.accent : palette.accent2,
@@ -948,8 +1038,8 @@ function featuresScene(ctx: Ctx, scene: FilmScene, start: number, variant: numbe
     }));
     out.push(mk(ctx, `Feature ${i + 1}`, scene.id, {
       durationMs: base - 500 - i * 120,
-      delayMs: start + 470 + i * 180,
-      keyframes: beat({ translateX: 24 * a }, { translateX: 0 }, {}, { translateX: 8 * a }),
+      delayMs: start + 470 + i * staggerMs("proof"),
+      keyframes: mb("proof", { translateX: 24 * a }, { translateX: 0 }, base - 500 - i * 120, { drift: { translateX: 8 * a } }),
       style: textBlock({ x: left.x + 48, y, w: left.w - 48, h: rowH }, {
         justifyContent: "flex-start",
         textAlign: "left",
@@ -1029,7 +1119,12 @@ function statementScene(ctx: Ctx, scene: FilmScene, start: number, variant: numb
   out.push(mk(ctx, "Statement Figure", scene.id, {
     durationMs: base - 500,
     delayMs: start + 360,
-    keyframes: beat({ scale: 1 - 0.08 * a, translateY: 30 * a }, { scale: 1, translateY: 0 }, {}, { scale: 1 + 0.035 * a }),
+    keyframes: mb("proof", { scale: 1 + 0.18 * a, translateY: 30 * a }, { scale: 1, translateY: 0 }, base - 500, {
+      drift: { scale: 1 + 0.035 * a },
+      enterFrames: 14,
+      enterEase: EASE_SNAP_SETTLE,
+      enterOpacity: 1,
+    }),
     style: textBlock(figureBox, {
       color: palette.text,
       fontFamily: FONT_STACK,
@@ -1049,7 +1144,7 @@ function statementScene(ctx: Ctx, scene: FilmScene, start: number, variant: numb
   out.push(mk(ctx, "Statement Label", scene.id, {
     durationMs: base - 700,
     delayMs: start + 640,
-    keyframes: beat({ translateY: 18 * a }, { translateY: 0 }, {}, { translateY: -5 * a }),
+    keyframes: mb("proof", { translateY: 18 * a }, { translateY: 0 }, base - 700, { drift: { translateY: -5 * a } }),
     style: textBlock(labelBox, {
       color: palette.subtext,
       fontFamily: MONO_STACK,
@@ -1099,8 +1194,13 @@ function outroScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
     out.push(mk(ctx, "Logo Mark", scene.id, {
       durationMs: base - 500,
       delayMs: start + 300,
-      easing: EASE_BACK,
-      keyframes: beatHold({ scale: 1 - 0.6 * a, rotate: -12 * a }, { scale: 1, rotate: 0 }),
+      easing: EASE_SNAP_SETTLE,
+      keyframes: mbHold("cta", { scale: 1 + 0.6 * a, rotate: -6 * a }, { scale: 1, rotate: 0 }, base - 500, {
+        enterFrames: 18,
+        enterEase: EASE_SNAP_SETTLE,
+        enterOpacity: 1,
+        drift: { scale: 1 + 0.01 * a },
+      }),
       style: boxToStyle(markBox, {
         borderRadius: "28px",
         background: `linear-gradient(135deg, ${palette.accent}, ${palette.accent2})`,
@@ -1120,8 +1220,8 @@ function outroScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
   }
   out.push(mk(ctx, "Wordmark", scene.id, {
     durationMs: base - 600,
-    delayMs: start + 500,
-    keyframes: beatHold({ translateY: 24 * a }, { translateY: 0 }, { translateY: -6 * a }),
+    delayMs: start + 300 + staggerMs("cta"),
+    keyframes: mbHold("cta", { translateY: 24 * a }, { translateY: 0 }, base - 600, { drift: { translateY: -6 * a } }),
     style: textBlock(wordmarkBox, {
       color: palette.text,
       fontFamily: FONT_STACK,
@@ -1135,8 +1235,8 @@ function outroScene(ctx: Ctx, scene: FilmScene, start: number, assets: FilmAsset
   }));
   out.push(mk(ctx, "Tagline", scene.id, {
     durationMs: base - 800,
-    delayMs: start + 700,
-    keyframes: beatHold({ translateY: 18 * a }, { translateY: 0 }, { translateY: -5 * a }),
+    delayMs: start + 300 + 2 * staggerMs("cta"),
+    keyframes: mbHold("cta", { translateY: 18 * a }, { translateY: 0 }, base - 800, { drift: { translateY: -5 * a } }),
     style: textBlock(taglineBox, {
       color: palette.subtext,
       fontFamily: MONO_STACK,
@@ -1193,11 +1293,11 @@ function driftField(ctx: Ctx, totalMs: number): ComponentDraft[] {
     mk(ctx, `Drift ${i + 1}`, null, {
       durationMs: totalMs,
       delayMs: 0,
-      easing: EASE_IN_OUT,
+      easing: EASE_CRUISE,
       keyframes: [
-        { offset: 0, properties: { translateX: -s.dx, translateY: -s.dy, scale: 0.85, opacity: 0 } as Keyframe["properties"], easing: EASE_IN_OUT },
-        { offset: 0.18, properties: { opacity: s.op } as Keyframe["properties"], easing: EASE_IN_OUT },
-        { offset: 0.82, properties: { opacity: s.op } as Keyframe["properties"], easing: EASE_IN_OUT },
+        { offset: 0, properties: { translateX: -s.dx, translateY: -s.dy, scale: 0.85, opacity: 0 } as Keyframe["properties"], easing: EASE_CRUISE },
+        { offset: 0.18, properties: { opacity: s.op } as Keyframe["properties"], easing: EASE_CRUISE },
+        { offset: 0.82, properties: { opacity: s.op } as Keyframe["properties"], easing: EASE_CRUISE },
         { offset: 1, properties: { translateX: s.dx, translateY: s.dy, scale: 1.2, opacity: 0 } as Keyframe["properties"] },
       ],
       style: circle(s.size, 50, {
