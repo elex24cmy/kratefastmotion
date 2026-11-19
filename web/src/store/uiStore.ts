@@ -56,6 +56,10 @@ interface UiState {
   sidebarCollapsed: boolean;
   sidebarWidth: number;
   rightPanelCollapsed: boolean;
+  /** Width in pixels of the expanded right panel. Dragging the divider
+      between the canvas and the panel changes this, so the preview can be
+      given more room on small windows. */
+  rightPanelWidth: number;
   /** Templates panel browse mode — shared so Cmd+K can switch to catalog. */
   templatesBrowseMode: "templates" | "catalog";
   isPlaying: boolean;
@@ -111,6 +115,7 @@ interface UiState {
   setSidebarCollapsed: (collapsed: boolean) => void;
   setSidebarWidth: (w: number) => void;
   setRightPanelCollapsed: (collapsed: boolean) => void;
+  setRightPanelWidth: (w: number) => void;
   setTemplatesBrowseMode: (mode: "templates" | "catalog") => void;
   setIsPlaying: (playing: boolean) => void;
   setTrackOrder: (order: string[]) => void;
@@ -160,7 +165,8 @@ export const useUiStore = create<UiState>((set, get) => ({
   collapsedGroups: new Set<string>(),
   sidebarCollapsed: true,
   sidebarWidth: 260,
-  rightPanelCollapsed: false,
+  rightPanelCollapsed: typeof window !== "undefined" ? window.innerWidth < 1100 : false,
+  rightPanelWidth: 288,
   templatesBrowseMode: "templates",
   isPlaying: false,
   trackOrder: [],
@@ -242,6 +248,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
   setSidebarWidth: (w) => set({ sidebarWidth: Math.max(200, Math.min(400, w)) }),
   setRightPanelCollapsed: (collapsed) => set({ rightPanelCollapsed: collapsed }),
+  setRightPanelWidth: (w) => set({ rightPanelWidth: Math.max(200, Math.min(560, w)) }),
   setTemplatesBrowseMode: (mode) => set({ templatesBrowseMode: mode }),
   setIsPlaying: (playing) => set({ isPlaying: playing }),
   setTrackOrder: (order) => set({ trackOrder: order }),

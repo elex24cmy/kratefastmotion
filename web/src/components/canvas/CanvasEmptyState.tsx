@@ -24,6 +24,17 @@ const EXAMPLE_PROMPTS: QuickStart[] = [
   { prompt: "add a glitch shader effect", label: "Shader effect", icon: "▓", hint: "WebGL visual effect" },
 ];
 
+/**
+ * Empty state for a project with no layers yet.
+ *
+ * Layout lives in `styles/index.css` (`.kfm-empty*`) rather than inline
+ * styles so it can reflow: the quick-start grid collapses from three
+ * columns to one as the canvas narrows, and the whole panel scrolls from
+ * a safe centre instead of clipping its own top when the viewport is
+ * short. The brand mark carries a slow conic sweep so the empty canvas
+ * still reads as "motion", and all of it is disabled under
+ * prefers-reduced-motion.
+ */
 export function CanvasEmptyState() {
   const projectId = useProjectStore((s) => s.projectId);
   const send = useChatStore((s) => s.send);
@@ -33,178 +44,62 @@ export function CanvasEmptyState() {
   };
 
   return (
-    <div
-      data-empty-state
-      style={{
-        position: "absolute",
-        inset: 0,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "40px 24px",
-        overflowY: "auto",
-      }}
-    >
-      {/* Hero */}
-      <div style={{ textAlign: "center", marginBottom: 40 }}>
-        <div
-          style={{
-            width: 64,
-            height: 64,
-            margin: "0 auto 20px",
-            borderRadius: 16,
-            border: "1px solid var(--border)",
-            background: "var(--panel2)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 28,
-            color: "var(--text)",
-          }}
-        >
-          ◇
+    <div data-empty-state className="kfm-empty">
+      <div className="kfm-empty__inner">
+        {/* Hero */}
+        <header className="kfm-empty__hero">
+          <div className="kfm-empty__mark" aria-hidden="true">
+            <span className="kfm-empty__mark-glyph">◇</span>
+          </div>
+          <h2 className="kfm-empty__title">Start creating motion</h2>
+          <p className="kfm-empty__sub">
+            Pick a quick start below, or describe what you want in the Agent chat on the left.
+            Everything you create here can be refined through conversation.
+          </p>
+        </header>
+
+        {/* Quick starts — auto-fits from 3 columns down to 1 */}
+        <div className="kfm-empty__grid">
+          {QUICK_STARTS.map((qs) => (
+            <button
+              key={qs.label}
+              type="button"
+              onClick={() => handleQuickStart(qs.prompt)}
+              className="kfm-empty__card"
+              title={qs.prompt}
+            >
+              <span className="kfm-empty__card-icon" aria-hidden="true">{qs.icon}</span>
+              <span className="kfm-empty__card-label">{qs.label}</span>
+              <span className="kfm-empty__card-hint">{qs.hint}</span>
+            </button>
+          ))}
         </div>
-        <h2
-          style={{
-            fontSize: 20,
-            fontWeight: 600,
-            color: "var(--text)",
-            margin: "0 0 8px",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          Start creating motion
-        </h2>
-        <p
-          style={{
-            fontSize: 13,
-            color: "var(--accent2)",
-            maxWidth: 380,
-            lineHeight: 1.5,
-            margin: 0,
-          }}
-        >
-          Pick a quick start below, or describe what you want in the Agent chat on the left.
-          Everything you create here can be refined through conversation.
-        </p>
-      </div>
 
-      {/* Quick start grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 12,
-          maxWidth: 520,
-          width: "100%",
-          marginBottom: 32,
-        }}
-      >
-        {QUICK_STARTS.map((qs) => (
-          <button
-            key={qs.label}
-            onClick={() => handleQuickStart(qs.prompt)}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-              gap: 6,
-              padding: "14px 16px",
-              background: "var(--panel)",
-              border: "1px solid var(--border)",
-              borderRadius: 10,
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-              textAlign: "left",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "var(--text)";
-              e.currentTarget.style.background = "var(--panel2)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "var(--border)";
-              e.currentTarget.style.background = "var(--panel)";
-            }}
-          >
-            <span style={{ fontSize: 18, color: "var(--text)", lineHeight: 1 }}>{qs.icon}</span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text)" }}>{qs.label}</span>
-            <span style={{ fontSize: 10, color: "var(--accent2)", lineHeight: 1.3 }}>{qs.hint}</span>
-          </button>
-        ))}
-      </div>
+        {/* Divider */}
+        <div className="kfm-empty__divider">
+          <span className="kfm-empty__rule" />
+          <span className="kfm-empty__divider-text">OR TRY THESE</span>
+          <span className="kfm-empty__rule" />
+        </div>
 
-      {/* Divider */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          width: "100%",
-          maxWidth: 520,
-          marginBottom: 24,
-        }}
-      >
-        <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-        <span style={{ fontSize: 10, color: "var(--accent2)", fontFamily: "var(--mono)", letterSpacing: "0.05em" }}>
-          OR TRY THESE
-        </span>
-        <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-      </div>
-
-      {/* Example prompts */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          maxWidth: 520,
-          width: "100%",
-        }}
-      >
-        {EXAMPLE_PROMPTS.map((ex) => (
-          <button
-            key={ex.label}
-            onClick={() => handleQuickStart(ex.prompt)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "10px 14px",
-              background: "transparent",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-              textAlign: "left",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "var(--text)";
-              e.currentTarget.style.background = "var(--panel2)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "var(--border)";
-              e.currentTarget.style.background = "transparent";
-            }}
-          >
-            <span style={{ fontSize: 14, color: "var(--accent2)", flexShrink: 0 }}>{ex.icon}</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text)" }}>{ex.label}</div>
-              <div
-                style={{
-                  fontSize: 10,
-                  color: "var(--accent2)",
-                  fontFamily: "var(--mono)",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                "{ex.prompt}"
-              </div>
-            </div>
-          </button>
-        ))}
+        {/* Example prompts */}
+        <div className="kfm-empty__examples">
+          {EXAMPLE_PROMPTS.map((ex) => (
+            <button
+              key={ex.label}
+              type="button"
+              onClick={() => handleQuickStart(ex.prompt)}
+              className="kfm-empty__example"
+              title={ex.prompt}
+            >
+              <span className="kfm-empty__example-icon" aria-hidden="true">{ex.icon}</span>
+              <span className="kfm-empty__example-body">
+                <span className="kfm-empty__example-label">{ex.label}</span>
+                <span className="kfm-empty__example-prompt">"{ex.prompt}"</span>
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

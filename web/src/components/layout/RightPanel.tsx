@@ -163,6 +163,7 @@ export function RightPanel() {
   const projectId = useProjectStore((s) => s.projectId);
   const collapsed = useUiStore((s) => s.rightPanelCollapsed);
   const setCollapsed = useUiStore((s) => s.setRightPanelCollapsed);
+  const panelWidth = useUiStore((s) => s.rightPanelWidth);
 
   const activeCategory = categoryOfTab(tab as TabId);
   const currentCategory = CATEGORIES.find((c) => c.id === activeCategory) ?? CATEGORIES[0];
@@ -209,7 +210,11 @@ export function RightPanel() {
   }
 
   return (
-    <div className="w-72 border-l border-edge flex flex-col flex-shrink-0 bg-panel">
+    <div
+      className="flex flex-col flex-shrink-0 bg-panel"
+      style={{ width: panelWidth }}
+      data-right-panel
+    >
       {/* Sub-tab row — panels within the active category, with collapse toggle */}
       <div className="flex items-stretch border-b border-edge flex-shrink-0 bg-panel2/50">
         <div className="flex flex-1 min-w-0 overflow-x-auto scrollbar-thin">

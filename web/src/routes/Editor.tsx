@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { useProjectStore } from "../store/projectStore.js";
 import { useUiStore } from "../store/uiStore.js";
 import { useChatStore } from "../store/chatStore.js";
@@ -31,9 +32,35 @@ export function Editor() {
   const triggerReplay = useUiStore((s) => s.triggerReplay);
   const chatWidth = useUiStore((s) => s.chatWidth);
   const setChatWidth = useUiStore((s) => s.setChatWidth);
+  const rightPanelCollapsed = useUiStore((s) => s.rightPanelCollapsed);
+  const rightPanelWidth = useUiStore((s) => s.rightPanelWidth);
+  const setRightPanelWidth = useUiStore((s) => s.setRightPanelWidth);
   const chatMessages = useChatStore((s) => s.messages);
   const chatStreaming = useChatStore((s) => s.isStreaming);
   const clearChat = useChatStore((s) => s.clear);
+
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  const [panelMax, setPanelMax] = useState(560);
+
+  // The canvas keeps a floor of ~300px: the right panel can only grow until
+  // that is reached, and it is pulled back in when the window (or the chat
+  // panel) leaves less room than it is currently using.
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const recompute = () => {
+      setPanelMax(Math.max(200, Math.min(560, el.clientWidth - 300 - 26)));
+    };
+    recompute();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(recompute);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (rightPanelWidth > panelMax) setRightPanelWidth(panelMax);
+  }, [panelMax, rightPanelWidth, setRightPanelWidth]);
 
   useKeyboard();
 
@@ -189,10 +216,21 @@ export function Editor() {
         </div>
 
         {/* Editor body: Canvas | Right Panel */}
-        <div className="flex-1 min-h-0 flex">
+        <div ref={bodyRef} className="flex-1 min-h-0 flex">
           <div className="flex-1 min-w-0 p-3">
             <MotionCanvas />
           </div>
+          {/* Drag handle — lets the user trade panel width for preview size.
+              Hidden while the panel is collapsed (it renders as a thin rail). */}
+          {!rightPanelCollapsed && (
+            <ResizableDivider
+              size={rightPanelWidth}
+              onResize={setRightPanelWidth}
+              min={200}
+              max={panelMax}
+              side="right"
+            />
+          )}
           <RightPanel />
         </div>
 

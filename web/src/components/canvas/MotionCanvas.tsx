@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import { useMemo, useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import { useProjectStore } from "../../store/projectStore.js";
 import { useUiStore } from "../../store/uiStore.js";
 import { useChatStore } from "../../store/chatStore.js";
@@ -10,7 +10,6 @@ import type { Keyframe } from "@kratefastmotion/shared";
 import { AlignmentToolbar } from "./AlignmentToolbar.js";
 import { SelectionOverlay } from "./SelectionOverlay.js";
 import { QuickActionBar } from "./QuickActionBar.js";
-import { CanvasMinimap } from "./CanvasMinimap.js";
 import { MultiSelectGizmo } from "./MultiSelectGizmo.js";
 import { MotionPathOverlay } from "./MotionPathOverlay.js";
 import { PerformanceMonitor } from "./PerformanceMonitor.js";
@@ -38,6 +37,130 @@ function keyframeTransform(kf: Keyframe): string {
 function keyframeOpacity(kf: Keyframe): number {
   const props = kf.properties as Record<string, string | number>;
   return typeof props.opacity === "number" ? props.opacity : 1;
+}
+
+interface ViewToggle {
+  id: string;
+  label: string;
+  icon: string;
+  active: boolean;
+  onToggle: () => void;
+}
+
+interface MenuAction {
+  id: string;
+  label: string;
+  icon: string;
+  onSelect: () => void;
+}
+
+/** Shape tools offered by the canvas toolbar (and the overflow menu). */
+const SHAPES: Array<{ id: "rectangle" | "circle" | "text" | "triangle" | "star" | "polygon" | "line" | "arrow"; label: string; icon: string }> = [
+  { id: "rectangle", label: "Rectangle", icon: "▭" },
+  { id: "circle", label: "Circle", icon: "○" },
+  { id: "triangle", label: "Triangle", icon: "△" },
+  { id: "star", label: "Star", icon: "★" },
+  { id: "polygon", label: "Pentagon", icon: "⬠" },
+  { id: "line", label: "Line", icon: "─" },
+  { id: "arrow", label: "Arrow", icon: "➤" },
+  { id: "text", label: "Text", icon: "T" },
+];
+
+/**
+ * Compact overflow menu for the canvas view toggles and (on narrow canvases)
+ * the shape tools and view commands. Keeping these behind a single button
+ * lets the canvas toolbar stay one or two rows instead of overflowing and
+ * clipping its controls.
+ */
+function ViewMenu({
+  toggles,
+  groups,
+}: {
+  toggles: ViewToggle[];
+  groups?: Array<{ heading?: string; items: MenuAction[] }>;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("mousedown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("mousedown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  const activeCount = toggles.filter((t) => t.active).length;
+
+  return (
+    <div className="relative z-50" ref={rootRef}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={`relative px-2 py-0.5 text-[10px] rounded ${open || activeCount > 0 ? "bg-accent/20 text-accent" : "text-gray-500 hover:text-gray-300"}`}
+        title="View options"
+        aria-label="View options"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        data-view-menu
+      >
+        ⋯
+        {activeCount > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-accent" />
+        )}
+      </button>
+      {open && (
+        <div
+          className="absolute right-0 top-full mt-1 w-44 max-h-[70vh] overflow-y-auto rounded-md border border-edge bg-panel2 shadow-xl py-1 z-50"
+          role="menu"
+        >
+          {toggles.map((t) => (
+            <button
+              key={t.id}
+              role="menuitemcheckbox"
+              aria-checked={t.active}
+              onClick={() => t.onToggle()}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-gray-300 hover:bg-panel3 text-left transition-colors"
+            >
+              <span className="w-3 text-center text-accent">{t.active ? "✓" : ""}</span>
+              <span className="text-xs w-4 text-center">{t.icon}</span>
+              <span className="flex-1">{t.label}</span>
+            </button>
+          ))}
+          {groups?.map((g) => (
+            <div key={g.heading ?? g.items[0]?.id} role="group" aria-label={g.heading}>
+              <div className="my-1 h-px bg-edge" />
+              {g.heading && (
+                <div className="px-2.5 py-1 text-[9px] uppercase tracking-wide text-gray-600">{g.heading}</div>
+              )}
+              {g.items.map((a) => (
+                <button
+                  key={a.id}
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false);
+                    a.onSelect();
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-gray-300 hover:bg-panel3 text-left transition-colors"
+                >
+                  <span className="w-3" />
+                  <span className="text-xs w-4 text-center">{a.icon}</span>
+                  <span className="flex-1">{a.label}</span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function MotionCanvas() {
@@ -105,6 +228,13 @@ export function MotionCanvas() {
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
   const canvasAreaRef = useRef<HTMLDivElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  // True when the canvas card is too narrow for the full toolbar — the
+  // "Canvas" label is dropped so the controls keep their own row.
+  const [compact, setCompact] = useState(false);
+  // True when it is too narrow for the shape strip as well; those tools then
+  // move into the overflow menu so the toolbar stays short.
+  const [narrow, setNarrow] = useState(false);
 
   useEffect(() => {
     setReplayKey((k) => k + 1);
@@ -269,6 +399,65 @@ export function MotionCanvas() {
     if (!area || area.clientWidth < 32 || area.clientHeight < 32) return;
     fitToScreen();
   }, [CANVAS_W, CANVAS_H, fitToScreen]);
+
+  // Track the card width so the toolbar can drop optional chrome instead of
+  // wrapping into a tall stack of rows.
+  // Measure the card synchronously on mount (a ResizeObserver callback is
+  // deferred while a tab is hidden, which would otherwise leave the first
+  // paint with the full-width toolbar), then keep it in sync on resize.
+  useLayoutEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const apply = (w: number) => {
+      setCompact(w < 560);
+      setNarrow(w < 430);
+    };
+    apply(el.clientWidth);
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width ?? el.clientWidth;
+      apply(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Wheel zoom anchored at the pointer.
+  //
+  // Attached natively rather than through React's onWheel because React
+  // registers wheel listeners as passive, which silently ignores
+  // preventDefault() and lets the page scroll underneath the canvas. Zooming
+  // around the cursor (instead of the canvas centre) is what makes the
+  // gesture feel like it is following the mouse.
+  useEffect(() => {
+    const area = canvasAreaRef.current;
+    if (!area) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = area.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      const { canvasZoom: z0, canvasPan: pan0 } = useUiStore.getState();
+      // Exponential factor: touchpads fire many small deltas, mice a few
+      // large ones; this keeps the feel consistent across both.
+      const z1 = Math.max(0.1, Math.min(5, z0 * Math.exp(-e.deltaY * 0.0015)));
+      if (z1 === z0) return;
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const r = z1 / z0;
+      // The canvas is flex-centred then transformed from its own centre, so
+      // the point under the cursor is q = (p - c - pan) / zoom. Solving for
+      // the pan that leaves q fixed gives pan' = (p - c) - (p - c - pan) * r.
+      useUiStore.getState().setCanvasZoom(z1);
+      useUiStore.getState().setCanvasPan({
+        x: px - cx - (px - cx - pan0.x) * r,
+        y: py - cy - (py - cy - pan0.y) * r,
+      });
+    };
+    area.addEventListener("wheel", onWheel, { passive: false });
+    return () => area.removeEventListener("wheel", onWheel);
+  }, []);
 
   // Generation flash — when a spec_update lands with new components,
   // trigger a brief CSS animation on the canvas to draw the eye. The
@@ -473,17 +662,6 @@ export function MotionCanvas() {
     };
   }, [isPanning, setCanvasPan]);
 
-  const onWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    // Exponential zoom so each wheel notch scales by a constant factor
-    // instead of adding a fixed step. Feels linear to the eye and works
-    // across zoom ranges (10%–500%) without becoming jerky at the extremes.
-    // Touchpads fire many small deltaY events; mice fire a few large ones.
-    // A 0.0015 factor keeps touchpads smooth while mice still jump by ~15%.
-    const factor = Math.exp(-e.deltaY * 0.0015);
-    setCanvasZoom(canvasZoom * factor);
-  }, [canvasZoom, setCanvasZoom]);
-
   const handleAddShape = useCallback(async (shape: "rectangle" | "circle" | "text" | "triangle" | "star" | "polygon" | "line" | "arrow") => {
     if (!projectId) return;
     const names: Record<string, string> = {
@@ -533,11 +711,41 @@ export function MotionCanvas() {
     ? artboardBg
     : "radial-gradient(120% 120% at 50% 0%, #161616 0%, #000000 60%)";
 
+  // Secondary view toggles live in the overflow menu so the toolbar keeps
+  // one row on narrow canvases.
+  const viewToggles: ViewToggle[] = [
+    { id: "snap", label: "Snap to grid", icon: "🧲", active: snapToGrid, onToggle: () => setSnapToGrid(!snapToGrid) },
+    { id: "rulers", label: "Rulers", icon: "📊", active: showRulers, onToggle: () => setShowRulers(!showRulers) },
+    { id: "onion", label: "Onion skin", icon: "◊", active: onionSkin.enabled, onToggle: () => setOnionSkin({ enabled: !onionSkin.enabled }) },
+    { id: "paths", label: "Motion paths", icon: "∿", active: showMotionPaths, onToggle: () => setShowMotionPaths(!showMotionPaths) },
+    { id: "perf", label: "Performance", icon: "⚙", active: showPerformanceMonitor, onToggle: () => setShowPerformanceMonitor(!showPerformanceMonitor) },
+  ];
+
+  // On a very narrow canvas the shape tools and the two convenience view
+  // commands move into the overflow menu, so the toolbar stays short and
+  // nothing is lost.
+  const shapeActions: MenuAction[] = SHAPES.map((s) => ({
+    id: s.id,
+    label: s.label,
+    icon: s.icon,
+    onSelect: () => void handleAddShape(s.id),
+  }));
+  const viewActions: MenuAction[] = [
+    { id: "reset-view", label: "Reset view to 100%", icon: "◱", onSelect: resetCanvasView },
+    { id: "frame-selected", label: "Frame selected", icon: "▤", onSelect: frameSelected },
+  ];
+  const menuGroups = narrow
+    ? [
+        ...(projectId ? [{ heading: "Add shape", items: shapeActions }] : []),
+        { heading: "View", items: viewActions },
+      ]
+    : undefined;
+
   return (
-    <div className="flex flex-col h-full bg-ink rounded-xl border border-edge overflow-hidden">
+    <div ref={cardRef} className="flex flex-col h-full bg-ink rounded-xl border border-edge">
       {/* Canvas toolbar */}
-      <div className="px-3 py-1.5 border-b border-edge flex items-center gap-2 bg-panel flex-shrink-0">
-        <span className="text-[10px] uppercase tracking-wide text-gray-500">Canvas</span>
+      <div data-canvas-toolbar className="rounded-t-xl px-3 py-1.5 border-b border-edge flex flex-wrap items-center gap-x-2 gap-y-1 bg-panel flex-shrink-0">
+        {!compact && <span className="text-[10px] uppercase tracking-wide text-gray-500 whitespace-nowrap">Canvas</span>}
         <div className="flex items-center gap-1">
           <input
             type="number"
@@ -569,26 +777,26 @@ export function MotionCanvas() {
             aria-label="Canvas height in pixels"
           />
         </div>
-        {/* Shape creation buttons */}
-        {projectId && (
-          <div className="flex items-center gap-0.5 ml-1">
-            <button onClick={() => handleAddShape("rectangle")} className="w-6 h-6 flex items-center justify-center text-[10px] text-gray-500 hover:text-accent bg-panel2 border border-edge rounded" title="Add rectangle" aria-label="Add rectangle">▭</button>
-            <button onClick={() => handleAddShape("circle")} className="w-6 h-6 flex items-center justify-center text-[10px] text-gray-500 hover:text-accent bg-panel2 border border-edge rounded" title="Add circle" aria-label="Add circle">○</button>
-            <button onClick={() => handleAddShape("triangle")} className="w-6 h-6 flex items-center justify-center text-[10px] text-gray-500 hover:text-accent bg-panel2 border border-edge rounded" title="Add triangle" aria-label="Add triangle">△</button>
-            <button onClick={() => handleAddShape("star")} className="w-6 h-6 flex items-center justify-center text-[10px] text-gray-500 hover:text-accent bg-panel2 border border-edge rounded" title="Add star" aria-label="Add star">★</button>
-            <button onClick={() => handleAddShape("polygon")} className="w-6 h-6 flex items-center justify-center text-[10px] text-gray-500 hover:text-accent bg-panel2 border border-edge rounded" title="Add pentagon" aria-label="Add pentagon">⬠</button>
-            <button onClick={() => handleAddShape("line")} className="w-6 h-6 flex items-center justify-center text-[10px] text-gray-500 hover:text-accent bg-panel2 border border-edge rounded" title="Add line" aria-label="Add line">─</button>
-            <button onClick={() => handleAddShape("arrow")} className="w-6 h-6 flex items-center justify-center text-[10px] text-gray-500 hover:text-accent bg-panel2 border border-edge rounded" title="Add arrow" aria-label="Add arrow">➤</button>
-            <button onClick={() => handleAddShape("text")} className="w-6 h-6 flex items-center justify-center text-[10px] text-gray-500 hover:text-accent bg-panel2 border border-edge rounded" title="Add text" aria-label="Add text">T</button>
+        {/* Shape creation buttons — hidden on very narrow canvases, where
+            they move into the overflow menu instead of wrapping the toolbar. */}
+        {projectId && !narrow && (
+          <div className="flex flex-wrap items-center gap-0.5 ml-1">
+            {SHAPES.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => handleAddShape(s.id)}
+                className="w-6 h-6 flex items-center justify-center text-[10px] text-gray-500 hover:text-accent bg-panel2 border border-edge rounded"
+                title={`Add ${s.label.toLowerCase()}`}
+                aria-label={`Add ${s.label.toLowerCase()}`}
+              >
+                {s.icon}
+              </button>
+            ))}
           </div>
         )}
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-1 min-w-0">
           <button onClick={() => setShowGrid((v) => !v)} className={`px-2 py-0.5 text-[10px] rounded ${showGrid ? "bg-accent/20 text-accent" : "text-gray-500 hover:text-gray-300"}`} title="Toggle grid" aria-label="Toggle grid" aria-pressed={showGrid}>⊞</button>
-          <button onClick={() => setSnapToGrid(!snapToGrid)} className={`px-2 py-0.5 text-[10px] rounded ${snapToGrid ? "bg-accent/20 text-accent" : "text-gray-500 hover:text-gray-300"}`} title="Snap to grid" aria-label="Toggle snap to grid" aria-pressed={snapToGrid}>🧲</button>
-          <button onClick={() => setShowRulers(!showRulers)} className={`px-2 py-0.5 text-[10px] rounded ${showRulers ? "bg-accent/20 text-accent" : "text-gray-500 hover:text-gray-300"}`} title="Toggle rulers" aria-label="Toggle rulers" aria-pressed={showRulers}>📊</button>
-          <button onClick={() => setOnionSkin({ enabled: !onionSkin.enabled })} className={`px-2 py-0.5 text-[10px] rounded ${onionSkin.enabled ? "bg-accent/20 text-accent" : "text-gray-500 hover:text-gray-300"}`} title="Toggle onion skin" aria-label="Toggle onion skin" aria-pressed={onionSkin.enabled}>◊</button>
-          <button onClick={() => setShowMotionPaths(!showMotionPaths)} className={`px-2 py-0.5 text-[10px] rounded ${showMotionPaths ? "bg-accent/20 text-accent" : "text-gray-500 hover:text-gray-300"}`} title="Toggle motion paths" aria-label="Toggle motion paths" aria-pressed={showMotionPaths}>∿</button>
-          <button onClick={() => setShowPerformanceMonitor(!showPerformanceMonitor)} className={`px-2 py-0.5 text-[10px] rounded ${showPerformanceMonitor ? "bg-accent/20 text-accent" : "text-gray-500 hover:text-gray-300"}`} title="Toggle performance monitor" aria-label="Toggle performance monitor" aria-pressed={showPerformanceMonitor}>⚙</button>
+          <ViewMenu toggles={viewToggles} groups={menuGroups} />
           <button onClick={() => setPreviewOpen(true)} className="px-2 py-0.5 text-[10px] text-gray-500 hover:text-accent bg-panel2 border border-edge rounded" title="Fullscreen preview" aria-label="Open fullscreen preview">⤢</button>
           <div className="flex items-center border border-edge rounded overflow-hidden">
             <button onClick={zoomOut} className="w-6 h-6 flex items-center justify-center text-xs text-gray-400 hover:text-accent bg-panel2" title="Zoom out" aria-label="Zoom out">−</button>
@@ -596,8 +804,15 @@ export function MotionCanvas() {
             <button onClick={zoomIn} className="w-6 h-6 flex items-center justify-center text-xs text-gray-400 hover:text-accent bg-panel2" title="Zoom in" aria-label="Zoom in">+</button>
           </div>
           <button onClick={fitToScreen} className="px-2 py-0.5 text-[10px] text-gray-400 hover:text-accent bg-panel2 border border-edge rounded" title="Fit to screen" aria-label="Fit to screen">Fit</button>
-          <button onClick={frameSelected} className="px-2 py-0.5 text-[10px] text-gray-400 hover:text-accent bg-panel2 border border-edge rounded" title="Frame selected" aria-label="Frame selected">▤</button>
-          <button onClick={triggerReplay} className="ml-1 px-2.5 py-0.5 text-[10px] rounded bg-accent hover:bg-accent2 text-black font-medium" title="Replay (Shift+R)" aria-label="Replay animation">▶ Replay</button>
+          {/* These two are conveniences; they yield first when the canvas is
+              narrow so the toolbar stays two rows instead of three. */}
+          {!narrow && (
+            <>
+              <button onClick={resetCanvasView} className="px-2 py-0.5 text-[10px] text-gray-400 hover:text-accent bg-panel2 border border-edge rounded" title="Reset view to 100%" aria-label="Reset view to 100%">1:1</button>
+              <button onClick={frameSelected} className="px-2 py-0.5 text-[10px] text-gray-400 hover:text-accent bg-panel2 border border-edge rounded" title="Frame selected" aria-label="Frame selected">▤</button>
+            </>
+          )}
+          <button onClick={triggerReplay} className="ml-1 px-2.5 py-0.5 text-[10px] rounded bg-accent hover:bg-accent2 text-black font-medium" title="Replay (Shift+R)" aria-label="Replay animation">{narrow ? "▶" : "▶ Replay"}</button>
         </div>
       </div>
 
@@ -608,7 +823,12 @@ export function MotionCanvas() {
         style={{ cursor: cursorStyle }}
         onMouseDown={onCanvasMouseDown}
         onContextMenu={onContextMenu}
-        onWheel={onWheel}
+        onDoubleClick={(e) => {
+          // Double-clicking the empty backdrop re-fits the artboard — the
+          // quick way back if a pan/zoom lost the canvas off-screen.
+          const t = e.target as HTMLElement;
+          if (t === e.currentTarget || t.classList.contains("canvas-area-bg")) fitToScreen();
+        }}
       >
         <style>{css}</style>
         {isStreaming && (
@@ -937,11 +1157,8 @@ export function MotionCanvas() {
         </div>
       </div>
 
-      {/* Canvas minimap for navigation */}
-      <CanvasMinimap />
-
       {/* Status bar */}
-      <div className="px-3 py-1 border-t border-edge flex items-center gap-2 text-[10px] text-gray-600 bg-panel flex-shrink-0">
+      <div className="rounded-b-xl px-3 py-1 border-t border-edge flex items-center gap-2 text-[10px] text-gray-600 bg-panel flex-shrink-0">
         <span className="font-medium">{components.length}</span>
         <span className="text-gray-700">layers</span>
         <span className="text-gray-700">·</span>
