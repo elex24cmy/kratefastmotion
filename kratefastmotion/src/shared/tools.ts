@@ -136,6 +136,155 @@ export const CheckLayoutInput = z.object({
   pad: z.number().min(0).optional().describe("Required clearance in pixels between layers. Two layers closer than this are reported as collisions, so pass pad: 16 to demand breathing room rather than merely \\\"not touching\\\". Defaults to 0."),
 });
 
+/* ------------------- Vector shape / path / icon tools ------------------- */
+
+/** Mirrors `SHAPE_KINDS` in the motion package; kept literal so the shared
+ *  package stays free of motion imports (it is loaded as plain JS at runtime). */
+export const ShapeKindSchema = z.enum([
+  "rectangle",
+  "rounded-rectangle",
+  "ellipse",
+  "circle",
+  "polygon",
+  "star",
+  "line",
+  "arrow",
+  "triangle",
+  "pie",
+  "arc",
+  "blob",
+  "squircle",
+  "heart",
+  "moon",
+  "ring",
+  "sparkle",
+  "bubble",
+]);
+
+const placementField = () =>
+  GraphicPlacementSchema.optional().describe(
+    'Where it belongs: an anchor (top-left, top-center, top-right, middle-left, center, middle-right, bottom-left, bottom-center, bottom-right) or "auto" to let the layout engine pick the first free anchor. Defaults to "auto".',
+  );
+
+export const DrawShapeInput = z.object({
+  projectId: zIdField,
+  shape: ShapeKindSchema.describe(
+    "The shape to draw. rectangle; rounded-rectangle (cornerRadius); ellipse; circle; polygon (sides); star (points, innerRatio, or straightArms); line (thickness); arrow; triangle; pie (startAngle..endAngle); arc (startAngle..endAngle, thickness); blob (seed, wobble); squircle (exponent); heart; moon; ring (thickness); sparkle; bubble.",
+  ),
+  placement: placementField(),
+  x: z.number().optional().describe("Explicit left edge in stage pixels. Give x and y together to place by hand instead of letting the engine choose."),
+  y: z.number().optional().describe("Explicit top edge in stage pixels."),
+  width: z.number().int().positive().optional().describe("Width in stage pixels. A sensible per-shape default is used when omitted."),
+  height: z.number().int().positive().optional().describe("Height in stage pixels."),
+  rotation: z.number().min(-360).max(360).optional().describe("Rotation in degrees. The rotated shape is re-fitted so it still stays inside its box."),
+  sides: z.number().int().min(3).max(24).optional().describe("Number of sides for `polygon`."),
+  points: z.number().int().min(3).max(24).optional().describe("Number of points for `star`."),
+  innerRatio: z.number().min(0.05).max(1).optional().describe("Inner radius as a share of the outer radius for `star` (0.5 is a classic star)."),
+  straightArms: z.boolean().optional().describe("For `star`: use straight-edged arms (a crisp sparkle-star) instead of the default curved inner radius."),
+  cornerRadius: z.number().min(0).optional().describe("Corner radius in pixels for `rounded-rectangle`."),
+  exponent: z.number().min(2).max(12).optional().describe("Corner softness for `squircle` (4 is a classic squircle)."),
+  startAngle: z.number().min(-360).max(360).optional().describe("Start angle in degrees for `pie` and `arc` (0 is 12 o'clock, increasing clockwise)."),
+  endAngle: z.number().min(-360).max(360).optional().describe("End angle in degrees for `pie` and `arc`."),
+  thickness: z.number().positive().optional().describe("Stroke thickness in pixels for `line`, `arrow`, `arc` and `ring`."),
+  seed: z.number().int().optional().describe("Shape seed for `blob` — different seeds give different blobs."),
+  wobble: z.number().min(0).max(0.5).optional().describe("How lumpy a `blob` is (0.26 is the default)."),
+  fill: z.string().optional().describe('Fill colour as a hex string, or "none" for an outline only. Defaults to the project accent.'),
+  fillTo: z.string().optional().describe("Second hex colour — when set, the fill becomes a gradient from `fill` to `fillTo`."),
+  stroke: z.string().optional().describe("Outline colour as a hex string. When both fill and stroke are given, the shape is drawn as a filled shape with an outline."),
+  strokeWidth: z.number().positive().optional().describe("Outline width in pixels."),
+  opacity: z.number().min(0).max(1).optional().describe("Layer opacity 0..1."),
+  accent: z.string().optional().describe("Accent colour as a hex string, e.g. \"#38bdf8\". Defaults to the project's palette accent."),
+  zIndex: z.number().int().min(0).max(90).optional().describe("Stacking order. Content sits at 0-10, shapes 14, illustrations 20. Defaults to 14."),
+  sceneId: z.string().optional().describe("Attach the shape to an existing scene so it appears with that beat. Omit for a standalone shape."),
+  delayMs: z.number().int().nonnegative().optional().describe("Entrance delay in ms relative to its scene (or to 0 standalone)."),
+  durationMs: z.number().int().positive().optional().describe("Total lifetime in ms. Defaults to the scene length, or 1800ms standalone."),
+  avoidOverlap: z.boolean().optional().describe("When the requested spot is occupied, move the shape to a free anchor instead of stacking on top of it (default true)."),
+  name: z.string().optional().describe("Base layer name. Defaults to the shape kind."),
+});
+
+export const AddPathInput = z.object({
+  projectId: zIdField,
+  d: z.string().min(1).describe(
+    'SVG path data, e.g. "M10 90 C 40 10, 160 10, 190 90" or "M12 2 L2 7 L12 12 Z". Standard commands M, L, H, V, C, S, Q, T, A and Z are supported.',
+  ),
+  viewBox: z
+    .array(z.number())
+    .min(2)
+    .max(4)
+    .optional()
+    .describe("Coordinate space the path was authored in: [minX, minY, width, height]. Pass it when you copied artwork from its own system (a 24x24 icon, a map)."),
+  placement: placementField(),
+  x: z.number().optional().describe("Explicit left edge in stage pixels."),
+  y: z.number().optional().describe("Explicit top edge in stage pixels."),
+  width: z.number().int().positive().optional().describe("Width in stage pixels. Defaults to the path's own width."),
+  height: z.number().int().positive().optional().describe("Height in stage pixels. Defaults to the path's own height."),
+  rotation: z.number().min(-360).max(360).optional().describe("Rotation in degrees; the path is re-fitted so it stays inside its box."),
+  fill: z.string().optional().describe('Fill colour as a hex string, or "none". A closed path fills by default; an open path strokes by default.'),
+  fillTo: z.string().optional().describe("Second hex colour — turns the fill into a gradient."),
+  stroke: z.string().optional().describe("Outline colour as a hex string."),
+  strokeWidth: z.number().positive().optional().describe("Outline width in pixels (default 4)."),
+  opacity: z.number().min(0).max(1).optional().describe("Layer opacity 0..1."),
+  accent: z.string().optional().describe("Accent colour as a hex string. Defaults to the project's palette accent."),
+  zIndex: z.number().int().min(0).max(90).optional().describe("Stacking order. Defaults to 14."),
+  sceneId: z.string().optional().describe("Attach the path to an existing scene so it appears with that beat."),
+  delayMs: z.number().int().nonnegative().optional().describe("Entrance delay in ms."),
+  durationMs: z.number().int().positive().optional().describe("Total lifetime in ms."),
+  avoidOverlap: z.boolean().optional().describe("Move to a free anchor when the requested spot is occupied (default true)."),
+  name: z.string().optional().describe("Base layer name. Defaults to \"Path\"."),
+});
+
+export const AddIconInput = z.object({
+  projectId: zIdField,
+  icon: z.string().min(1).describe(
+    'Name or description of the icon, e.g. "bolt", "shield", "chart-line", "notification", "magnifier". Call list_illustrations to search the library.',
+  ),
+  placement: placementField(),
+  x: z.number().optional().describe("Explicit left edge in stage pixels."),
+  y: z.number().optional().describe("Explicit top edge in stage pixels."),
+  size: z.number().int().positive().optional().describe("Square size in pixels (default 160). Use width/height for a non-square box."),
+  width: z.number().int().positive().optional().describe("Width in stage pixels."),
+  height: z.number().int().positive().optional().describe("Height in stage pixels."),
+  rotation: z.number().min(-360).max(360).optional().describe("Rotation in degrees."),
+  color: z.string().optional().describe("Icon colour as a hex string. Defaults to the project accent."),
+  opacity: z.number().min(0).max(1).optional().describe("Layer opacity 0..1."),
+  accent: z.string().optional().describe("Accent colour as a hex string. Defaults to the project's palette accent."),
+  zIndex: z.number().int().min(0).max(90).optional().describe("Stacking order. Defaults to 20."),
+  sceneId: z.string().optional().describe("Attach the icon to an existing scene so it appears with that beat."),
+  delayMs: z.number().int().nonnegative().optional().describe("Entrance delay in ms."),
+  durationMs: z.number().int().positive().optional().describe("Total lifetime in ms."),
+  avoidOverlap: z.boolean().optional().describe("Move to a free anchor when the requested spot is occupied (default true)."),
+  name: z.string().optional().describe("Base layer name. Defaults to the icon's description."),
+});
+
+export const ComposeIllustrationInput = z.object({
+  projectId: zIdField,
+  illustration: z.string().min(1).describe(
+    'Name or description of the illustration, e.g. "rocket", "mountains", "cloud-sync", "growth", "security". Call list_illustrations to search the catalogue.',
+  ),
+  placement: placementField(),
+  x: z.number().optional().describe("Explicit left edge in stage pixels."),
+  y: z.number().optional().describe("Explicit top edge in stage pixels."),
+  width: z.number().int().positive().optional().describe("Width in stage pixels (default 520)."),
+  height: z.number().int().positive().optional().describe("Height in stage pixels (default 400)."),
+  accent: z.string().optional().describe("Primary colour as a hex string. Defaults to the project accent."),
+  secondary: z.string().optional().describe("Secondary colour as a hex string. Defaults to the project's second accent."),
+  ink: z.string().optional().describe("Detail/line colour. Defaults to the project text colour."),
+  muted: z.string().optional().describe("Low-contrast backdrop colour. Defaults to the project subtext colour."),
+  staggerMs: z.number().int().min(0).max(600).optional().describe("Delay between parts as they animate in (default 90)."),
+  opacity: z.number().min(0).max(1).optional().describe("Overall opacity 0..1."),
+  zIndex: z.number().int().min(0).max(90).optional().describe("Stacking order. Defaults to 20."),
+  sceneId: z.string().optional().describe("Attach the illustration to an existing scene so it appears with that beat."),
+  delayMs: z.number().int().nonnegative().optional().describe("Entrance delay in ms."),
+  durationMs: z.number().int().positive().optional().describe("Total lifetime in ms. Defaults to the scene length, or 3200ms standalone."),
+  avoidOverlap: z.boolean().optional().describe("Move to a free anchor when the requested spot is occupied (default true)."),
+  name: z.string().optional().describe("Base layer name. Defaults to the illustration's name."),
+});
+
+export const ListIllustrationsInput = z.object({
+  kind: z.enum(["all", "illustration", "icon"]).optional().describe("Restrict the listing to illustrations or to icons. Defaults to both."),
+  query: z.string().optional().describe('Free-text filter, e.g. "security", "growth", "notification". Omit to list everything.'),
+});
+
 /* ------------------------ Effect (look) tools ------------------------ */
 
 /** Mirrors `EFFECT_KINDS` in the motion package; kept literal so the shared
@@ -3904,6 +4053,11 @@ export const TOOL_INPUT_SCHEMAS = {
   add_shape: AddShapeInput,
   compose_graphic: ComposeGraphicInput,
   check_layout: CheckLayoutInput,
+  draw_shape: DrawShapeInput,
+  add_path: AddPathInput,
+  add_icon: AddIconInput,
+  compose_illustration: ComposeIllustrationInput,
+  list_illustrations: ListIllustrationsInput,
   apply_effect: ApplyEffectInput,
   add_captions: AddCaptionsInput,
   add_keyword_pop: AddKeywordPopInput,
@@ -4464,9 +4618,19 @@ export const TOOL_DESCRIPTIONS: Record<ToolName, string> = {
   set_playback_range: "Set or clear the playback time range (in/out points in ms). When set, playback loops within the range. Use when the user says 'set playback range', 'trim to 500-2000ms', or 'clear range'.",
   select_components: "Select multiple components by id, optionally clearing existing selection first. Use when the user says 'select all', 'select multiple', or 'select these layers'.",
   toggle_snap: "Enable or disable snap-to-grid with optional grid size (1-50px). Use when the user says 'turn on snap', 'disable snapping', or 'set grid size to 16'.",
-  add_shape: "Add a shape to the canvas - rectangle, circle, text, triangle, star, pentagon, line, or arrow. Optionally set position (x/y) and size (width/height). Use when the user says 'add a rectangle', 'create a star', or 'add an arrow'.",
+  add_shape: "Add a legacy simple shape to the canvas (rectangle, circle, text, triangle, star, pentagon, line, arrow) at a fixed x/y with no collision awareness. Prefer draw_shape for real vector shapes — it has the full geometry vocabulary, real rounded corners, arcs, pies, blobs, rings and hearts, and places itself so it cannot overlap existing content. Use add_shape only when you specifically want the old fixed-position behaviour.",
   compose_graphic:
     "Draw a designed graphic — a card, chip, ring, framing brackets, connector, progress bar, bar chart, dot field, chevrons, divider, icon tile or area chart — and let the layout engine choose exactly where it goes so it never lands on top of existing content. Pass kind plus a placement intent (an anchor like \"bottom-right\", or \"auto\"); the tool computes the pixel box on the 1920x1080 stage, moves it to a free anchor when the requested spot is taken (avoidOverlap, default true), and returns the resolved position. Prefer this over add_shape for anything decorative: add_shape drops a raw shape at fixed x/y with no collision awareness. Use it for 'add a chart', 'put a progress bar here', 'frame this', 'add an icon tile', or any graphic that has to sit correctly in a composition. Call check_layout afterwards to confirm the composition is still clean.",
+  draw_shape:
+    "Draw a real vector shape — rectangle, rounded-rectangle, ellipse, circle, polygon, star, line, arrow, triangle, pie, arc, blob, squircle, heart, moon, ring, sparkle or bubble — as true vector geometry, and let the layout engine choose exactly where it goes so it never lands on top of existing content and never falls outside the frame. Pass shape plus a placement intent (an anchor like \"bottom-right\", or \"auto\"); the tool computes the pixel box on the project's artboard, moves it to a free anchor when the requested spot is taken (avoidOverlap, default true), steps the size down if the stage is too full rather than covering a neighbour, and returns the resolved position. Give x and y instead to place it by hand. Set fill and/or stroke (stroke adds a real outline), rotation, and the shape-specific knobs (sides, points, cornerRadius, startAngle/endAngle, thickness, seed). Use it for 'add a circle', 'draw a rounded rectangle behind this', 'make a triangle', 'put a ring here', or any shape that has to sit correctly in a composition. Call check_layout afterwards.",
+  add_path:
+    "Draw an arbitrary vector path from SVG path data. Pass `d` with standard commands (M, L, H, V, C, S, Q, T, A, Z) and the tool fits it into a placed box, fills and/or strokes it, and returns the resolved position. Pass viewBox ([minX, minY, w, h]) when you copied artwork authored in its own coordinate space. A closed path fills by default; an open path strokes by default. Use it for logos-as-paths, custom squiggles, underlines, arrows, hand-drawn marks, or any shape the named vocabulary does not cover.",
+  add_icon:
+    "Draw an icon from the built-in library — a glyph such as bolt, check, arrow, star, heart, shield, lock, gear, search, target, clock, bell, mail, chart, globe, layers, users, code, camera, wifi, download, filter, flag, trophy, gauge, calendar, music, lightbulb, compass, megaphone, chat, rocket and more. Pass an icon name or a description (\"notification\", \"magnifier\") and the tool resolves it, places it with the layout engine, and returns the resolved position. Use it for feature bullets, status marks, list icons and small illustrative details. Call list_illustrations to search the library.",
+  compose_illustration:
+    "Draw a whole named illustration — a multi-part piece of vector artwork such as mountains, rocket, orbit, growth, network, cloud-sync, shield-check, idea, target, pulse, blobs, layers-stack, flow or waveform. Each part animates in on a stagger, and the whole composition is placed by the layout engine so it never overlaps existing content. Pass an illustration name or a description (\"security\", \"cloud backup\", \"analytics\") and optionally recolour it with accent/secondary/ink/muted. Use it when the user wants a picture, a scene, a diagram or a piece of artwork rather than a single shape. Call list_illustrations to search the catalogue, and check_layout afterwards.",
+  list_illustrations:
+    "List the illustrations and icons available to draw_shape, add_icon and compose_illustration, optionally filtered by a free-text query and restricted to illustrations or icons. Call it when you are not sure what artwork exists, or to turn a user's words (\"something about security\") into a concrete id before drawing.",
   check_layout:
     "Audit a project's spatial layout and report every pair of layers that overlap and every layer that falls outside the safe area, with the offending layer names and boxes. Pass sceneId to audit one scene, and pad to demand a minimum clearance between layers. The audit is time- and background-aware: layers that are never on screen together are not a collision, and full-bleed layers (base video, cutaways, colour cards, scrims) are meant to be covered. Use it after adding or moving layers, and always after compose_graphic, add_captions or edit_talking_head, to confirm the composition is clean before showing it to the user. Returns ok plus a one-line summary you can act on.",
   apply_effect:

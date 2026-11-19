@@ -20,6 +20,7 @@ import { paintKeyingTransitionExecutors } from "./paintKeyingTransitionTools.js"
 import { generatorExecutors } from "./generatorTools.js";
 import { filmExecutors } from "./filmTools.js";
 import { graphicExecutors } from "./graphicTools.js";
+import { vectorExecutors } from "./vectorTools.js";
 import { effectExecutors } from "./effectTools.js";
 import { captionExecutors } from "./captionTools.js";
 import { editExecutors } from "./editTools.js";
@@ -64,6 +65,7 @@ const EXECUTORS: Partial<Record<ToolName, ToolExecutor>> = {
   ...generatorExecutors,
   ...filmExecutors,
   ...graphicExecutors,
+  ...vectorExecutors,
   ...effectExecutors,
   ...captionExecutors,
   ...editExecutors,
